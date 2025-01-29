@@ -1,0 +1,119 @@
+.progressSummary {
+position:relative;
+height:auto;
+}
+
+.progressSummary .progressStages {
+position:relative;
+display:table;
+height:40px;
+overflow:visible;
+}
+
+.progressSummary .progressStages ul {
+width:100%;
+display:table;
+table-layout:fixed;
+height:40px;
+-ms-box-sizing:border-box;
+-o-box-sizing:border-box;
+box-sizing:border-box;
+overflow:hidden;
+border-collapse:collapse;
+}
+
+ol,ul {
+list-style:none;
+}
+
+.progressSummary .progressStages.open ul li.active,.progressSummary .progressStages.open ul li.active .stageContent .stageArrow::after,.progressSummary .progressStages.won ul li.active,.progressSummary .progressStages.won ul li.active .stageContent .stageArrow::after {
+background:#1ab394;
+padding: 0px;
+}
+
+.progressSummary .progressStages ul li:first-child {
+-moz-border-top-left-radius:3px;
+border-top-left-radius:3px;
+-moz-border-bottom-left-radius:3px;
+border-bottom-left-radius:3px;
+}
+
+.progressSummary .progressStages ul li {
+position:relative;
+background:#ced1d3;
+display:table-cell;
+vertical-align:middle;
+-webkit-touch-callout:none;
+-webkit-user-select:none;
+-moz-user-select:none;
+-ms-user-select:none;
+user-select:none;
+line-height:20px;
+color:#fff;
+text-align:center;
+cursor:pointer;
+padding: 0px;
+}
+
+.progressSummary .progressStages ul li .stageContent {
+position:relative;
+}
+
+.progressSummary .progressStages ul li:first-child .stageContent .stageArrow {
+display:none;
+}
+
+.progressSummary .progressStages ul li .stageContent .stageArrow {
+width:15px;
+height:40px;
+position:absolute;
+top:-10px;
+left:0;
+overflow:hidden;
+}
+
+.progressSummary .progressStages ul li .stageContent .stagename {
+font-size:16px;
+display:inline-block;
+position:relative;
+left:3px;
+font-size: 0.8vw;
+color: #666;
+}
+
+.progressSummary .progressStages.open ul li.active + li .stageContent .stageArrow::after,.progressSummary .progressStages.won ul li.active + li .stageContent .stageArrow::after {
+/*! border-top:6px solid #f3f3f4; */
+/*! border-right:6px solid #f3f3f4; */
+/*! background:#1ab394; */
+}
+
+.progressSummary .progressStages ul li .stageContent .stageArrow::after {
+width:42px;
+height:40px;
+position:absolute;
+right:-2px;
+top:0px;
+/*! border-top:6px solid #f3f3f4; */
+/*! border-right:6px solid #f3f3f4; */
+transform:scaleX(0.5) rotate(45deg);
+content:" ";
+cursor:pointer;
+background:#ced1d3;
+box-shadow: 5px -5px #f3f3f4;
+}
+
+.progressSummary .progressStages ul li:last-child {
+-moz-border-top-right-radius:3px;
+border-top-right-radius:3px;
+-moz-border-bottom-right-radius:3px;
+border-bottom-right-radius:3px;
+}
+.active.last {
+    background-color: #0CA485 !important;
+}
+.inactive-first .stageArrow::after {
+    background: #0CA485 !important;
+}
+.active .stagename {
+    color: #f3f3f4 !important;
+}

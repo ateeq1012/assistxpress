@@ -1,0 +1,484 @@
+<?php 
+
+class IntegrationFunctionHelper
+{
+	public static function get_site_types()
+	{
+		return array(
+			1 => array("key"=>"bts_site", "label"=>"BTS Sites"),
+			2 => array("key"=>"2g_site", "label"=>"2G BTS Sites"),
+			3 => array("key"=>"3g_site", "label"=>"3G BTS Sites"),
+			4 => array("key"=>"4g_site", "label"=>"4G BTS Sites"),
+			5 => array("key"=>"mw_tx_site", "label"=>"MW-TX Sites"),
+			6 => array("key"=>"of_tx_site", "label"=>"OF-TX Sites"),
+			7 => array("key"=>"bsc_rnc_site", "label"=>"BSC/RNC Sites"),
+			8 => array("key"=>"core_sites", "label"=>"Core Sites"),
+			99 => array("key"=>"cells", "label"=>"EAM Cells"),
+		);
+	}
+
+	public static function site_attributes_by_type( $type )
+	{
+		$resp = new stdClass;
+		$resp->success = true;
+		$resp->message = '';
+		$resp->data = null;
+
+		$postRequest = array('site_type'=>$type, 'token' => Yii::app()->params["eam_integration_api_key"]);
+
+		$ch = curl_init();
+		curl_setopt($ch, CURLOPT_URL, Yii::app()->params["eam_integration_base_url"].'/api/get_sites_lookup');
+		curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, Yii::app()->params["eam_integration_verify_ssl"]);
+		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, Yii::app()->params["eam_integration_verify_ssl"]);
+		curl_setopt($ch, CURLOPT_TIMEOUT, 30); 
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER,1);
+		curl_setopt($ch, CURLOPT_POSTFIELDS, $postRequest);
+
+		$api_resp = curl_exec ($ch);
+
+		$req_code = curl_errno($ch);
+		$req_msg = curl_error($ch);
+		$httpcode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+		curl_close($ch);
+
+		if($req_code != 0 )
+		{
+			$resp->success = false;
+			$resp->message = "Curl Error Code: $req_code, Curl Error Message: $req_msg, Response Json: $api_resp";
+		}
+		else
+		{
+			// check for API errors 
+			if($httpcode != 200)
+			{
+				$resp->success = false;
+				$resp->message = "API Error Occured! HTTP Code: $httpcode, Response Json: $api_resp";
+			}
+			else
+			{
+				$resp_obj = json_decode($api_resp, true);
+				if (json_last_error() == JSON_ERROR_NONE)
+				{
+					if( $resp_obj["success"] )
+					{
+						$resp->success = true;
+						$resp->message = "";
+						$resp->data = $resp_obj["data"];
+					}
+					else
+					{
+						$resp->success = false;
+						$resp->message = $resp_obj["message"];
+					}
+				}
+				else
+				{
+					$resp->success = false;
+					$resp->message = "Invalid Json received, Response: $api_resp";
+				}
+			}
+		}
+		return $resp;
+	}
+
+	public static function sites_by_type( $type )
+	{
+		$resp = new stdClass;
+		$resp->success = true;
+		$resp->message = '';
+		$resp->data = null;
+
+		$postRequest = array('site_type'=>$type, 'token' => Yii::app()->params["eam_integration_api_key"]);
+
+		$ch = curl_init();
+		curl_setopt($ch, CURLOPT_URL, Yii::app()->params["eam_integration_base_url"].'/api/get_sites_by_type');
+		curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, Yii::app()->params["eam_integration_verify_ssl"]);
+		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, Yii::app()->params["eam_integration_verify_ssl"]);
+		curl_setopt($ch, CURLOPT_TIMEOUT, 30); 
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER,1);
+		curl_setopt($ch, CURLOPT_POSTFIELDS, $postRequest);
+
+		$api_resp = curl_exec ($ch);
+
+		$req_code = curl_errno($ch);
+		$req_msg = curl_error($ch);
+		$httpcode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+		curl_close($ch);
+
+		if($req_code != 0 )
+		{
+			$resp->success = false;
+			$resp->message = "Curl Error Code: $req_code, Curl Error Message: $req_msg, Response Json: $api_resp";
+		}
+		else
+		{
+			// check for API errors 
+			if($httpcode != 200)
+			{
+				$resp->success = false;
+				$resp->message = "API Error Occured! HTTP Code: $httpcode, Response Json: $api_resp";
+			}
+			else
+			{
+				$resp_obj = json_decode($api_resp, true);
+				if (json_last_error() == JSON_ERROR_NONE)
+				{
+					if( $resp_obj["success"] )
+					{
+						$resp->success = true;
+						$resp->message = "";
+						$resp->data = $resp_obj["data"];
+					}
+					else
+					{
+						$resp->success = false;
+						$resp->message = $resp_obj["message"];
+					}
+				}
+				else
+				{
+					$resp->success = false;
+					$resp->message = "Invalid Json received, Response: $api_resp";
+				}
+			}
+		}
+		return $resp;
+	}
+
+	public static function update_moc_business_refrential( $domain_id, $vendor_id, $moc_id )
+	{
+		ini_set("memory_limit", "-1");
+		set_time_limit(300);
+
+		$resp = new stdClass;
+		$resp->success = true;
+		$resp->message = "";
+
+		$dtn = date("Y-m-d H:i");
+
+		$kpi_lkp = Yii::app()->params["kpi_lkp"];
+
+		$sdb = $kpi_lkp[$domain_id]["vendors"][$vendor_id]["schema_db"];
+		$mtbln = $kpi_lkp[$domain_id]["vendors"][$vendor_id]["moc"]["table"];
+		$moitbln = $kpi_lkp[$domain_id]["vendors"][$vendor_id]["moi"]["table"];
+
+		$mocs = Yii::app()->$sdb->createCommand("SELECT * FROM $mtbln WHERE id = $moc_id AND business_ref_configs IS NOT NULL")->queryAll();
+
+		if( $mocs === false || $mocs === null || sizeof($mocs) == 0 )
+		{
+			$resp->success = false;
+			$resp->message = "Error getting MOCs!";
+			return $resp;
+		}
+
+		$site_types = self::get_site_types();
+		$sites_lkp = array();
+
+		foreach ($mocs as $moc)
+		{
+			$configs = json_decode($moc["business_ref_configs"], true);
+			if( isset($configs["site_type"]) && isset($site_types[intval($configs["site_type"])]) )
+			{
+				$st = intval($configs["site_type"]);
+				if( !isset( $sites_lkp[$st] ) )
+				{
+					$sites_lkp[$st] = array(
+						"attrs_lkp" => null,
+						"ents" => null,
+					);
+				}
+			}
+		}
+
+		foreach ($sites_lkp as $st => $site_info)
+		{
+			$attr_resp = self::site_attributes_by_type( $st );
+			if( $attr_resp->success )
+			{
+				$sites_lkp [$st]["attrs_lkp"] = $attr_resp->data;
+			}
+			else
+			{
+				$resp->success = false;
+				$resp->message = "Error getting Labels for type ($st) :".$attr_resp->message;
+				return $resp;
+			}
+
+			$ents_resp = self::sites_by_type( $st );
+			if( $ents_resp->success )
+			{
+				$sites_lkp [$st]["ents"] = $ents_resp->data;
+			}
+			else
+			{
+				$resp->success = false;
+				$resp->message = "Error getting Labels for type ($st) :".$ents_resp->message;
+				return $resp;
+			}
+		}
+
+		foreach ($mocs as $moc)
+		{
+			$moc_status = array(
+				"success" => true,
+				"message" => "",
+				"run_at" => $dtn,
+			);
+
+			$labels = null;
+
+			$cm_labels = null;
+			if( isset($moc["parameter_labels"]) )
+				$cm_labels = json_decode($moc["parameter_labels"], true);
+			else
+				$cm_labels = array();
+
+			$configs = json_decode($moc["business_ref_configs"], true);
+
+			if( isset($configs["site_type"]) && isset($site_types[intval($configs["site_type"])]) && isset($configs["cm_attributes"]) && sizeof($configs["cm_attributes"]) > 0 && isset($configs["ds_attributes"]) && sizeof($configs["ds_attributes"]) > 0 )
+			{
+				$st = intval($configs["site_type"]);
+				
+				$cm_attributes = $configs["cm_attributes"];
+				$ds_attributes = $configs["ds_attributes"];
+
+				$cm_combr = ( isset($configs["cm_combr"]) && trim($configs["cm_combr"]) != "" ) ? trim($configs["cm_combr"]) : "";
+				$ds_combr = ( isset($configs["ds_combr"]) && trim($configs["ds_combr"]) != "" ) ? trim($configs["ds_combr"]) : "";
+
+				$fattrs = array();
+				if( isset($configs["attribute_configs"]) && sizeof($configs["attribute_configs"]) > 0 )
+				{
+					foreach ($configs["attribute_configs"] as $attr_conf)
+					{
+						if( isset($attr_conf["attr_id"]) && isset($sites_lkp[$st]["attrs_lkp"][$attr_conf["attr_id"]]) )
+						{
+							if( isset($attr_conf["attr_label"]) && trim($attr_conf["attr_label"]) != "" )
+							{
+								$fattrs [ $attr_conf["attr_id"] ] = trim($attr_conf["attr_label"]);
+							}
+							else
+							{
+								$fattrs [ $attr_conf["attr_id"] ] = $sites_lkp[$st]["attrs_lkp"][$attr_conf["attr_id"]];
+							}
+						}
+						else
+						{
+							$moc_status ["success"] = false;
+							$moc_status ["message"] = "Invalid/Depricated Configurations(attribute_definition) for Business Refrential Sync!";
+							break;
+						}
+					}
+				}
+				else
+				{
+					// selecting all
+					$fattrs = $sites_lkp[$st]["attrs_lkp"];
+				}
+
+				
+
+				$colsels = array();
+				foreach ($cm_attributes as $cma)
+				{
+					if( !in_array($cma, $cm_labels) )
+					{
+						$moc_status ["success"] = false;
+						$moc_status ["message"] = "Invalid/Depricated Configurations(cm_mapping_attributes) for Business Refrential Sync!";
+						break;
+					}
+
+					$scma = strtolower($cma); // it is selecting as small letter so making sure here 
+					$colsels [ $cma ] = "t.parameter_data->>'{$cma}' as {$scma}";
+				}
+				
+				foreach ($ds_attributes as $dsa)
+				{
+					if( !isset($sites_lkp[$st]["attrs_lkp"][$dsa]) )
+					{
+						$moc_status ["success"] = false;
+						$moc_status ["message"] = "Invalid/Depricated Configurations(ds_mapping_attributes) for Business Refrential Sync!";
+						break;
+					}
+				}
+
+				$dsa_lkp = array();
+				foreach ($sites_lkp[$st]["ents"] as $ent)
+				{
+					$keyps = array();
+					foreach ($ds_attributes as $dsa)
+					{
+						if( isset($ent[$dsa]) )
+						{
+							$keyps [$dsa] = $ent[$dsa];
+						}
+					}
+
+					if( isset($configs["combr_cond"]) && count($configs["combr_cond"]["ds"]) ) {
+						echo "1<br>";
+						$key = $configs["ds_combr"];
+						foreach ($configs["combr_cond"]["ds"] as $ds_combr_tmplt) {
+
+							if( array_key_exists($ds_combr_tmplt["attr"], $keyps) ){
+
+								if( isset($ds_combr_tmplt["func"]) ) {
+
+									if( $ds_combr_tmplt["func"] == 'subStr' && isset($ds_combr_tmplt["funcArg"]) && count($ds_combr_tmplt["funcArg"]) == 2 ) {
+
+										$start_pos = $ds_combr_tmplt["funcArg"]["start_pos"];
+										$sub_str_len = $ds_combr_tmplt["funcArg"]["sub_str_len"];
+										$attr_vl = $keyps [$ds_combr_tmplt["attr"]];
+										
+										$key = str_replace( $ds_combr_tmplt["inst"], substr($attr_vl, $start_pos, $sub_str_len), $key);
+
+									} else {
+										$moc_status ["success"] = false;
+										$moc_status ["message"] = "Failed in updating MOIs for Business Refrential Sync. Invalid Function in Combiner Template!";
+										break;
+									}
+								} else {
+									$moc_status ["success"] = false;
+									$moc_status ["message"] = "Failed in updating MOIs for Business Refrential Sync. Invalid Combiner Template!";
+									break;
+							}
+							} else {
+								$moc_status ["success"] = false;
+								$moc_status ["message"] = "Failed in updating MOIs for Business Refrential Sync. Invalid Combiner Template!";
+								break;
+							}
+						}
+
+					} else {
+						if( sizeof($keyps) < 1 )
+							continue;
+						$key = implode($ds_combr, $keyps);
+					}
+
+					echo "<pre><strong>" . __FILE__ . " Line: [". __LINE__ ."]</strong><br>"; print_r( [$configs["combr_cond"], $key] ); echo "</pre><br>"; exit;
+
+					$data_arr = array();
+					foreach ($fattrs as $fk => $fl)
+					{
+						if( isset($ent[$fk]) )
+						{
+							$data_arr [$fk] = $ent[$fk];
+						}
+					}
+
+					$dsa_lkp [ $key ] = $data_arr;
+				}
+
+				$col_q = implode(" , ", $colsels);
+				$mois = Yii::app()->$sdb->createCommand(" SELECT t.id, t.moc_id, $col_q FROM $moitbln t WHERE t.moc_id = ".$moc["id"]." ;")->queryAll();
+
+				$found_bri = 0;
+				$found_bri_wd = 0;
+
+				$labels = $fattrs;
+
+				foreach ($mois as $moi)
+				{
+					$keyps = array();
+					foreach ($cm_attributes as $cma)
+					{
+						$scma = strtolower($cma);
+						if( isset($moi[$scma]) )
+						{
+							$keyps [] = $moi[$scma];
+						}
+					}
+					if( isset($configs["combr_cond"]) && count($configs["combr_cond"]["cm"]) ) {
+						echo "1<br>";
+						$key = $configs["cm_combr"];
+						foreach ($configs["combr_cond"]["cm"] as $ds_combr_tmplt) {
+
+							if( array_key_exists($ds_combr_tmplt["attr"], $keyps) ){
+
+								if( isset($ds_combr_tmplt["func"]) ) {
+
+									if( $ds_combr_tmplt["func"] == 'subStr' && isset($ds_combr_tmplt["funcArg"]) && count($ds_combr_tmplt["funcArg"]) == 2 ) {
+
+										$start_pos = $ds_combr_tmplt["funcArg"]["start_pos"];
+										$sub_str_len = $ds_combr_tmplt["funcArg"]["sub_str_len"];
+										$attr_vl = $keyps [$ds_combr_tmplt["attr"]];
+										
+										$key = str_replace( $ds_combr_tmplt["inst"], substr($attr_vl, $start_pos, $sub_str_len), $key);
+
+									} else {
+										$moc_status ["success"] = false;
+										$moc_status ["message"] = "Failed in updating MOIs for Business Refrential Sync. Invalid Function in Combiner Template!";
+										break;
+									}
+								} else {
+									$moc_status ["success"] = false;
+									$moc_status ["message"] = "Failed in updating MOIs for Business Refrential Sync. Invalid Combiner Template!";
+									break;
+							}
+							} else {
+								$moc_status ["success"] = false;
+								$moc_status ["message"] = "Failed in updating MOIs for Business Refrential Sync. Invalid Combiner Template!";
+								break;
+							}
+						}
+
+					} else {
+						if( sizeof($keyps) < 1 )
+							continue;
+
+						$key = implode($cm_combr, $keyps);
+					}
+
+					if( isset($dsa_lkp[$key]) )
+					{
+						$found_bri++;
+						if( sizeof($dsa_lkp[$key]) > 0 )
+						{
+							$found_bri_wd++;
+							$upd_arr = array(
+								"business_ref_data" => json_encode($dsa_lkp[$key]),
+							);
+
+							$upd_resp = $kpi_lkp[$domain_id]["vendors"][$vendor_id]["moi"]["class"]::model()->updateByPk($moi["id"], $upd_arr );
+							if( $upd_resp === false || $upd_resp === 0 )
+							{
+								$moc_status ["success"] = false;
+								$moc_status ["message"] = "Failed in updating MOIs for Business Refrential Sync!";
+								break;
+							}
+						}
+					}
+				}
+
+				unset($mois);
+				unset($dsa_lkp);
+
+				if( $moc_status ["success"] === true )
+				{
+					$moc_status ["message"] = "Sync Successful, $found_bri items found and synced ($found_bri_wd with data)";
+				}
+			}
+			else
+			{
+				$moc_status ["success"] = false;
+				$moc_status ["message"] = "Invalid Configurations(absent) for Business Refrential Sync!";
+			}
+
+			if( $labels != null )
+				$labels = json_encode($labels);
+
+			$farray = array(
+				"last_status" => json_encode($moc_status),
+				"business_ref_labels" => $labels,
+			);
+
+			$inresp = Yii::app()->$sdb->createCommand()->update( $mtbln, $farray, " id = ".$moc["id"] );
+			if( !$inresp )
+			{
+				$resp->success = false;
+				$resp->message = "Error Managing Business Refrential Data (MOC Update Failed!)";
+				break;
+			}
+		}
+
+		return $resp;
+	}
+}

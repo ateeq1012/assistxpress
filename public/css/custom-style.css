@@ -1,0 +1,92 @@
+/*custom margins*/
+.p-oos {
+    padding: 0px 0px !important;
+}
+.col, .col-1, .col-10, .col-11, .col-12, .col-2, .col-3, .col-4, .col-5, .col-6, .col-7, .col-8, .col-9, .col-auto, .col-lg, .col-lg-1, .col-lg-10, .col-lg-11, .col-lg-12, .col-lg-2, .col-lg-3, .col-lg-4, .col-lg-5, .col-lg-6, .col-lg-7, .col-lg-8, .col-lg-9, .col-lg-auto, .col-md, .col-md-1, .col-md-10, .col-md-11, .col-md-12, .col-md-2, .col-md-3, .col-md-4, .col-md-5, .col-md-6, .col-md-7, .col-md-8, .col-md-9, .col-md-auto, .col-sm, .col-sm-1, .col-sm-10, .col-sm-11, .col-sm-12, .col-sm-2, .col-sm-3, .col-sm-4, .col-sm-5, .col-sm-6, .col-sm-7, .col-sm-8, .col-sm-9, .col-sm-auto, .col-xl, .col-xl-1, .col-xl-10, .col-xl-11, .col-xl-12, .col-xl-2, .col-xl-3, .col-xl-4, .col-xl-5, .col-xl-6, .col-xl-7, .col-xl-8, .col-xl-9, .col-xl-auto {
+    padding-right: 8px;
+    padding-left: 13px;
+}
+.m-xxs {
+    margin: 2px 4px !important;
+}
+.m-oos {
+    margin: 0px 0px !important;
+}
+.m-oxs {
+    margin: 0px 2px !important;
+}
+
+/*custom padding*/
+.p-losRos{
+	padding-left: 0px !important;
+	padding-right: 0px !important;
+	padding-top: 10px !important;
+}
+.p-xxs {
+    padding: 2px 4px !important;
+}
+.p-oxs {
+    padding: 0px 2px !important;
+}
+
+.custom-page-heading {
+    border-top: 0;
+    padding: 10px 20px 10px 10px;
+}
+.custom-h .h1, .h2, .h3, h1, h2, h3 {
+    margin-top: 0px;
+    margin-bottom: 0px;
+}
+.title-action {
+    text-align: right;
+    padding-top: 0px;
+    margin-right: -3px;
+}
+.wrapper-content {
+    padding: 10px 10px 20px;
+}
+dl, ol, ul {
+    margin-top: 0;
+    margin-bottom: 10px;
+}
+.ibox-content {
+    padding: 15px 15px 20px 15px;
+}
+
+.nav-tabs .nav-item.show .nav-link, .nav-tabs .nav-link.active {
+    color: #0ca485;
+    background-color: #fff;
+    border-color: #dee2e6 #dee2e6 #fff;
+}
+.ibox-title {
+    padding: 5px 5px 5px 15px;
+    min-height: 40px;
+}
+.ibox-content {
+    padding: 5px 15px 10px 15px;
+}
+.display-block{
+    display: inline-block;
+}
+.profile-image-md {
+    width: 64px;
+    float: left;
+}
+.profile-image-md img {
+    width: 50px;
+    height: 50px;
+}
+.profile-info-md {
+    margin: 5px 2px 0px 0px;
+}
+.inmodal .modal-title {
+    font-size: 18px;
+}
+.inmodal .modal-header {
+    padding: 10px 10px;
+    text-align: center;
+    display: block;
+}
+.modal-footer {
+    padding: 0.5rem;
+}

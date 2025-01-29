@@ -1,0 +1,2987 @@
+<?php
+
+class MocController extends KpimgmtController
+{
+	public function filters()
+	{
+		return array(
+			// 'setCreds',
+			'accessSimpleCheck',
+		);
+	}
+
+	public function actionManager($domain, $vendor)
+	{
+		$kpi_lkp = Yii::app()->params["kpi_lkp"];
+
+		$domain_id = intval($domain);
+		$vendor_id = intval($vendor);
+
+		if ( !isset($kpi_lkp[$domain_id]) || !isset($kpi_lkp[$domain_id]["vendors"][$vendor_id]) )
+		{
+			throw new CHttpException(404, 'The requested page does not exist.');
+		}
+		
+		$this->render('manager', array(
+			'kpi_lkp' => $kpi_lkp,
+			'domain_id' => $domain_id,
+			'vendor_id' => $vendor_id,
+		));
+	}
+
+	public function actionMocData()
+	{
+		ini_set("memory_limit", '8192M');
+		set_time_limit(300);
+
+		$domain_id = null;
+		$vendor_id = null;
+
+		$kpi_lkp = Yii::app()->params["kpi_lkp"];        
+		if( isset($_POST["domain_id"]) && trim($_POST["domain_id"]) != "" && isset($_POST["vendor_id"]) && trim($_POST["vendor_id"]) != "" )
+		{
+			$domain_id = intval($_POST["domain_id"]);
+			$vendor_id = intval($_POST["vendor_id"]);
+
+			if ( !isset($kpi_lkp[$domain_id]) || !isset($kpi_lkp[$domain_id]["vendors"][$vendor_id]) )
+			{
+				throw new CHttpException(400,'Invalid Request.');
+			}
+		}
+		else
+			throw new CHttpException(400,'Invalid Request.');
+
+
+		$final_cond = "TRUE";
+		$sort_sql = "";
+		$table_response = new stdClass;
+		$table_response->success = true;
+		$table_response->draw = $_POST["draw"];
+		$table_response->data = array();
+		$table_response->recordsTotal = 0;
+		$table_response->recordsFiltered = 0;
+		$table_response->error_message = "";
+		$table_response->data_end = false;
+
+		if( isset($_POST["search"]["value"]) && trim($_POST["search"]["value"]) != "" )
+		{
+			$val = strtolower(trim($_POST["search"]["value"]));
+			$final_cond .= " AND ( lower(t.name) like '%$val%' OR lower(t.user_label) like '%$val%' ) ";
+		}
+
+		if( isset($_POST["moc_tech_id"]) && trim($_POST["moc_tech_id"]) != "" && trim($_POST["moc_tech_id"]) != "1" )
+		{
+			$tid = intval($_POST["moc_tech_id"]);
+			$final_cond .= " AND ( technology = $tid ) ";
+		}
+
+		$start = $_POST["start"];
+		$limit = $_POST["length"];
+
+		$sdb = $kpi_lkp[$domain_id]["vendors"][$vendor_id]["schema_db"];
+		$moctbl = $kpi_lkp[$domain_id]["vendors"][$vendor_id]["moc"]["table"];
+
+		$moc_lkp = array();
+		$criteria = new CDbCriteria();  
+		$criteria->select = "id,name,parent_id";
+		$mocs = $kpi_lkp[$domain_id]["vendors"][$vendor_id]["moc"]["class"]::model()->findAll( $criteria );
+		foreach ($mocs as  $moc)
+		{
+			$moc_lkp[$moc->id] = array("name"=>$moc->name, "parent_id"=>$moc->parent_id);
+		}
+		unset($mocs);
+		
+		$res = Yii::app()->$sdb->createCommand("SELECT * FROM $moctbl t WHERE $final_cond $sort_sql OFFSET $start LIMIT $limit ")->queryAll();
+		$res_count = Yii::app()->$sdb->createCommand("SELECT count(id) as t_count FROM $moctbl t WHERE $final_cond")->queryRow();
+
+		if( $res !== false && isset($res_count["t_count"]) )
+		{
+			$sr = intval($start);
+			$final_data = array();
+			foreach ($res as $dr)
+			{
+				$sr++;
+
+				$moc = array();
+				$moc["sr_no"] = $sr;
+				$moc["name"] = $dr["name"];
+				$moc["user_label"] = $dr["user_label"];
+
+				if( isset($dr["technology"]) )
+					$moc["technology"] = $dr["technology"]."G";
+				else
+					$moc["technology"] = null;
+
+				$moc_path = array();
+				$moc_path [] = $dr["name"];
+
+				$parent_tlkf = $moc_lkp[$dr["id"]]["parent_id"];
+				while ( $parent_tlkf != null && isset($moc_lkp[$parent_tlkf]) )
+				{
+					$moc_path[] = $moc_lkp[$parent_tlkf]["name"];
+					$parent_tlkf = $moc_lkp[$parent_tlkf]["parent_id"];
+				}
+
+				$moc_path = array_reverse($moc_path);
+				$moc["moc_path"] = implode(" / ", $moc_path);
+
+				// For ZTE-UME file sources
+				if( $domain_id == 1 && $vendor_id == 5 )
+				{
+					if( isset($dr["source_files"]) )
+					{
+						$srces = json_decode($dr["source_files"], true);
+						if( $srces )
+						{
+							$moc["file_srces"] = implode(",", $srces);
+						}
+					}
+				}
+
+				$final_data [] = $moc;
+			}
+
+			$table_response = new stdClass;
+			$table_response->success = true;
+			$table_response->draw = $_POST["draw"];
+			$table_response->data = $final_data;
+			$table_response->final_cond = $final_cond;
+			$table_response->recordsTotal = $res_count["t_count"];
+			$table_response->recordsFiltered = $res_count["t_count"];
+			$table_response->error_message = "";
+
+			echo json_encode($table_response);
+			Yii::app()->end();
+		}
+		else
+		{
+			$table_response = new stdClass;
+			$table_response->success = false;
+			$table_response->draw = $_POST["draw"];
+			$table_response->recordsTotal = 0;
+			$table_response->recordsFiltered = 0;
+			$table_response->error_message = "";
+
+			echo json_encode($table_response);
+			Yii::app()->end();
+		}
+	}
+
+	public function actionMocExportFormat()
+	{
+		ini_set("memory_limit", '8192M');
+		set_time_limit(300);
+
+		if( isset($_GET["configs"]) && !empty($_GET["configs"]) )
+		{
+			$configs = json_decode($_GET["configs"], true);
+
+			if( json_last_error() == JSON_ERROR_NONE )
+			{
+				$domain_id = null;
+				$vendor_id = null;
+
+				$kpi_lkp = Yii::app()->params["kpi_lkp"];        
+				if( isset($configs["domain_id"]) && trim($configs["domain_id"]) != "" && isset($configs["vendor_id"]) && trim($configs["vendor_id"]) != "" )
+				{
+					$domain_id = intval($configs["domain_id"]);
+					$vendor_id = intval($configs["vendor_id"]);
+
+					if ( !isset($kpi_lkp[$domain_id]) || !isset($kpi_lkp[$domain_id]["vendors"][$vendor_id]) )
+					{
+						throw new CHttpException(400,'Invalid Request.');
+					}
+				}
+				else
+					throw new CHttpException(400,'Invalid Request.');
+
+				$this->download_send_headers("moc_sample_" . date("Y-m-d") . ".csv");
+
+				ob_start();
+				$df = fopen("php://output", 'w');
+
+				$headers = array();
+				$headers [] = "Name";
+				$headers [] = "User Label";
+				$headers [] = "Technology";
+				$headers [] = "MOC Path";
+
+				fputcsv($df, $headers);
+
+				fclose($df);
+				echo ob_get_clean();
+				Yii::app()->end();
+			}
+			else
+			{
+				echo "Invalid Request!";
+				Yii::app()->end();
+			}
+		}
+		else
+		{
+			echo "Invalid Request!";
+			Yii::app()->end();
+		}
+	}
+
+	public function actionMocExport()
+	{
+		ini_set("memory_limit", '8192M');
+		set_time_limit(300);
+
+		if( isset($_GET["configs"]) && !empty($_GET["configs"]) )
+		{
+			$configs = json_decode($_GET["configs"], true);
+
+			if( json_last_error() == JSON_ERROR_NONE )
+			{
+				$domain_id = null;
+				$vendor_id = null;
+
+				$kpi_lkp = Yii::app()->params["kpi_lkp"];
+				if( isset($configs["domain_id"]) && trim($configs["domain_id"]) != "" && isset($configs["vendor_id"]) && trim($configs["vendor_id"]) != "" )
+				{
+					$domain_id = intval($configs["domain_id"]);
+					$vendor_id = intval($configs["vendor_id"]);
+
+					if ( !isset($kpi_lkp[$domain_id]) || !isset($kpi_lkp[$domain_id]["vendors"][$vendor_id]) )
+					{
+						throw new CHttpException(400,'Invalid Request.');
+					}
+				}
+				else
+					throw new CHttpException(400,'Invalid Request.');
+
+				$moc_lkp = array();
+				$criteria = new CDbCriteria();
+				$criteria->select = "id,name,parent_id";
+				$mocs = $kpi_lkp[$domain_id]["vendors"][$vendor_id]["moc"]["class"]::model()->findAll( $criteria );
+				foreach ($mocs as $moc)
+				{
+					$moc_lkp[$moc->id] = array("name"=>$moc->name, "parent_id"=>$moc->parent_id);
+				}
+				unset($mocs);
+
+				$final_cond = "TRUE";
+				$sort_sql = "";
+
+				if( isset($configs["search"]["value"]) && trim($configs["search"]["value"]) != "" )
+				{
+					$val = strtolower(trim($configs["search"]["value"]));
+					$final_cond .= " AND ( lower(t.name) like '%$val%' OR lower(t.user_label) like '%$val%' ) ";
+				}
+
+				if( isset($configs["moc_tech_id"]) && trim($configs["moc_tech_id"]) != "" && trim($configs["moc_tech_id"]) != "1" )
+				{
+					$tid = intval($_POST["moc_tech_id"]);
+					$final_cond .= " AND ( technology = $tid ) ";
+				}
+
+				$sdb = $kpi_lkp[$domain_id]["vendors"][$vendor_id]["schema_db"];
+				$moctbl = $kpi_lkp[$domain_id]["vendors"][$vendor_id]["moc"]["table"];
+
+				$res = Yii::app()->$sdb->createCommand("SELECT * FROM $moctbl t WHERE $final_cond $sort_sql")->queryAll();
+
+				if( $res !== false )
+				{
+					$this->download_send_headers("mocs_" . date("Y-m-d") . ".csv");
+
+					ob_start();
+					$df = fopen("php://output", 'w');
+
+					$headers = array();
+					$headers [] = "Name";
+					$headers [] = "User Label";
+					$headers [] = "Technology";
+					$headers [] = "MOC Path";
+
+					// For ZTE-UME file sources
+					if( $domain_id == 1 && $vendor_id == 5 )
+					{
+						$headers [] = "Sources";
+					}
+
+					fputcsv($df, $headers);
+
+					foreach ($res as $dr)
+					{
+						$moc = array();
+						$moc["name"] = $dr["name"];
+						$moc["user_label"] = $dr["user_label"];
+
+						if( isset($dr["technology"]) )
+							$moc["technology"] = $dr["technology"]."G";
+						else
+							$moc["technology"] = null;
+
+						$moc_path = array();
+						$moc_path [] = $dr["name"];
+
+						$parent_tlkf = $moc_lkp[$dr["id"]]["parent_id"];
+						while ( $parent_tlkf != null && isset($moc_lkp[$parent_tlkf]) )
+						{
+							$moc_path[] = $moc_lkp[$parent_tlkf]["name"];
+							$parent_tlkf = $moc_lkp[$parent_tlkf]["parent_id"];
+						}
+
+						$moc_path = array_reverse($moc_path);
+
+						$moc["moc_path"] = implode(" / ", $moc_path);
+
+						// For ZTE-UME file sources
+						if( $domain_id == 1 && $vendor_id == 5 )
+						{
+							$fsrces = "";
+
+							if( isset($dr["source_files"]) )
+							{
+								$srces = json_decode($dr["source_files"], true);
+								if( $srces )
+								{
+									$fsrces = implode(",", $srces);
+								}
+							}
+
+							$moc["file_srces"] = $fsrces;
+						}
+
+						fputcsv($df, $moc);
+					}
+
+					fclose($df);
+					echo ob_get_clean();
+					Yii::app()->end();
+				}
+				else
+				{
+					echo "Error Processing Request!";
+					Yii::app()->end();
+				}
+			}
+			else
+			{
+				echo "Invalid Request!";
+				Yii::app()->end();
+			}
+		}
+		else
+		{
+			echo "Invalid Request!";
+			Yii::app()->end();
+		}
+	}
+
+	private function download_send_headers($filename)
+	{
+		// disable caching
+		// $now = gmdate("D, d M Y H:i:s");
+		// header("Expires: Tue, 03 Jul 2001 06:00:00 GMT");
+		// header("Cache-Control: max-age=0, no-cache, must-revalidate, proxy-revalidate");
+		// header("Last-Modified: {$now} GMT");
+
+		// force download  
+		header("Content-Type: application/force-download");
+		header("Content-Type: application/octet-stream");
+		header("Content-Type: application/download");
+
+		// disposition / encoding on response body
+		header("Content-Disposition: attachment;filename={$filename}");
+		header("Content-Transfer-Encoding: binary");
+	}
+
+	public function actionBulkUpdate($domain, $vendor)
+	{
+		$kpi_lkp = Yii::app()->params["kpi_lkp"];
+
+		$domain_id = intval($domain);
+		$vendor_id = intval($vendor);
+
+		if ( !isset($kpi_lkp[$domain_id]) || !isset($kpi_lkp[$domain_id]["vendors"][$vendor_id]) )
+		{
+			throw new CHttpException(404, 'The requested page does not exist.');
+		}
+		$errors = array();
+		$success = array();
+		if( isset($_FILES["bulk_attachment"]["name"]) && !empty($_FILES["bulk_attachment"]["name"]) )
+		{
+			$filename = $_FILES["bulk_attachment"]["name"];
+			$ext = pathinfo($filename, PATHINFO_EXTENSION);
+
+			if( strtolower($ext) == "csv" )
+			{
+				try
+				{
+					$files_dir = Yii::app()->basePath."/data/moc_uploads";
+
+					if (!file_exists($files_dir))
+					{
+						mkdir($files_dir, 0775, true);
+					}
+
+					$file_name = "moc_upload_".time().".".$ext;
+					$file_move_resp = move_uploaded_file( $_FILES["bulk_attachment"]["tmp_name"], $files_dir."/".$file_name);
+
+					if ( $file_move_resp )
+					{
+						$fh = fopen($files_dir."/".$file_name, 'r');
+						if( $fh !== false )
+						{
+							$rows = array();
+							$row_ind = 0;
+							while ( ($row = fgetcsv($fh)) !== FALSE )
+							{
+								$row_ind++;
+								if( $row_ind > 1 )
+								{
+									$rows [ $row_ind ] = $row;
+								}
+							}
+							fclose($fh);
+
+							$validated = true;
+							if ( sizeof($rows) < 1 )
+							{
+								unlink($files_dir."/".$file_name);
+								$errors [] = "No Data Found in Uploaded File.";
+								$validated = false;
+							}
+
+							$moc_lkp = array();
+							$vents = array();
+
+							foreach ($rows as $row_num => $row)
+							{
+								if( !isset($row[0]) || trim($row[0]) == "" )
+								{
+									$errors [] = "Line# $row_num: MOC Name Not found!";
+									$validated = false;
+									continue;
+								}
+
+								if( !isset($row[1]) || trim($row[1]) == "" )
+								{
+									$errors [] = "Line# $row_num: MOC User Label Not found!";
+									$validated = false;
+									continue;
+								}
+
+								if( !isset($row[3]) || trim($row[3]) == "" )
+								{
+									$errors [] = "Line# $row_num: MOC Path Not found!";
+									$validated = false;
+									continue;
+								}
+
+								$tech_id = null;
+								if( isset($row[2]) && trim($row[2]) != "" )
+								{
+									$tech = strtolower(trim($row[2]));
+									if( !in_array($tech, array("2g","3g","4g")) )
+									{
+										$errors [] = "Line# $row_num: Invalid Technology Found!";
+										$validated = false;
+										continue;
+									}
+
+									$tech_id = 2;
+									if( $tech == "3g" )
+										$tech_id = 3;
+									if( $tech == "4g" )
+										$tech_id = 4;
+								}
+
+								$mocn = trim($row[0]);
+								$mocl = trim($row[1]);
+								$moc_path = trim($row[3]);
+
+								$mocps = explode("/", $moc_path);
+
+								$last_parent_id = null;
+								$tmoc = null;
+								$path_valid = true;
+
+								foreach ($mocps as $mocp)
+								{
+									if( $last_parent_id == null )
+										$ex_moc = $kpi_lkp[$domain_id]["vendors"][$vendor_id]["moc"]["class"]::model()->find( " name='".trim($mocp)."' AND parent_id IS NULL  " );
+									else
+										$ex_moc = $kpi_lkp[$domain_id]["vendors"][$vendor_id]["moc"]["class"]::model()->find( " name='".trim($mocp)."' AND parent_id = $last_parent_id " );
+
+									if( $ex_moc != null )
+									{
+										$tmoc = $ex_moc;
+										$last_parent_id = $ex_moc->id;
+									}
+									else
+									{
+										$path_valid = false;
+									}
+								}
+
+								if( $path_valid != true || $tmoc->name != $mocn )
+								{
+									$errors [] = "Line# $row_num: MOC Path not Valid!";
+									$validated = false;
+									continue;
+								}
+
+								$vents [ $row_num ] = array("mocid"=>$tmoc->id, "mocl"=>$mocl, "tech"=>$tech_id );
+							}
+							unset($rows);
+
+							if( $validated )
+							{
+								$sdb = $kpi_lkp[$domain_id]["vendors"][$vendor_id]["schema_db"];
+								$moctn = $kpi_lkp[$domain_id]["vendors"][$vendor_id]["moc"]["table"];
+
+								foreach ($vents as $row_num => $vent)
+								{
+									$uresp = Yii::app()->$sdb->createCommand()->update($moctn, array(
+										"user_label" => $vent["mocl"],
+										"technology" => $vent["tech"],
+									), 'id=:id', array(':id'=>$vent["mocid"]) );
+									
+									if( $uresp !== false )
+									{
+										$success [] = "Row: ".$row_num.": MOC Updated Successfully";
+									}
+									else
+									{
+										$errors [] = "Row: ".$row_num.": Error Updating MOC!";
+									}
+								}
+							}
+							else
+							{
+								unlink($files_dir."/".$file_name);
+							}
+						}
+						else
+						{
+							if( file_exists($files_dir."/".$file_name) )
+								unlink($files_dir."/".$file_name);
+
+							$errors [] = "Error in Reading Uploaded File: ".json_encode( error_get_last() );
+						}
+					}
+					else
+					{
+						$errors [] = "Error in Uploading because of error #".$_FILES["bulk_attachment"]["error"];
+					}
+				}
+				catch (Exception $e)
+				{
+					$errors [] = "Error Processing Uploaded File: ".$e->getMessage();
+				}
+			}
+			else
+			{
+				$errors [] = "Invalid File Format!";
+			}
+		}
+
+		$this->render('bulk_update',array(
+			'kpi_lkp' => $kpi_lkp,
+			'domain_id' => $domain_id,
+			'vendor_id' => $vendor_id,
+			'errors'=>$errors,
+			'success'=>$success,
+		));
+	}
+
+	public function actionVirtualAttributes($domain, $vendor, $moc_id=null)
+	{
+		$kpi_lkp = Yii::app()->params["kpi_lkp"];
+
+		$domain_id = intval($domain);
+		$vendor_id = intval($vendor);
+
+		if ( !isset($kpi_lkp[$domain_id]) || !isset($kpi_lkp[$domain_id]["vendors"][$vendor_id]) )
+		{
+			throw new CHttpException(404, 'The requested page does not exist.');
+		}
+
+		if( $moc_id == null )
+		{
+			$ems_mocn = "ems_data_source";
+			$ems_moc = $kpi_lkp[$domain_id]["vendors"][$vendor_id]["moc"]["class"]::model()->find(" name='".$ems_mocn."' " );
+
+			if( $ems_moc == null )
+				throw new CHttpException(500, 'EMS MOC does not exist for this Integration');
+
+			$moc_id = $ems_moc->id;
+		}
+
+		$main_moc = $kpi_lkp[$domain_id]["vendors"][$vendor_id]["moc"]["class"]::model()->findByPk(intval($moc_id));
+		if( $main_moc == null )
+			throw new CHttpException(404, 'The requested page does not exist.');
+
+		$integ_list = array();
+		foreach ($kpi_lkp as $domain_tid => $domain)
+		{
+			foreach ($domain["vendors"] as $vendor_tid => $vendor)
+			{
+				$integ_list [ "ems_{$domain_tid}_{$vendor_tid}" ] = $vendor["label"]."-".$domain["label"];
+			}
+		}
+
+		$full_moc_list = $kpi_lkp[$domain_id]["vendors"][$vendor_id]["moc"]["class"]::model()->findAll();
+
+		$ids_list = array();
+		$this->getmocsunder($main_moc, $full_moc_list, $ids_list);
+
+		$moc_resp = $this->get_moc_tree($domain_id, $vendor_id, $moc_id);
+		$moc_tree = $moc_resp["tree"];
+		$moc_list = $moc_resp["list"];
+		$moc_path = $moc_resp["path"];
+
+		$all_attrs = $this->get_all_attributes($main_moc, $full_moc_list);
+
+		$disp_temp = "";
+		$srch_temp = "";
+
+		$exist_configs = array();
+		if( isset($main_moc->name_configs) )
+		{
+			$exist_configs = json_decode($main_moc->name_configs, true);
+			if( isset($exist_configs["display_template"]) && trim($exist_configs["display_template"]) != "" )
+			{
+				$disp_temp = trim($exist_configs["display_template"]);
+			}
+			if( isset($exist_configs["search_template"]) && trim($exist_configs["search_template"]) != "" )
+			{
+				$srch_temp = trim($exist_configs["search_template"]);
+			}
+		}
+
+		$moc_atts = $this->get_all_attributes_enh($main_moc, $full_moc_list);
+
+		$visible_cols = array();
+		$hidden_cols = array();
+
+		if( isset($main_moc->col_configs) )
+		{
+			$exist_col_configs = json_decode($main_moc->col_configs, true);
+			if( isset($exist_col_configs["visible_cols"]) )
+			{
+				$visible_cols = $exist_col_configs["visible_cols"];
+			}
+			if( isset($exist_col_configs["hidden_cols"]) )
+			{
+				$hidden_cols = $exist_col_configs["hidden_cols"];
+			}
+		}
+
+		$fin_visible_cols = array();
+		$fin_hidden_cols = array();
+
+		foreach ($moc_atts as $mattr)
+		{
+			if( isset($visible_cols[$mattr["attr"]]) )
+			{
+				$fin_visible_cols [] = array(
+					"attr" => $mattr["attr"],
+					"type" => $mattr["type"],
+					"seq_num" => $visible_cols[$mattr["attr"]],
+				);
+			}
+			else if( isset($hidden_cols[$mattr["attr"]]) )
+			{
+				$fin_hidden_cols [] = array(
+					"attr" => $mattr["attr"],
+					"type" => $mattr["type"],
+					"seq_num" => $hidden_cols[$mattr["attr"]],
+				);
+			}
+			else
+			{
+				$fin_visible_cols [] = array(
+					"attr" => $mattr["attr"],
+					"type" => $mattr["type"],
+					"seq_num" => -1,
+				);
+			}
+		}
+
+		uasort($fin_visible_cols, function($a, $b)
+		{
+			return $a["seq_num"] < $b["seq_num"];
+		});
+
+		uasort($fin_hidden_cols, function($a, $b)
+		{
+			return $a["seq_num"] < $b["seq_num"];
+		});
+		
+		$this->render('virtual_attributes', array(
+			'kpi_lkp' => $kpi_lkp,
+			'moc_tree' => $moc_tree,
+			'moc_path' => $moc_path,
+			'domain_id' => $domain_id,
+			'vendor_id' => $vendor_id,
+			'main_moc' => $main_moc,
+			'integ_list' => $integ_list,
+			'moc_childs' => $ids_list,
+			'all_attrs' => $all_attrs,
+			'disp_temp' => $disp_temp,
+			'srch_temp' => $srch_temp,
+			'fin_visible_cols' => $fin_visible_cols,
+			'fin_hidden_cols' => $fin_hidden_cols,
+		));
+	}
+
+	public function actionUpdateVirtualAttributes()
+	{
+		$kpi_lkp = Yii::app()->params["kpi_lkp"];
+
+		if ( !isset($_GET["domain_id"]) || !isset($_GET["vendor_id"]) || !isset($_GET["moc_id"]) )
+		{
+			throw new CHttpException(404, 'The requested page does not exist.');
+		}
+
+		$domain_id = intval($_GET["domain_id"]);
+		$vendor_id = intval($_GET["vendor_id"]);
+		$moc_id = intval($_GET["moc_id"]);
+
+		if ( !isset($kpi_lkp[$domain_id]) || !isset($kpi_lkp[$domain_id]["vendors"][$vendor_id]) )
+		{
+			throw new CHttpException(404, 'The requested page does not exist.');
+		}
+
+		$moc = $kpi_lkp[$domain_id]["vendors"][$vendor_id]["moc"]["class"]::model()->findByPk($moc_id);
+		if( $moc == null )
+			throw new CHttpException(404, 'The requested page does not exist.');
+
+		$resp = new stdClass;
+		$resp->success = true;
+		$resp->message = "";
+
+		if( isset($moc->virtual_attributes) || isset($moc->name_configs) )
+		{
+			$moi_upd_resp = VirtualAttributeHelper::Compute( $domain_id, $vendor_id, $moc->id );
+			if( !$moi_upd_resp->success )
+			{
+				$resp->success = false;
+				$resp->message = "Error: ".$moi_upd_resp->message;
+			}
+		}
+
+		echo json_encode($resp);
+		exit();
+	}
+
+	public function getmocsunder($moc, $full_moc_list, &$ids_list)
+	{
+		$ids_list [ $moc->id ] = $moc->name;
+		$level_child = $this->getchildids($moc, $full_moc_list);
+
+		foreach ($level_child as $child) 
+		{
+			$this->getmocsunder($child, $full_moc_list, $ids_list);
+		}
+	}
+
+	public function getchildids($moc, $full_moc_list)
+	{
+		$childarr = array();
+		
+		foreach ($full_moc_list as $cmoc)
+		{
+			if( $cmoc->parent_id == $moc->id)
+				$childarr [] = $cmoc;
+		}
+		return $childarr;
+	}
+
+	public function actionAddPmocAttrs()
+	{
+		$kpi_lkp = Yii::app()->params["kpi_lkp"];
+
+		if ( !isset($_POST["domain_id"]) || !isset($_POST["vendor_id"]) || !isset($_POST["moc_id"]) || !isset($_POST["pattrs"]) )
+		{
+			throw new CHttpException(404, 'The requested page does not exist.');
+		}
+
+		$domain_id = intval($_POST["domain_id"]);
+		$vendor_id = intval($_POST["vendor_id"]);
+		$moc_id = intval($_POST["moc_id"]);
+
+		if ( !isset($kpi_lkp[$domain_id]) || !isset($kpi_lkp[$domain_id]["vendors"][$vendor_id]) )
+		{
+			throw new CHttpException(404, 'The requested page does not exist.');
+		}
+
+		$moc = $kpi_lkp[$domain_id]["vendors"][$vendor_id]["moc"]["class"]::model()->findByPk($moc_id);
+		if( $moc == null )
+			throw new CHttpException(404, 'The requested page does not exist.');
+
+		$attr_conf = json_decode($_POST["pattrs"], true);
+		if( json_last_error() != JSON_ERROR_NONE )
+		{
+			throw new CHttpException(400, 'Invalid Request');
+		}
+
+		$exist_attrs = array();
+		if( isset($moc->virtual_attributes) )
+			$exist_attrs = json_decode($moc->virtual_attributes, true);
+
+		$full_moc_list = $kpi_lkp[$domain_id]["vendors"][$vendor_id]["moc"]["class"]::model()->findAll();
+
+		$mc_lkp = array();
+		foreach ($full_moc_list as $omoc)
+		{
+			if( !isset($mc_lkp[$omoc->id]) )
+			{
+				$mc_lkp[$omoc->id] = array(
+					"name" => $omoc->name,
+					"parent_id" => $omoc->parent_id,
+					"fmoi" => $omoc,
+				);
+			}
+		}
+
+		// original Path
+		$moc_path = array();
+		if( $moc_id != null && isset($mc_lkp[$moc_id]) )
+		{
+			$parent_tlkf = $mc_lkp[$moc_id]["parent_id"];
+			while ( $parent_tlkf != null && isset($mc_lkp[$parent_tlkf]) )
+			{
+				$moc_path[$parent_tlkf] = 1;
+				$parent_tlkf = $mc_lkp[$parent_tlkf]["parent_id"];
+			}
+		}
+
+		$resp = new stdClass;
+		$resp->success = true;
+		$resp->message = "";
+
+		foreach ($attr_conf as $attr)
+		{
+			if( isset($attr["parent_moc"]) && isset($attr["parent_moc_attr"]) && isset($attr["parent_moc_attr_lbl"]) )
+			{
+				$parent_moc = intval($attr["parent_moc"]);
+				$parent_moc_attr = trim($attr["parent_moc_attr"]);
+				$parent_moc_attr_lbl = trim($attr["parent_moc_attr_lbl"]);
+
+				if( isset($moc_path[$parent_moc]) && isset($mc_lkp[$parent_moc]) )
+				{
+					$pattr_arr = $this->get_all_attributes($mc_lkp[$parent_moc]["fmoi"], $full_moc_list);
+					if( in_array($parent_moc_attr, $pattr_arr) )
+					{
+						$moc_attr_arr = $this->get_all_attributes($moc, $full_moc_list);
+						if( !isset($exist_attrs[$parent_moc_attr_lbl]) && !in_array($parent_moc_attr_lbl, $moc_attr_arr) )
+						{
+							$exist_attrs [$parent_moc_attr_lbl] = array(
+								"type" => 1,
+								"parent_moc_id" => $parent_moc,
+								"parent_moc_attr" => $parent_moc_attr,
+							);
+						}
+						else
+						{
+							$resp->success = false;
+							$resp->message = "Attribute Already Exists with the Name: ".$parent_moc_attr_lbl;
+
+							echo json_encode($resp);
+							Yii::app()->end();
+						}
+					}
+					else
+					{
+						$resp->success = false;
+						$resp->message = "Attribute Does not Exist on Parent: ".$mc_lkp[$parent_moc]["name"]." (".$parent_moc_attr.")";
+
+						echo json_encode($resp);
+						Yii::app()->end();
+					}
+				}
+				else
+				{
+					$resp->success = false;
+					$resp->message = "Invalid Parent Selected!";
+
+					echo json_encode($resp);
+					Yii::app()->end();
+				}
+			}
+			else
+			{
+				throw new CHttpException(400, 'Invalid Request');
+			}
+		}
+
+		$sdb = $kpi_lkp[$domain_id]["vendors"][$vendor_id]["schema_db"];
+		$moctn = $kpi_lkp[$domain_id]["vendors"][$vendor_id]["moc"]["table"];
+		
+		$uresp = Yii::app()->$sdb->createCommand()->update($moctn, array(
+			"virtual_attributes" => json_encode($exist_attrs),
+		), 'id=:id', array(':id'=>$moc->id) );
+		
+		if( $uresp === false )
+		{
+			$resp->success = false;
+			$resp->message = "Unable to update MOC settings after verification.";
+		}
+
+		echo json_encode($resp);
+		Yii::app()->end();
+	}
+
+	public function actionAddNameConfigs()
+	{
+		$kpi_lkp = Yii::app()->params["kpi_lkp"];
+
+		if ( !isset($_POST["domain_id"]) || !isset($_POST["vendor_id"]) || !isset($_POST["moc_id"]) )
+		{
+			throw new CHttpException(404, 'The requested page does not exist.');
+		}
+
+		$domain_id = intval($_POST["domain_id"]);
+		$vendor_id = intval($_POST["vendor_id"]);
+		$moc_id = intval($_POST["moc_id"]);
+
+		if ( !isset($kpi_lkp[$domain_id]) || !isset($kpi_lkp[$domain_id]["vendors"][$vendor_id]) )
+		{
+			throw new CHttpException(404, 'The requested page does not exist.');
+		}
+
+		$moc = $kpi_lkp[$domain_id]["vendors"][$vendor_id]["moc"]["class"]::model()->findByPk($moc_id);
+		if( $moc == null )
+			throw new CHttpException(404, 'The requested page does not exist.');
+
+		$display_template = "";
+		if( isset($_POST["display_template"]) )
+			$display_template = trim($_POST["display_template"]);
+
+		$search_template = "";
+		if( isset($_POST["search_template"]) )
+			$search_template = trim($_POST["search_template"]);
+
+		$exist_configs = array();
+		if( isset($moc->name_configs) )
+			$exist_configs = json_decode($moc->name_configs, true);
+
+		$full_moc_list = $kpi_lkp[$domain_id]["vendors"][$vendor_id]["moc"]["class"]::model()->findAll();
+
+		$moc_attr = $this->get_all_attributes($moc, $full_moc_list);
+
+		preg_match_all("/{{(.*?)}}/", $display_template, $disp_matches);
+		preg_match_all("/{{(.*?)}}/", $search_template, $srch_matches);
+
+		$resp = new stdClass;
+		$resp->success = true;
+		$resp->message = "";
+
+		if( sizeof($srch_matches[0]) == 0 || sizeof($srch_matches[1]) == 0 )
+		{
+			$resp->success = false;
+			$resp->message = "No Variables found in Search Template";
+
+			echo json_encode($resp);
+			Yii::app()->end();
+		}
+
+		if( sizeof($disp_matches[0]) == 0 || sizeof($disp_matches[1]) == 0 )
+		{
+			$resp->success = false;
+			$resp->message = "No Variables found in Display Template";
+			
+			echo json_encode($resp);
+			Yii::app()->end();
+		}
+
+		$srch_attr_arr = array();
+		$disp_attr_arr = array();
+
+		for ($i=0; $i < sizeof($srch_matches[0]); $i++)
+		{
+			$attr_lbl = trim($srch_matches[1][$i]);
+			if( in_array($attr_lbl, $moc_attr) )
+			{
+				$srch_attr_arr [] = array(
+					"attr" => $attr_lbl,
+					"inst" => $srch_matches[0][$i],
+				);
+			}
+			else
+			{
+				$resp->success = false;
+				$resp->message = "Invalid Attribute found in Main MOC Template: ".$attr_lbl;
+				
+				echo json_encode($resp);
+				Yii::app()->end();
+			}
+		}
+
+		for ($i=0; $i < sizeof($disp_matches[0]); $i++)
+		{
+			$attr_lbl = trim($disp_matches[1][$i]);
+			if( in_array($attr_lbl, $moc_attr) )
+			{
+				$disp_attr_arr [] = array(
+					"attr" => $attr_lbl,
+					"inst" => $disp_matches[0][$i],
+				);
+			}
+			else
+			{
+				$resp->success = false;
+				$resp->message = "Invalid Attribute found in Relation MOC Template: ".$attr_lbl;
+				
+				echo json_encode($resp);
+				Yii::app()->end();
+			}
+		}
+
+		if( trim($display_template) != "" )
+		{
+			$exist_configs ["display_template"] = $display_template;
+			$exist_configs ["display_attr_arr"] = $disp_attr_arr;
+		}
+
+		if( trim($search_template) != "" )
+		{
+			$exist_configs ["search_template"] = $search_template;
+			$exist_configs ["search_attr_arr"] = $srch_attr_arr;
+		}
+
+		$sdb = $kpi_lkp[$domain_id]["vendors"][$vendor_id]["schema_db"];
+		$moctn = $kpi_lkp[$domain_id]["vendors"][$vendor_id]["moc"]["table"];
+		
+		$uresp = Yii::app()->$sdb->createCommand()->update($moctn, array(
+			"name_configs" => json_encode($exist_configs),
+		), 'id=:id', array(':id'=>$moc->id) );
+		
+		if( $uresp === false )
+		{
+			$resp->success = false;
+			$resp->message = "Unable to update MOC settings after verification.";
+		}
+
+		echo json_encode($resp);
+		Yii::app()->end();
+	}
+	
+	public function actionSaveColConfigs()
+	{
+		$kpi_lkp = Yii::app()->params["kpi_lkp"];
+
+		if ( !isset($_POST["domain_id"]) || !isset($_POST["vendor_id"]) || !isset($_POST["moc_id"]) || !isset($_POST["visible_col_list"]) || !isset($_POST["hidden_col_list"]) )
+		{
+			throw new CHttpException(404, 'The requested page does not exist.');
+		}
+
+		$domain_id = intval($_POST["domain_id"]);
+		$vendor_id = intval($_POST["vendor_id"]);
+		$moc_id = intval($_POST["moc_id"]);
+
+		if ( !isset($kpi_lkp[$domain_id]) || !isset($kpi_lkp[$domain_id]["vendors"][$vendor_id]) )
+		{
+			throw new CHttpException(404, 'The requested page does not exist.');
+		}
+
+		$moc = $kpi_lkp[$domain_id]["vendors"][$vendor_id]["moc"]["class"]::model()->findByPk($moc_id);
+		if( $moc == null )
+			throw new CHttpException(404, 'The requested page does not exist.');
+
+		$visible_col_list = array();
+		if( isset($_POST["visible_col_list"]) )
+			$visible_col_list = $_POST["visible_col_list"];
+
+		$visible_col_list = array_values($visible_col_list);
+
+		$hidden_col_list = array();
+		if( isset($_POST["hidden_col_list"]) )
+			$hidden_col_list = $_POST["hidden_col_list"];
+
+		$hidden_col_list = array_values($hidden_col_list);
+
+		$exist_configs = array();
+		if( isset($moc->col_configs) )
+			$exist_configs = json_decode($moc->col_configs, true);
+
+		$full_moc_list = $kpi_lkp[$domain_id]["vendors"][$vendor_id]["moc"]["class"]::model()->findAll();
+
+		$moc_attr = $this->get_all_attributes($moc, $full_moc_list);
+
+		$fin_visible_cols = array();
+		$fin_hidden_cols = array();
+
+		foreach ($moc_attr as $mattr)
+		{
+			if( in_array($mattr, $visible_col_list) && array_search($mattr, $visible_col_list) !== false )
+			{
+				$fin_visible_cols [$mattr] = array_search($mattr, $visible_col_list);
+			}
+			else if( in_array($mattr, $hidden_col_list) && array_search($mattr, $hidden_col_list) !== false )
+			{
+				$fin_hidden_cols [$mattr] = array_search($mattr, $hidden_col_list);
+			}
+			else
+			{
+				// leaving as it is 
+			}
+		}
+
+		$resp = new stdClass;
+		$resp->success = true;
+		$resp->message = "";
+
+		$exist_configs [ "visible_cols" ] = $fin_visible_cols;
+		$exist_configs [ "hidden_cols" ] = $fin_hidden_cols;
+
+		$sdb = $kpi_lkp[$domain_id]["vendors"][$vendor_id]["schema_db"];
+		$moctn = $kpi_lkp[$domain_id]["vendors"][$vendor_id]["moc"]["table"];
+		
+		$uresp = Yii::app()->$sdb->createCommand()->update($moctn, array(
+			"col_configs" => json_encode($exist_configs),
+		), 'id=:id', array(':id'=>$moc->id) );
+		
+		if( $uresp === false )
+		{
+			$resp->success = false;
+			$resp->message = "Unable to update MOC settings after verification.";
+		}
+
+		echo json_encode($resp);
+		Yii::app()->end();
+	}
+
+	public function actionAddChildMocAttrs()
+	{
+		$kpi_lkp = Yii::app()->params["kpi_lkp"];
+
+		if ( !isset($_POST["domain_id"]) || !isset($_POST["vendor_id"]) || !isset($_POST["moc_id"]) || !isset($_POST["child_moc"]) || !isset($_POST["child_attrs"]) || !isset($_POST["child_moc_cond"]) )
+		{
+			throw new CHttpException(404, 'The requested page does not exist.');
+		}
+
+		$domain_id = intval($_POST["domain_id"]);
+		$vendor_id = intval($_POST["vendor_id"]);
+		$moc_id = intval($_POST["moc_id"]);
+		$child_moc = intval($_POST["child_moc"]);
+
+		if ( !isset($kpi_lkp[$domain_id]) || !isset($kpi_lkp[$domain_id]["vendors"][$vendor_id]) )
+		{
+			throw new CHttpException(404, 'The requested page does not exist.');
+		}
+
+		$moc = $kpi_lkp[$domain_id]["vendors"][$vendor_id]["moc"]["class"]::model()->findByPk($moc_id);
+		if( $moc == null )
+			throw new CHttpException(404, 'The requested page does not exist.');
+
+		$child_moc = $kpi_lkp[$domain_id]["vendors"][$vendor_id]["moc"]["class"]::model()->findByPk($child_moc);
+		if( $child_moc == null )
+			throw new CHttpException(404, 'The requested page does not exist.');
+
+		$attr_conf = json_decode($_POST["child_attrs"], true);
+		if( json_last_error() != JSON_ERROR_NONE )
+		{
+			throw new CHttpException(400, 'Invalid Request');
+		}
+
+		$child_moc_cond = json_decode($_POST["child_moc_cond"]);
+		if( json_last_error() != JSON_ERROR_NONE )
+		{
+			throw new CHttpException(400, 'Invalid Request');
+		}
+
+		$exist_attrs = array();
+		if( isset($moc->virtual_attributes) )
+			$exist_attrs = json_decode($moc->virtual_attributes, true);
+
+		$full_moc_list = $kpi_lkp[$domain_id]["vendors"][$vendor_id]["moc"]["class"]::model()->findAll();
+
+		$cids_list = array();
+		$this->getmocsunder($moc, $full_moc_list, $cids_list);
+
+		if( isset($cids_list[$moc->id]) )
+		{
+			unset($cids_list[$moc->id]);
+		}
+
+		if( !isset($cids_list[$child_moc->id]) )
+		{
+			throw new CHttpException(400, 'Invalid Request');
+		}
+
+		$aggr_funs = array(
+			"child_moi_count" => "child_moi_count",
+			"uniqe_attr_count" => "uniqe_attr_count",
+			"child_attr_min" => "child_attr_min",
+			"child_attr_max" => "child_attr_max",
+			"child_attr_avg" => "child_attr_avg",
+			"child_attr_csv" => "child_attr_csv",
+		);
+
+		$child_attr_arr = $this->get_all_attributes($child_moc, $full_moc_list);
+		$main_attr_arr = $this->get_all_attributes($moc, $full_moc_list);
+
+		$child_cond_attrs = array();
+		$obj_resp = $this->getParsedQBConditions($child_moc_cond);
+		if( $obj_resp->valid )
+		{
+			if( sizeof($obj_resp->attributes) > 0 )
+			{
+				foreach ($obj_resp->attributes as $cattr)
+				{
+					if( in_array($cattr, $child_attr_arr) )
+					{
+						$child_cond_attrs [] = $cattr;
+					}
+					else
+					{
+						$resp->success = false;
+						$resp->message = "Invalid Attribute found in Child Condition: ".$cattr;
+						
+						echo json_encode($resp);
+						Yii::app()->end();
+					}
+				}
+			}
+		}
+		else
+		{
+			$resp->success = false;
+			$resp->message = "Invalid Condition Definition Sent: ".$obj_resp->message;
+
+			echo json_encode($resp);
+			Yii::app()->end();
+		}
+
+		$resp = new stdClass;
+		$resp->success = true;
+		$resp->message = "";
+
+		foreach ($attr_conf as $attr)
+		{
+			if( isset($attr["child_moc_aggr_fun"]) && isset($attr["child_moc_attr_lbl"]) )
+			{
+				$child_moc_attr_lbl = trim($attr["child_moc_attr_lbl"]);
+				$child_moc_aggr_fun = trim($attr["child_moc_aggr_fun"]);
+
+				if( isset($aggr_funs[$child_moc_aggr_fun]) )
+				{
+					if( $child_moc_aggr_fun != "child_moi_count" )
+					{
+						if( isset($attr["child_moc_attr"]) )
+						{
+							$child_moc_attr = trim( $attr["child_moc_attr"] );
+
+							if( in_array($child_moc_attr, $child_attr_arr) )
+							{
+								if( !isset($exist_attrs[$child_moc_attr_lbl]) && !in_array($child_moc_attr_lbl, $main_attr_arr) )
+								{
+									$exist_attrs [$child_moc_attr_lbl] = array(
+										"type" => 5,
+										"child_moc_id" => $child_moc->id,
+										"child_moc_aggr_fun" => $child_moc_aggr_fun,
+										"child_moc_attr" => $child_moc_attr,
+										"child_cond" => $child_moc_cond,
+										"child_cond_attrs" => $child_cond_attrs,
+									);
+								}
+								else
+								{
+									$resp->success = false;
+									$resp->message = "Attribute Already Exists with the Name: ".$child_moc_attr_lbl;
+
+									echo json_encode($resp);
+									Yii::app()->end();
+								}
+							}
+							else
+							{
+								$resp->success = false;
+								$resp->message = "Attribute Does not Exist on Child: ".$child_moc->name." (".$child_moc_attr.")";
+
+								echo json_encode($resp);
+								Yii::app()->end();
+							}
+						}
+						else
+						{
+							throw new CHttpException(400, 'Invalid Request');
+						}
+					}
+					else
+					{
+						if( !isset($exist_attrs[$child_moc_attr_lbl]) && !in_array($child_moc_attr_lbl, $main_attr_arr) )
+						{
+							$exist_attrs [$child_moc_attr_lbl] = array(
+								"type" => 5,
+								"child_moc_id" => $child_moc->id,
+								"child_moc_aggr_fun" => $child_moc_aggr_fun,
+								"child_cond" => $child_moc_cond,
+								"child_cond_attrs" => $child_cond_attrs,
+							);
+						}
+						else
+						{
+							$resp->success = false;
+							$resp->message = "Attribute Already Exists with the Name: ".$child_moc_attr_lbl;
+
+							echo json_encode($resp);
+							Yii::app()->end();
+						}
+					}
+				}
+				else
+				{
+					throw new CHttpException(400, 'Invalid Request');
+				}
+			}
+			else
+			{
+				throw new CHttpException(400, 'Invalid Request');
+			}
+		}
+
+		$sdb = $kpi_lkp[$domain_id]["vendors"][$vendor_id]["schema_db"];
+		$moctn = $kpi_lkp[$domain_id]["vendors"][$vendor_id]["moc"]["table"];
+		
+		$uresp = Yii::app()->$sdb->createCommand()->update($moctn, array(
+			"virtual_attributes" => json_encode($exist_attrs),
+		), 'id=:id', array(':id'=>$moc->id) );
+		
+		if( $uresp === false )
+		{
+			$resp->success = false;
+			$resp->message = "Unable to update MOC settings after verification.";
+		}
+
+		echo json_encode($resp);
+		Yii::app()->end();
+	}
+
+	public function actionAddRmocAttrs()
+	{
+		$kpi_lkp = Yii::app()->params["kpi_lkp"];
+		if ( !isset($_POST["domain_id"]) || !isset($_POST["vendor_id"]) || !isset($_POST["moc_id"]) )
+		{
+			throw new CHttpException(400, 'Invalid Request.');
+		}
+
+		$domain_id = intval($_POST["domain_id"]);
+		$vendor_id = intval($_POST["vendor_id"]);
+		$moc_id = intval($_POST["moc_id"]);
+
+		if ( !isset($kpi_lkp[$domain_id]) || !isset($kpi_lkp[$domain_id]["vendors"][$vendor_id]) )
+		{
+			throw new CHttpException(404, 'The requested page does not exist.');
+		}
+
+		$moc = $kpi_lkp[$domain_id]["vendors"][$vendor_id]["moc"]["class"]::model()->findByPk($moc_id);
+		if( $moc == null )
+			throw new CHttpException(400, 'Invalid Request.');
+
+		$exist_attrs = array();
+		if( isset($moc->virtual_attributes) )
+			$exist_attrs = json_decode($moc->virtual_attributes, true);
+
+		$integ_list = array();
+		foreach ($kpi_lkp as $idomain_id => $idomain)
+		{
+			foreach ($idomain["vendors"] as $ivendor_id => $ivendor)
+			{
+				$integ_list [ "ems_{$idomain_id}_{$ivendor_id}" ] = array( "domain"=>$idomain_id, "vendor"=>$ivendor_id );
+			}
+		}
+
+		if ( !isset($_POST["integration_ems"]) || !isset($integ_list[$_POST["integration_ems"]]) || !isset($_POST["relation_moc"]) )
+		{
+			throw new CHttpException(400, 'Invalid Request.');
+		}
+
+		$int_domain_id = $integ_list[$_POST["integration_ems"]]["domain"];
+		$int_vendor_id = $integ_list[$_POST["integration_ems"]]["vendor"];
+		$int_moc_id = intval($_POST["relation_moc"]);
+
+		$int_moc = $kpi_lkp[$int_domain_id]["vendors"][$int_vendor_id]["moc"]["class"]::model()->findByPk( $int_moc_id );
+		if( $int_moc == null )
+			throw new CHttpException(400, 'Invalid Request.');
+
+		if ( !isset($_POST["re_moc_template"]) || !isset($_POST["fe_moc_template"]) || !isset($_POST["rel_attrs"]) || !isset($_POST["rel_cond"]) )
+		{
+			throw new CHttpException(400, 'Invalid Request.');
+		}
+
+		$rel_attrs = json_decode($_POST["rel_attrs"], true);
+		if( json_last_error() != JSON_ERROR_NONE )
+		{
+			throw new CHttpException(400, 'Invalid Request');
+		}
+
+		$rel_cond = json_decode($_POST["rel_cond"]);
+		if( json_last_error() != JSON_ERROR_NONE )
+		{
+			throw new CHttpException(400, 'Invalid Request');
+		}
+
+		$full_moc_list = $kpi_lkp[$domain_id]["vendors"][$vendor_id]["moc"]["class"]::model()->findAll();
+
+		$moc_attr = $this->get_all_attributes($moc, $full_moc_list);
+		$int_moc_attr = $this->get_all_attributes($int_moc, $full_moc_list);
+
+		$re_moc_template = trim($_POST["re_moc_template"]);
+		$fe_moc_template = trim($_POST["fe_moc_template"]);
+
+		preg_match_all("/{{(.*?)}}/", $re_moc_template, $re_matches);
+		preg_match_all("/{{(.*?)}}/", $fe_moc_template, $fe_matches);
+
+		$resp = new stdClass;
+		$resp->success = true;
+		$resp->message = "";
+
+		if( sizeof($re_matches[0]) == 0 || sizeof($re_matches[1]) == 0 )
+		{
+			$resp->success = false;
+			$resp->message = "No Variables found in Main MOC Template";
+
+			echo json_encode($resp);
+			Yii::app()->end();
+		}
+
+		if( sizeof($fe_matches[0]) == 0 || sizeof($fe_matches[1]) == 0 )
+		{
+			$resp->success = false;
+			$resp->message = "No Variables found in Relation MOC Template";
+			
+			echo json_encode($resp);
+			Yii::app()->end();
+		}
+
+		$re_moc_template_attr_arr = array();
+		$fe_moc_template_attr_arr = array();
+
+		for ($i=0; $i < sizeof($re_matches[0]); $i++)
+		{
+			$attr_lbl = trim($re_matches[1][$i]);
+			if( in_array($attr_lbl, $moc_attr) )
+			{
+				$re_moc_template_attr_arr [] = array(
+					"attr" => $attr_lbl,
+					"inst" => $re_matches[0][$i],
+				);
+			}
+			else
+			{
+				$resp->success = false;
+				$resp->message = "Invalid Attribute found in Main MOC Template: ".$attr_lbl;
+				
+				echo json_encode($resp);
+				Yii::app()->end();
+			}
+		}
+
+		for ($i=0; $i < sizeof($fe_matches[0]); $i++)
+		{
+			$attr_lbl = trim($fe_matches[1][$i]);
+			if( in_array($attr_lbl, $int_moc_attr) )
+			{
+				$fe_moc_template_attr_arr [] = array(
+					"attr" => $attr_lbl,
+					"inst" => $fe_matches[0][$i],
+				);
+			}
+			else
+			{
+				$resp->success = false;
+				$resp->message = "Invalid Attribute found in Relation MOC Template: ".$attr_lbl;
+				
+				echo json_encode($resp);
+				Yii::app()->end();
+			}
+		}
+
+		$int_domain_id = $integ_list[$_POST["integration_ems"]]["domain"];
+		$int_vendor_id = $integ_list[$_POST["integration_ems"]]["vendor"];
+		$int_moc_id = intval($_POST["relation_moc"]);
+
+		$int_moc = $kpi_lkp[$int_domain_id]["vendors"][$int_vendor_id]["moc"]["class"]::model()->findByPk( $int_moc_id );
+
+		$rel_cond_attrs = array();
+		$obj_resp = $this->getParsedQBConditions($rel_cond);
+		if( $obj_resp->valid )
+		{
+			if( sizeof($obj_resp->attributes) > 0 )
+			{
+				foreach ($obj_resp->attributes as $rattr)
+				{
+					if( in_array($rattr, $int_moc_attr) )
+					{
+						$rel_cond_attrs [] = $rattr;
+					}
+					else
+					{
+						$resp->success = false;
+						$resp->message = "Invalid Attribute found in Child Condition: ".$rattr;
+						
+						echo json_encode($resp);
+						Yii::app()->end();
+					}
+				}
+			}
+		}
+		else
+		{
+			$resp->success = false;
+			$resp->message = "Invalid Condition Definition Sent: ".$obj_resp->message;
+
+			echo json_encode($resp);
+			Yii::app()->end();
+		}
+
+		$aggr_funs = array(
+			"child_moi_count" => "child_moi_count",
+			"uniqe_attr_count" => "uniqe_attr_count",
+			"child_attr_min" => "child_attr_min",
+			"child_attr_max" => "child_attr_max",
+			"child_attr_avg" => "child_attr_avg",
+			"child_attr_csv" => "child_attr_csv",
+		);
+
+		foreach ($rel_attrs as $attr)
+		{
+			if( isset($attr["type"]) && $attr["type"] == 1 )
+			{
+				if( isset($attr["relation_moc_attr"]) && isset($attr["relation_moc_attr_lbl"]) )
+				{
+					$relation_moc_attr = trim($attr["relation_moc_attr"]);
+					$relation_moc_attr_lbl = trim($attr["relation_moc_attr_lbl"]);
+
+					if( in_array($relation_moc_attr, $int_moc_attr) )
+					{
+						if( !in_array($relation_moc_attr_lbl, $moc_attr) && !isset($exist_attrs[$relation_moc_attr_lbl]) )
+						{
+							$exist_attrs[$relation_moc_attr_lbl] = array(
+								"type" => 2,
+								"int_domain_id" => $int_domain_id,
+								"int_vendor_id" => $int_vendor_id,
+								"int_moc_id" => $int_moc_id,
+
+								"re_moc_template" => $re_moc_template,
+								"re_moc_template_attr_arr" => $re_moc_template_attr_arr,
+								"fe_moc_template" => $fe_moc_template,
+								"fe_moc_template_attr_arr" => $fe_moc_template_attr_arr,
+								"rel_cond" => $rel_cond,
+								"rel_cond_attrs" => $rel_cond_attrs,
+
+								"relation_moc_attr" => $relation_moc_attr,
+								"relation_moc_attr_lbl" => $relation_moc_attr_lbl,
+							);
+						}
+						else
+						{
+							$resp->success = false;
+							$resp->message = "Attribute Already Exists with the Name: ".$relation_moc_attr_lbl;
+
+							echo json_encode($resp);
+							Yii::app()->end();
+						}
+					}
+					else
+					{
+						$resp->success = false;
+						$resp->message = "Invalid Attribute Selected for Relation MOC: ".$relation_moc_attr;
+						
+						echo json_encode($resp);
+						Yii::app()->end();
+					}
+				}
+				else
+				{
+					throw new CHttpException(400, 'Invalid Request');
+				}
+			}
+			else if( isset($attr["type"]) && $attr["type"] == 2 )
+			{
+				if( isset($attr["relation_moc_aggr_fun"]) && isset($attr["relation_moc_aggr_attr_lbl"]) )
+				{
+					$relation_moc_aggr_fun = trim($attr["relation_moc_aggr_fun"]);
+					$relation_moc_aggr_attr_lbl = trim($attr["relation_moc_aggr_attr_lbl"]);
+
+					if( isset($aggr_funs[$relation_moc_aggr_fun]) )
+					{
+						if( $relation_moc_aggr_fun != "child_moi_count" )
+						{
+							if( isset($attr["relation_moc_aggr_attr"]) )
+							{
+								$relation_moc_aggr_attr = trim( $attr["relation_moc_aggr_attr"] );
+								if( in_array($relation_moc_aggr_attr, $int_moc_attr) )
+								{
+									if( !isset($exist_attrs[$relation_moc_aggr_attr_lbl]) && !in_array($relation_moc_aggr_attr_lbl, $moc_attr) )
+									{
+										$exist_attrs [$relation_moc_aggr_attr_lbl] = array(
+											"type" => 2,
+											"int_domain_id" => $int_domain_id,
+											"int_vendor_id" => $int_vendor_id,
+											"int_moc_id" => $int_moc_id,
+											
+											"re_moc_template" => $re_moc_template,
+											"re_moc_template_attr_arr" => $re_moc_template_attr_arr,
+											"fe_moc_template" => $fe_moc_template,
+											"fe_moc_template_attr_arr" => $fe_moc_template_attr_arr,
+											"rel_cond" => $rel_cond,
+											"rel_cond_attrs" => $rel_cond_attrs,
+
+											"relation_moc_aggr_fun" => $relation_moc_aggr_fun,
+											"relation_moc_aggr_attr" => $relation_moc_aggr_attr,
+										);
+									}
+									else
+									{
+										$resp->success = false;
+										$resp->message = "Attribute Already Exists with the Name: ".$relation_moc_aggr_attr_lbl;
+
+										echo json_encode($resp);
+										Yii::app()->end();
+									}
+								}
+								else
+								{
+									$resp->success = false;
+									$resp->message = "Invalid Attribute Selected for Relation MOC: ".$relation_moc_aggr_attr;
+
+									echo json_encode($resp);
+									Yii::app()->end();
+								}
+							}
+							else
+							{
+								throw new CHttpException(400, 'Invalid Request');
+							}
+						}
+						else
+						{
+							if( !isset($exist_attrs[$relation_moc_aggr_attr_lbl]) && !in_array($relation_moc_aggr_attr_lbl, $moc_attr) )
+							{
+								$exist_attrs [$relation_moc_aggr_attr_lbl] = array(
+									"type" => 2,
+									"int_domain_id" => $int_domain_id,
+									"int_vendor_id" => $int_vendor_id,
+									"int_moc_id" => $int_moc_id,
+
+									"re_moc_template" => $re_moc_template,
+									"re_moc_template_attr_arr" => $re_moc_template_attr_arr,
+									"fe_moc_template" => $fe_moc_template,
+									"fe_moc_template_attr_arr" => $fe_moc_template_attr_arr,
+									"rel_cond" => $rel_cond,
+									"rel_cond_attrs" => $rel_cond_attrs,
+
+									"relation_moc_aggr_fun" => $relation_moc_aggr_fun,
+								);
+							}
+							else
+							{
+								$resp->success = false;
+								$resp->message = "Attribute Already Exists with the Name: ".$relation_moc_aggr_attr_lbl;
+
+								echo json_encode($resp);
+								Yii::app()->end();
+							}
+						}
+					}
+					else
+					{
+						throw new CHttpException(400, 'Invalid Request');
+					}
+				}
+				else
+				{
+					throw new CHttpException(400, 'Invalid Request');
+				}
+			}
+			else
+			{
+				throw new CHttpException(400, 'Invalid Request');
+			}
+		}
+
+		$sdb = $kpi_lkp[$domain_id]["vendors"][$vendor_id]["schema_db"];
+		$moctn = $kpi_lkp[$domain_id]["vendors"][$vendor_id]["moc"]["table"];
+		
+		$uresp = Yii::app()->$sdb->createCommand()->update($moctn, array(
+			"virtual_attributes" => json_encode($exist_attrs),
+		), 'id=:id', array(':id'=>$moc->id) );
+		
+		if( $uresp === false )
+		{
+			$resp->success = false;
+			$resp->message = "Unable to update MOC settings after verification.";
+		}
+
+		echo json_encode($resp);
+		Yii::app()->end();
+	}
+
+	public function actionAddPsuedoMocAttrs()
+	{
+		$kpi_lkp = Yii::app()->params["kpi_lkp"];
+		if ( !isset($_POST["ptemp_attr_name"]) || trim($_POST["ptemp_attr_name"]) == "" || !isset($_POST["domain_id"]) || !isset($_POST["vendor_id"]) || !isset($_POST["moc_id"]) || !isset($_POST["pattr_conds_set"]) )
+		{
+			throw new CHttpException(400, 'Invalid Request.');
+		}
+
+		$domain_id = intval($_POST["domain_id"]);
+		$vendor_id = intval($_POST["vendor_id"]);
+		$moc_id = intval($_POST["moc_id"]);
+
+		if ( !isset($kpi_lkp[$domain_id]) || !isset($kpi_lkp[$domain_id]["vendors"][$vendor_id]) )
+		{
+			throw new CHttpException(404, 'The requested page does not exist.');
+		}
+
+		$moc = $kpi_lkp[$domain_id]["vendors"][$vendor_id]["moc"]["class"]::model()->findByPk($moc_id);
+		if( $moc == null )
+			throw new CHttpException(400, 'Invalid Request.');
+
+		$exist_attrs = array();
+		if( isset($moc->virtual_attributes) )
+			$exist_attrs = json_decode($moc->virtual_attributes, true);
+
+		$pattr_conds_set = json_decode($_POST["pattr_conds_set"]);
+		if( json_last_error() != JSON_ERROR_NONE )
+		{
+			throw new CHttpException(400, 'Invalid Request');
+		}
+
+		$full_moc_list = $kpi_lkp[$domain_id]["vendors"][$vendor_id]["moc"]["class"]::model()->findAll();
+		$moc_attr = $this->get_all_attributes($moc, $full_moc_list);
+
+		$resp = new stdClass;
+		$resp->success = true;
+		$resp->message = "";
+
+		$final_conds_config = array();
+		
+		foreach ($pattr_conds_set as $pattr_cond)
+		{
+			$pattr_template_attrs = array();
+			$pattr_cond_attrs = array();
+
+			$pattr_template = trim($pattr_cond->pattr_template);
+			preg_match_all("/{{(.*?)}}/", $pattr_template, $pattr_matches);
+
+			for ($i=0; $i < sizeof($pattr_matches[0]); $i++)
+			{
+				$attr_lbl = trim($pattr_matches[1][$i]);
+				if( in_array($attr_lbl, $moc_attr) )
+				{
+					$pattr_template_attrs [] = array(
+						"attr" => $attr_lbl,
+						"inst" => $pattr_matches[0][$i],
+					);
+				}
+				else
+				{
+					$resp->success = false;
+					$resp->message = "Invalid Attribute found in MOC Template: ".$attr_lbl;
+					
+					echo json_encode($resp);
+					Yii::app()->end();
+				}
+			}
+
+			$obj_resp = $this->getParsedQBConditions($pattr_cond->pattr_cond);
+			if( $obj_resp->valid )
+			{
+				if( sizeof($obj_resp->attributes) > 0 )
+				{
+					foreach ($obj_resp->attributes as $cattr)
+					{
+						if( in_array($cattr, $moc_attr) )
+						{
+							$pattr_cond_attrs [] = $cattr;
+						}
+						else
+						{
+							$resp->success = false;
+							$resp->message = "Invalid Attribute found in MOC Template: ".$cattr;
+							
+							echo json_encode($resp);
+							Yii::app()->end();
+						}
+					}
+				}
+			}
+			else
+			{
+				$resp->success = false;
+				$resp->message = "Invalid Condition Definition Sent: ".$obj_resp->message;
+
+				echo json_encode($resp);
+				Yii::app()->end();
+			}
+
+			$final_conds_config [] = array(
+				"pattr_template" => $pattr_template,
+				"pattr_template_attrs" => $pattr_template_attrs,
+				"pattr_cond" => $pattr_cond->pattr_cond,
+				"pattr_cond_attrs" => $pattr_cond_attrs,
+			);
+		}
+
+		if( sizeof($final_conds_config) == 0 )
+		{
+			throw new CHttpException(400, 'Invalid Request');
+		}
+
+		$ptemp_attr_name = trim($_POST["ptemp_attr_name"]);
+		if( !in_array($ptemp_attr_name, $moc_attr) && !isset($exist_attrs[$ptemp_attr_name]) )
+		{
+			$exist_attrs [$ptemp_attr_name] = array(
+				"type" => 3,
+				"fconds_config" => $final_conds_config,
+			);
+		}
+		else
+		{
+			$resp->success = false;
+			$resp->message = "Attribute Already Exists with the Name: ".$ptemp_attr_name;
+
+			echo json_encode($resp);
+			Yii::app()->end();
+		}
+
+		$sdb = $kpi_lkp[$domain_id]["vendors"][$vendor_id]["schema_db"];
+		$moctn = $kpi_lkp[$domain_id]["vendors"][$vendor_id]["moc"]["table"];
+		
+		$uresp = Yii::app()->$sdb->createCommand()->update($moctn, array(
+			"virtual_attributes" => json_encode($exist_attrs),
+		), 'id=:id', array(':id'=>$moc->id) );
+		
+		if( $uresp === false )
+		{
+			$resp->success = false;
+			$resp->message = "Unable to update MOC settings after verification.";
+		}
+
+		echo json_encode($resp);
+		Yii::app()->end();
+	}
+
+	public function actionVerifyPsuedoMocAttrCond()
+	{
+		$kpi_lkp = Yii::app()->params["kpi_lkp"];
+		if ( !isset($_POST["domain_id"]) || !isset($_POST["vendor_id"]) || !isset($_POST["moc_id"]) || !isset($_POST["pattr_cond"]) )
+		{
+			throw new CHttpException(400, 'Invalid Request.');
+		}
+
+		$domain_id = intval($_POST["domain_id"]);
+		$vendor_id = intval($_POST["vendor_id"]);
+		$moc_id = intval($_POST["moc_id"]);
+
+		if ( !isset($kpi_lkp[$domain_id]) || !isset($kpi_lkp[$domain_id]["vendors"][$vendor_id]) )
+		{
+			throw new CHttpException(404, 'The requested page does not exist.');
+		}
+
+		$moc = $kpi_lkp[$domain_id]["vendors"][$vendor_id]["moc"]["class"]::model()->findByPk($moc_id);
+		if( $moc == null )
+			throw new CHttpException(400, 'Invalid Request.');
+
+		$exist_attrs = array();
+		if( isset($moc->virtual_attributes) )
+			$exist_attrs = json_decode($moc->virtual_attributes, true);
+
+		if ( !isset($_POST["pattr_template"]) || trim($_POST["pattr_template"]) == "" )
+		{
+			throw new CHttpException(400, 'Invalid Request.');
+		}
+
+		$pattr_cond = json_decode($_POST["pattr_cond"]);
+		if( json_last_error() != JSON_ERROR_NONE )
+		{
+			throw new CHttpException(400, 'Invalid Request');
+		}
+
+		$resp = new stdClass;
+		$resp->success = true;
+		$resp->message = "";
+
+		$pattr_template = trim($_POST["pattr_template"]);
+
+		$full_moc_list = $kpi_lkp[$domain_id]["vendors"][$vendor_id]["moc"]["class"]::model()->findAll();
+		$moc_attr = $this->get_all_attributes($moc, $full_moc_list);
+		preg_match_all("/{{(.*?)}}/", $pattr_template, $pattr_matches);
+
+		$pattr_template_attr_arr = array();
+
+		for ($i=0; $i < sizeof($pattr_matches[0]); $i++)
+		{
+			$attr_lbl = trim($pattr_matches[1][$i]);
+			if( in_array($attr_lbl, $moc_attr) )
+			{
+				$pattr_template_attr_arr [] = array(
+					"attr" => $attr_lbl,
+					"inst" => $pattr_matches[0][$i],
+				);
+			}
+			else
+			{
+				$resp->success = false;
+				$resp->message = "Invalid Attribute found in MOC Template: ".$attr_lbl;
+				
+				echo json_encode($resp);
+				Yii::app()->end();
+			}
+		}
+
+		$condition_attrs = array();
+		$obj_resp = $this->getParsedQBConditions($pattr_cond);
+		if( $obj_resp->valid )
+		{
+			if( sizeof($obj_resp->attributes) > 0 )
+			{
+				foreach ($obj_resp->attributes as $cattr)
+				{
+					if( in_array($cattr, $moc_attr) )
+					{
+						$condition_attrs [] = $cattr;
+					}
+					else
+					{
+						$resp->success = false;
+						$resp->message = "Invalid Attribute found in MOC Template: ".$cattr;
+						
+						echo json_encode($resp);
+						Yii::app()->end();
+					}
+				}
+			}
+		}
+		else
+		{
+			$resp->success = false;
+			$resp->message = "Invalid Condition Definition Sent: ".$obj_resp->message;
+
+			echo json_encode($resp);
+			Yii::app()->end();
+		}
+
+		echo json_encode($resp);
+		Yii::app()->end();
+	}
+
+	public function actionAddTranMocAttrs()
+	{
+		$kpi_lkp = Yii::app()->params["kpi_lkp"];
+		if ( !isset($_POST["domain_id"]) || !isset($_POST["vendor_id"]) || !isset($_POST["moc_id"]) )
+		{
+			throw new CHttpException(400, 'Invalid Request.');
+		}
+
+		$domain_id = intval($_POST["domain_id"]);
+		$vendor_id = intval($_POST["vendor_id"]);
+		$moc_id = intval($_POST["moc_id"]);
+
+		if ( !isset($kpi_lkp[$domain_id]) || !isset($kpi_lkp[$domain_id]["vendors"][$vendor_id]) )
+		{
+			throw new CHttpException(404, 'The requested page does not exist.');
+		}
+
+		$moc = $kpi_lkp[$domain_id]["vendors"][$vendor_id]["moc"]["class"]::model()->findByPk($moc_id);
+		if( $moc == null )
+			throw new CHttpException(400, 'Invalid Request.');
+
+		$exist_attrs = array();
+		if( isset($moc->virtual_attributes) )
+			$exist_attrs = json_decode($moc->virtual_attributes, true);
+
+		if ( !isset($_POST["ptran_label"]) || trim($_POST["ptran_label"]) == "" || !isset($_POST["ptran_attr"]) || trim($_POST["ptran_keyvals"]) == "" )
+		{
+			throw new CHttpException(400, 'Invalid Request.');
+		}
+
+		$ptran_label = trim($_POST["ptran_label"]);
+		$ptran_attr = trim($_POST["ptran_attr"]);
+		$ptran_keyvals = trim($_POST["ptran_keyvals"]);
+		$ptran_default = null;
+		if( isset($_POST["ptran_default"]) && trim($_POST["ptran_default"]) != "" )
+			$ptran_default = $_POST["ptran_default"];
+
+		$resp = new stdClass;
+		$resp->success = true;
+		$resp->message = "";
+
+		$lkp = array();
+		$lkpn = str_replace("\r", "", $ptran_keyvals);
+		$lkpn = str_replace("'", "''", $lkpn);
+		$lkpn = explode("\n", $lkpn);
+		$lkpn = array_map('trim', $lkpn);
+		$lkpn = array_filter($lkpn);
+		$lkpn = array_values($lkpn);
+
+		foreach ($lkpn as $lkpnps)
+		{
+			$pcs = explode(":", $lkpnps);
+			if( isset($pcs[0]) && trim($pcs[0]) != "" && isset($pcs[1]) && trim($pcs[1]) != "" )
+			{
+				$lkp [ trim($pcs[0]) ] = trim($pcs[1]);
+			}
+		}
+
+		if( sizeof($lkp) == 0 )
+		{
+			$resp->success = false;
+			$resp->message = "No valid Lookup found!";
+
+			echo json_encode($resp);
+			Yii::app()->end();
+		}
+
+		$full_moc_list = $kpi_lkp[$domain_id]["vendors"][$vendor_id]["moc"]["class"]::model()->findAll();
+		$moc_attr = $this->get_all_attributes($moc, $full_moc_list);
+
+		if( in_array($ptran_attr, $moc_attr) )
+		{
+			if( !in_array($ptran_label, $moc_attr) && !isset($exist_attrs[$ptran_label]) )
+			{
+				$exist_attrs [$ptran_label] = array(
+					"type" => 4,
+					"translation_attribute" => $ptran_attr,
+					"translation_lkp" => $lkp,
+					"translation_default" => $ptran_default,
+				);
+			}
+			else
+			{
+				$resp->success = false;
+				$resp->message = "Attribute Already Exists with the Name: ".$ptran_label;
+
+				echo json_encode($resp);
+				Yii::app()->end();
+			}
+		}
+		else
+		{
+			$resp->success = false;
+			$resp->message = "Invalid Attribute Selected for Translation!";
+
+			echo json_encode($resp);
+			Yii::app()->end();
+		}
+
+		$sdb = $kpi_lkp[$domain_id]["vendors"][$vendor_id]["schema_db"];
+		$moctn = $kpi_lkp[$domain_id]["vendors"][$vendor_id]["moc"]["table"];
+		
+		$uresp = Yii::app()->$sdb->createCommand()->update($moctn, array(
+			"virtual_attributes" => json_encode($exist_attrs),
+		), 'id=:id', array(':id'=>$moc->id) );
+		
+		if( $uresp === false )
+		{
+			$resp->success = false;
+			$resp->message = "Unable to update MOC settings after verification.";
+		}
+
+		echo json_encode($resp);
+		Yii::app()->end();
+	}
+
+	public function get_all_attributes($moc, $full_moc_list, $labels=true)
+	{
+		$mc_lkp = array();
+
+		$attrs = array();
+		$attrs [] = "SYSTEM_MOI";
+
+		if( $labels )
+		{
+			$attrs [] = "RAW_DATA_LABEL";
+			$attrs [] = "SYSTEM_USER_LABEL";
+			$attrs [] = "SYSTEM_SEARCH_LABEL";
+		}
+
+		if( isset($moc->parameter_labels) )
+		{
+			$pmlbls = json_decode($moc->parameter_labels, true);
+			foreach ($pmlbls as $pmlbl)
+			{
+				$attrs [] = $pmlbl;
+			}
+		}
+		if( isset($moc->business_ref_labels) )
+		{
+			$brlbls = json_decode($moc->business_ref_labels, true);
+			foreach ($brlbls as $brlbl)
+			{
+				$attrs [] = $brlbl;
+			}
+		}
+		if( isset($moc->virtual_attributes) )
+		{
+			$valbls = json_decode($moc->virtual_attributes, true);
+			foreach ($valbls as $valbl => $vaconfig)
+			{
+				$attrs [] = $valbl;
+			}
+		}		
+
+		foreach ($full_moc_list as $fmoc)
+		{
+			if( !isset($mc_lkp[$fmoc->id]) )
+			{
+				$mc_lkp[$fmoc->id] = array(
+					"name" => $fmoc->name,
+					"parent_id" => $fmoc->parent_id,
+				);
+			}
+		}
+
+		$moc_path = array();
+		if( isset($mc_lkp[$moc->id]) )
+		{
+			$moc_path[] = array(
+				"id" => $moc->id,
+				"name" => $moc->name,
+			);
+
+			$parent_tlkf = $mc_lkp[$moc->id]["parent_id"];
+			while ( $parent_tlkf != null && isset($mc_lkp[$parent_tlkf]) )
+			{
+				$moc_path[] = array(
+					"id" => $parent_tlkf,
+					"name" => $mc_lkp[$parent_tlkf]["name"],
+				);
+
+				$parent_tlkf = $mc_lkp[$parent_tlkf]["parent_id"];
+			}
+		}
+
+		foreach ($moc_path as $pmc)
+		{
+			if( $pmc["name"] == "ems_data_source" )
+			{
+				$attrs [] = "SYSTEM_SOURCE_EMS";
+			}
+			else
+			{
+				$attrs [] = "SYSTEM_MOIP_".$pmc["name"];
+			}
+		}
+
+		return $attrs;
+	}
+
+	public function get_all_attributes_enh($moc, $full_moc_list, $labels=true)
+	{
+		$mc_lkp = array();
+
+		$attrs = array();
+		$attrs [] = array("type"=>1, "attr"=>"SYSTEM_MOI");
+
+		if( $labels )
+		{
+			$attrs [] = array("type"=>1, "attr"=>"RAW_DATA_LABEL");
+			$attrs [] = array("type"=>1, "attr"=>"SYSTEM_USER_LABEL");
+			$attrs [] = array("type"=>1, "attr"=>"SYSTEM_SEARCH_LABEL");
+		}
+
+		if( isset($moc->parameter_labels) )
+		{
+			$pmlbls = json_decode($moc->parameter_labels, true);
+			foreach ($pmlbls as $pmlbl)
+			{
+				$attrs [] = array("type"=>2, "attr"=>$pmlbl);
+			}
+		}
+		if( isset($moc->business_ref_labels) )
+		{
+			$brlbls = json_decode($moc->business_ref_labels, true);
+			foreach ($brlbls as $brlbl)
+			{
+				$attrs [] = array("type"=>3, "attr"=>$brlbl);
+			}
+		}
+		if( isset($moc->virtual_attributes) )
+		{
+			$valbls = json_decode($moc->virtual_attributes, true);
+			foreach ($valbls as $valbl => $vaconfig)
+			{
+				$attrs [] = array("type"=>4, "attr"=>$valbl);
+			}
+		}		
+
+		foreach ($full_moc_list as $fmoc)
+		{
+			if( !isset($mc_lkp[$fmoc->id]) )
+			{
+				$mc_lkp[$fmoc->id] = array(
+					"name" => $fmoc->name,
+					"parent_id" => $fmoc->parent_id,
+				);
+			}
+		}
+
+		$moc_path = array();
+		if( isset($mc_lkp[$moc->id]) )
+		{
+			$moc_path[] = array(
+				"id" => $moc->id,
+				"name" => $moc->name,
+			);
+
+			$parent_tlkf = $mc_lkp[$moc->id]["parent_id"];
+			while ( $parent_tlkf != null && isset($mc_lkp[$parent_tlkf]) )
+			{
+				$moc_path[] = array(
+					"id" => $parent_tlkf,
+					"name" => $mc_lkp[$parent_tlkf]["name"],
+				);
+
+				$parent_tlkf = $mc_lkp[$parent_tlkf]["parent_id"];
+			}
+		}
+
+		foreach ($moc_path as $pmc)
+		{
+			if( $pmc["name"] == "ems_data_source" )
+			{
+				$attrs [] = array("type"=>1, "attr"=>"SYSTEM_SOURCE_EMS");
+			}
+			else
+			{
+				$attrs [] = array("type"=>1, "attr"=>"SYSTEM_MOIP_".$pmc["name"]);
+			}
+		}
+
+		return $attrs;
+	}
+
+	public function actionGetEmsMocs()
+	{
+		$kpi_lkp = Yii::app()->params["kpi_lkp"];
+
+		$integ_list = array();
+		foreach ($kpi_lkp as $domain_id => $domain)
+		{
+			foreach ($domain["vendors"] as $vendor_id => $vendor)
+			{
+				$integ_list [ "ems_{$domain_id}_{$vendor_id}" ] = array( "domain"=>$domain_id, "vendor"=>$vendor_id );
+			}
+		}
+
+		if ( !isset($_POST["integ_id"]) || !isset($integ_list[$_POST["integ_id"]]) )
+		{
+			throw new CHttpException(404, 'The requested page does not exist.');
+		}
+
+		$domain_id = $integ_list[$_POST["integ_id"]]["domain"];
+		$vendor_id = $integ_list[$_POST["integ_id"]]["vendor"];
+
+		$moc_lkp = array();
+		$criteria = new CDbCriteria();  
+		$criteria->select = "id,name,parent_id";
+		$mocs = $kpi_lkp[$domain_id]["vendors"][$vendor_id]["moc"]["class"]::model()->findAll( $criteria );
+		foreach ($mocs as  $moc)
+		{
+			$moc_lkp[$moc->id] = array("name"=>$moc->name, "parent_id"=>$moc->parent_id);
+		}
+
+		$skip_moc = null;
+		if( isset($_POST["curr_domain"]) && trim($_POST["curr_domain"]) != "" && isset($_POST["curr_vendor"]) && trim($_POST["curr_vendor"]) != "" && isset($_POST["curr_moc_id"]) && trim($_POST["curr_moc_id"]) != "" )
+		{
+			if( intval($_POST["curr_domain"]) == $domain_id && intval($_POST["curr_vendor"]) == $vendor_id )
+			{
+				$skip_moc = intval($_POST["curr_moc_id"]);
+			}
+		}
+
+		$moc_alist = array();
+		foreach ($mocs as $key => $moce)
+		{
+			$moc_apath = array();
+			$moc_apath [] = $moce->name;
+
+			$parent_tlkf = $moc_lkp[$moce->id]["parent_id"];
+			while ( $parent_tlkf != null && isset($moc_lkp[$parent_tlkf]) )
+			{
+				$moc_apath [] = $moc_lkp[$parent_tlkf]["name"];
+				$parent_tlkf = $moc_lkp[$parent_tlkf]["parent_id"];
+			}
+
+			$moc_apath = array_reverse($moc_apath);
+
+			if( $skip_moc == null || $skip_moc != $moce->id )
+			{
+				$moc_alist [] = array(
+					"id" => $moce->id,
+					"text" => $moce->name." ( ".implode(' / ', $moc_apath)." ) ",
+				);
+			}
+		}
+
+		echo json_encode($moc_alist);
+		Yii::app()->end();
+	}
+
+	public function actionAllAttributes()
+	{
+		$kpi_lkp = Yii::app()->params["kpi_lkp"];
+
+		$integ_list = array();
+		foreach ($kpi_lkp as $domain_id => $domain)
+		{
+			foreach ($domain["vendors"] as $vendor_id => $vendor)
+			{
+				$integ_list [ "ems_{$domain_id}_{$vendor_id}" ] = array( "domain"=>$domain_id, "vendor"=>$vendor_id );
+			}
+		}
+
+		if( isset($_POST["domain_id"]) && trim($_POST["domain_id"]) != "" && isset($_POST["vendor_id"]) && trim($_POST["vendor_id"]) != "" )
+		{
+			$domain_id = intval($_POST["domain_id"]);
+			$vendor_id = intval($_POST["vendor_id"]);
+
+			if ( !isset($kpi_lkp[$domain_id]) || !isset($kpi_lkp[$domain_id]["vendors"][$vendor_id]) )
+			{
+				throw new CHttpException(400,'Invalid Request.');
+			}
+		}
+		else if( isset($_POST["integ_id"]) && trim($_POST["integ_id"]) != "" && isset( $integ_list[$_POST["integ_id"]] ) )
+		{
+			$domain_id = $integ_list[$_POST["integ_id"]]["domain"];
+			$vendor_id = $integ_list[$_POST["integ_id"]]["vendor"];
+
+			if ( !isset($kpi_lkp[$domain_id]) || !isset($kpi_lkp[$domain_id]["vendors"][$vendor_id]) )
+			{
+				throw new CHttpException(400,'Invalid Request.');
+			}
+		}
+		else
+			throw new CHttpException(400,'Invalid Request.');
+
+		if( isset($_POST["moc_id"]) && trim($_POST["moc_id"]) != "" )
+			$moc_id = intval($_POST["moc_id"]);
+
+		$main_moc = $kpi_lkp[$domain_id]["vendors"][$vendor_id]["moc"]["class"]::model()->findByPk($moc_id);
+		
+		if( $main_moc == null )
+			throw new CHttpException(404, 'The requested page does not exist.');
+
+		$full_moc_list = $kpi_lkp[$domain_id]["vendors"][$vendor_id]["moc"]["class"]::model()->findAll();
+
+		$mc_lkp = array();
+		foreach ($full_moc_list as $moc)
+		{
+			if( !isset($mc_lkp[$moc->id]) )
+			{
+				$mc_lkp[$moc->id] = array(
+					"name" => $moc->name,
+					"parent_id" => $moc->parent_id,
+				);
+			}
+		}
+
+		$moc_path = array();
+		if( isset($mc_lkp[$main_moc->id]) )
+		{
+			$moc_path[] = array(
+				"id" => $main_moc->id,
+				"name" => $main_moc->name,
+			);
+
+			$parent_tlkf = $mc_lkp[$main_moc->id]["parent_id"];
+			while ( $parent_tlkf != null && isset($mc_lkp[$parent_tlkf]) )
+			{
+				$moc_path[] = array(
+					"id" => $parent_tlkf,
+					"name" => $mc_lkp[$parent_tlkf]["name"],
+				);
+
+				$parent_tlkf = $mc_lkp[$parent_tlkf]["parent_id"];
+			}
+		}
+	
+		$resp = array();
+		$resp [] = array( "id" => "SYSTEM_MOI", "text" => "SYSTEM_MOI" );
+		$resp [] = array( "id" => "RAW_DATA_LABEL", "text" => "RAW_DATA_LABEL" );
+		$resp [] = array( "id" => "SYSTEM_USER_LABEL", "text" => "SYSTEM_USER_LABEL" );
+		$resp [] = array( "id" => "SYSTEM_SEARCH_LABEL", "text" => "SYSTEM_SEARCH_LABEL" );
+
+		if( isset($main_moc->parameter_labels) )
+		{
+			$attrslbls = json_decode($main_moc->parameter_labels, true);
+			foreach ($attrslbls as $attrlbl)
+			{
+				$resp [] = array( "id" => $attrlbl, "text" => $attrlbl );
+			}
+		}
+		if( isset($main_moc->business_ref_labels) )
+		{
+			$brlbls = json_decode($main_moc->business_ref_labels, true);
+			foreach ($brlbls as $brlbl)
+			{
+				$resp [] = array( "id" => $brlbl, "text" => $brlbl );
+			}
+		}
+		if( isset($main_moc->virtual_attributes) )
+		{
+			$valbls = json_decode($main_moc->virtual_attributes, true);
+			foreach ($valbls as $valbl => $vaconfig)
+			{
+				$resp [] = array( "id" => $valbl, "text" => $valbl );
+			}
+		}
+
+		foreach ($moc_path as $pmc)
+		{
+			if( $pmc["name"] == "ems_data_source" )
+			{
+				$resp [] = array( "id" => "SYSTEM_SOURCE_EMS", "text" => "SYSTEM_SOURCE_EMS" );
+			}
+			else
+			{
+				$resp [] = array( "id" => "SYSTEM_MOIP_".$pmc["name"], "text" => "SYSTEM_MOIP_".$pmc["name"] );
+			}
+		}
+
+		echo json_encode($resp);
+		Yii::app()->end();
+	}
+
+	public function actionAllAttributesDt()
+	{
+		$kpi_lkp = Yii::app()->params["kpi_lkp"];
+
+		$integ_list = array();
+		foreach ($kpi_lkp as $domain_id => $domain)
+		{
+			foreach ($domain["vendors"] as $vendor_id => $vendor)
+			{
+				$integ_list [ "ems_{$domain_id}_{$vendor_id}" ] = array( "domain"=>$domain_id, "vendor"=>$vendor_id );
+			}
+		}
+
+		if( isset($_POST["domain_id"]) && trim($_POST["domain_id"]) != "" && isset($_POST["vendor_id"]) && trim($_POST["vendor_id"]) != "" )
+		{
+			$domain_id = intval($_POST["domain_id"]);
+			$vendor_id = intval($_POST["vendor_id"]);
+
+			if ( !isset($kpi_lkp[$domain_id]) || !isset($kpi_lkp[$domain_id]["vendors"][$vendor_id]) )
+			{
+				throw new CHttpException(400,'Invalid Request.');
+			}
+		}
+		else if( isset($_POST["integ_id"]) && trim($_POST["integ_id"]) != "" && isset( $integ_list[$_POST["integ_id"]] ) )
+		{
+			$domain_id = $integ_list[$_POST["integ_id"]]["domain"];
+			$vendor_id = $integ_list[$_POST["integ_id"]]["vendor"];
+
+			if ( !isset($kpi_lkp[$domain_id]) || !isset($kpi_lkp[$domain_id]["vendors"][$vendor_id]) )
+			{
+				throw new CHttpException(400,'Invalid Request.');
+			}
+		}
+		else
+			throw new CHttpException(400,'Invalid Request.');
+
+		if( isset($_POST["moc_id"]) && trim($_POST["moc_id"]) != "" )
+			$moc_id = intval($_POST["moc_id"]);
+
+		$main_moc = $kpi_lkp[$domain_id]["vendors"][$vendor_id]["moc"]["class"]::model()->findByPk($moc_id);
+		
+		if( $main_moc == null )
+			throw new CHttpException(404, 'The requested page does not exist.');
+
+		$full_moc_list = $kpi_lkp[$domain_id]["vendors"][$vendor_id]["moc"]["class"]::model()->findAll();
+
+		$mc_lkp = array();
+		foreach ($full_moc_list as $moc)
+		{
+			if( !isset($mc_lkp[$moc->id]) )
+			{
+				$mc_lkp[$moc->id] = array(
+					"name" => $moc->name,
+					"parent_id" => $moc->parent_id,
+				);
+			}
+		}
+
+		$moc_path = array();
+		if( isset($mc_lkp[$main_moc->id]) )
+		{
+			$moc_path[] = array(
+				"id" => $main_moc->id,
+				"name" => $main_moc->name,
+			);
+
+			$parent_tlkf = $mc_lkp[$main_moc->id]["parent_id"];
+			while ( $parent_tlkf != null && isset($mc_lkp[$parent_tlkf]) )
+			{
+				$moc_path[] = array(
+					"id" => $parent_tlkf,
+					"name" => $mc_lkp[$parent_tlkf]["name"],
+				);
+
+				$parent_tlkf = $mc_lkp[$parent_tlkf]["parent_id"];
+			}
+		}
+
+		$type_id = null;
+		if( isset($_POST["attr_type_id"]) && trim($_POST["attr_type_id"]) != "" )
+			$type_id = intval($_POST["attr_type_id"]);
+
+		$resp = new stdClass;
+		$resp->data = array();
+
+		$sr = 0;
+
+		if( $type_id == null || $type_id == 1 || $type_id == 8 )
+		{
+			$sr++;
+			$attr_ent = array();
+			$attr_ent ["sr_no"] = $sr;
+			$attr_ent ["name"] = "SYSTEM_MOI";
+			$attr_ent ["user_label"] = "SYSTEM_MOI";
+			$attr_ent ["type"] = "SYSTEM";
+			$attr_ent ["type_id"] = 1;
+			$attr_ent ["display"] = "Show (#$sr)";
+			$resp->data [] = $attr_ent;
+			$sr++;
+			$attr_ent = array();
+			$attr_ent ["sr_no"] = $sr;
+			$attr_ent ["name"] = "RAW_DATA_LABEL";
+			$attr_ent ["user_label"] = "RAW_DATA_LABEL";
+			$attr_ent ["type"] = "SYSTEM";
+			$attr_ent ["type_id"] = 1;
+			$attr_ent ["display"] = "Show (#$sr)";
+			$resp->data [] = $attr_ent;
+			$sr++;
+			$attr_ent = array();
+			$attr_ent ["sr_no"] = $sr;
+			$attr_ent ["name"] = "SYSTEM_USER_LABEL";
+			$attr_ent ["user_label"] = "SYSTEM_USER_LABEL";
+			$attr_ent ["type"] = "SYSTEM";
+			$attr_ent ["type_id"] = 1;
+			$attr_ent ["display"] = "Show (#$sr)";
+			$resp->data [] = $attr_ent;
+			$sr++;
+			$attr_ent = array();
+			$attr_ent ["sr_no"] = $sr;
+			$attr_ent ["name"] = "SYSTEM_SEARCH_LABEL";
+			$attr_ent ["user_label"] = "SYSTEM_SEARCH_LABEL";
+			$attr_ent ["type"] = "SYSTEM";
+			$attr_ent ["type_id"] = 1;
+			$attr_ent ["display"] = "Show (#$sr)";
+			$resp->data [] = $attr_ent;
+		}
+		if( isset($main_moc->parameter_labels) )
+		{
+			$attrslbls = json_decode($main_moc->parameter_labels, true);
+			foreach ($attrslbls as $attrlbl)
+			{
+				if( $type_id == null || $type_id == 2 )
+				{
+					$sr++;
+					$attr_ent = array();
+					$attr_ent ["sr_no"] = $sr;
+					$attr_ent ["name"] = $attrlbl;
+					$attr_ent ["user_label"] = $attrlbl;
+					$attr_ent ["type"] = "RAW_DATA";
+					$attr_ent ["type_id"] = 2;
+					$attr_ent ["display"] = "Show (#$sr)";
+					$resp->data [] = $attr_ent;
+				}
+			}
+		}
+		if( isset($main_moc->business_ref_labels) )
+		{
+			$brlbls = json_decode($main_moc->business_ref_labels, true);
+			foreach ($brlbls as $brlbl)
+			{
+				if( $type_id == null || $type_id == 3 || $type_id == 8 || $type_id == 9 )
+				{
+					$sr++;
+					$attr_ent = array();
+					$attr_ent ["sr_no"] = $sr;
+					$attr_ent ["name"] = $brlbl;
+					$attr_ent ["user_label"] = $brlbl;
+					$attr_ent ["type"] = "BUSINESS_REFRENTIAL";
+					$attr_ent ["type_id"] = 3;
+					$attr_ent ["display"] = "Show (#$sr)";
+					$resp->data [] = $attr_ent;
+				}
+			}
+		}
+		if( isset($main_moc->virtual_attributes) )
+		{
+			$valbls = json_decode($main_moc->virtual_attributes, true);
+			foreach ($valbls as $valbl => $vaconfig)
+			{
+				$type = null;
+				$type_vid = null;
+				if( $vaconfig["type"] == 1 )
+				{
+					$type = "PARENT_CHILD_ATTRIBUTE";
+					$type_vid = 4;
+				}
+				else if( $vaconfig["type"] == 2 )
+				{
+					$type = "CUSTOM_RELATION_ATTRIBUTE";
+					$type_vid = 5;
+				}
+				else if( $vaconfig["type"] == 3 )
+				{
+					$type = "PSEUDO_CONDITIONAL_ATTRIBUTE";
+					$type_vid = 6;
+				}
+				else if( $vaconfig["type"] == 4 )
+				{
+					$type = "PSEUDO_TRANSLATED_ATTRIBUTE";
+					$type_vid = 7;
+				}
+				else if( $vaconfig["type"] == 5 )
+				{
+					$type = "CHILD_AGGR_ATTRIBUTE";
+					$type_vid = 4;
+				}
+
+				if(
+					$type_id == null || 
+					( $type == "PARENT_CHILD_ATTRIBUTE" && ($type_id == 4 || $type_id == 8 || $type_id == 9) ) ||
+					( $type == "CUSTOM_RELATION_ATTRIBUTE" && ($type_id == 5 || $type_id == 8 || $type_id == 9) ) ||
+					( $type == "PSEUDO_CONDITIONAL_ATTRIBUTE" && ($type_id == 6 || $type_id == 8 || $type_id == 9) ) ||
+					( $type == "PSEUDO_TRANSLATED_ATTRIBUTE" && ($type_id == 7 || $type_id == 8 || $type_id == 9) ) ||
+					( $type == "CHILD_AGGR_ATTRIBUTE" && ($type_id == 11 || $type_id == 8 || $type_id == 9) )
+				)
+				{
+					$sr++;
+					$attr_ent = array();
+					$attr_ent ["sr_no"] = $sr;
+					$attr_ent ["name"] = $valbl;
+					$attr_ent ["user_label"] = $valbl;
+					$attr_ent ["type"] = $type;
+					$attr_ent ["type_id"] = $type_vid;
+					$attr_ent ["display"] = "Show (#$sr)";
+					$resp->data [] = $attr_ent;
+				}
+			}
+		}
+		foreach ($moc_path as $pmc)
+		{
+			$moi_part_label = "";
+			if( $pmc["name"] == "ems_data_source" )
+			{
+				$moi_part_label = "SYSTEM_SOURCE_EMS";
+			}
+			else
+			{
+				$moi_part_label = "SYSTEM_MOIP_".$pmc["name"];
+			}
+
+			if( $type_id == null || $type_id == 10 || $type_id == 8 )
+			{
+				$sr++;
+				$attr_ent = array();
+				$attr_ent ["sr_no"] = $sr;
+				$attr_ent ["name"] = $moi_part_label;
+				$attr_ent ["user_label"] = $moi_part_label;
+				$attr_ent ["type"] = "SYSTEM_MOI_PART";
+				$attr_ent ["type_id"] = 8;
+				$attr_ent ["display"] = "Show (#$sr)";
+				$resp->data [] = $attr_ent;
+			}
+		}
+
+		echo json_encode($resp);
+		Yii::app()->end();
+	}
+
+	public function get_moc_tree($domain_id, $vendor_id, $moc_id=null)
+	{
+		$kpi_lkp = Yii::app()->params["kpi_lkp"];
+		$full_moc_list = $kpi_lkp[$domain_id]["vendors"][$vendor_id]["moc"]["class"]::model()->findAll();
+		
+		$mc_lkp = array();
+		$res_array = array();
+		$moc_path = array();
+
+		foreach ($full_moc_list as $moc)
+		{
+			if( $moc->parent_id == null )
+			{
+				$res_array [] = $this->getFgTreeUnder($moc, $full_moc_list);
+			}
+
+			if( !isset($mc_lkp[$moc->id]) )
+			{
+				$mc_lkp[$moc->id] = array(
+					"user_label" => $moc->user_label,
+					"parent_id" => $moc->parent_id,
+					"technology" => "",
+				);
+
+				if( isset($moc->technology) )
+					$mc_lkp[$moc->id]["technology"] = " ( ".$moc->technology."G )";
+			}
+		}
+
+		usort($res_array, function($a, $b)
+		{
+			return strcmp(strtolower($a->data), strtolower($b->data));
+		});
+
+		if( $moc_id != null && isset($mc_lkp[$moc_id]) )
+		{
+			$moc_path[] = array(
+				"id" => $moc_id,
+				"label" => $mc_lkp[$moc_id]["user_label"].$mc_lkp[$moc_id]["technology"],
+				"curr" => true,
+			);
+
+			$parent_tlkf = $mc_lkp[$moc_id]["parent_id"];
+			while ( $parent_tlkf != null && isset($mc_lkp[$parent_tlkf]) )
+			{
+				$moc_path[] = array(
+					"id" => $parent_tlkf,
+					"label" => $mc_lkp[$parent_tlkf]["user_label"].$mc_lkp[$parent_tlkf]["technology"],
+					"curr" => false,
+				);
+
+				$parent_tlkf = $mc_lkp[$parent_tlkf]["parent_id"];
+			}
+
+			$moc_path = array_reverse($moc_path);
+		}
+
+		return array('tree'=>$res_array, 'list'=>$full_moc_list, 'path'=>$moc_path );
+	}
+
+	public function getFgTreeUnder($moc, $full_moc_list)
+	{
+		$item_obj = new stdClass();
+		$item_obj->id = $moc->id;
+		$item_obj->data = $moc->name;
+		$item_obj->text = "<i class=\"fa fa-bars\"></i>&nbsp;<span>".$moc->user_label."</span>";
+		$item_obj->type = "root";
+		$item_obj->children = array();
+
+		$level_child = $this->getItemChild($moc, $full_moc_list);
+		
+		foreach ($level_child as $child) 
+		{
+			$item_obj->children[] = $this->getFgTreeUnder($child, $full_moc_list);
+		}
+
+
+		usort($item_obj->children, function($a, $b)
+		{
+			return strcmp(strtolower($a->data), strtolower($b->data));
+		});
+
+		return $item_obj;
+	}
+
+	public function getItemChild($moc, $full_moc_list)
+	{
+		$childarr = array();
+		
+		foreach ($full_moc_list as $cmoc)
+		{
+			if( $cmoc->parent_id == $moc->id)
+				$childarr [] = $cmoc;
+		}
+		return $childarr;
+	}
+
+	public function getParsedQBConditions($qb_obj)
+	{
+		$resp = new stdClass;
+		$resp->valid = true;
+		$resp->message = "";
+		$resp->condition = null;
+		$resp->attributes = null;
+
+		try
+		{
+			$attributes = array();
+			$resp->condition = $this->prep_algo_condition($qb_obj, $attributes);
+			$resp->valid = true;
+			$resp->attributes = $attributes;
+		}
+		catch(Exception $e)
+		{
+			$resp->valid = false;
+			$resp->message = $e->getMessage()." (".$e->getLine().") ";
+		}
+
+		return $resp;
+	}
+
+	public function prep_algo_condition($condition_obj, &$attributes)
+	{
+		$condition_string = "";
+		if( isset($condition_obj->condition) && isset($condition_obj->rules) )
+		{
+			if( sizeof($condition_obj->rules) > 0 )
+			{
+				$first = true;
+				foreach ($condition_obj->rules as $nested_rule)
+				{
+					if ( $condition_obj->condition == "AND")
+					{
+						if($first == true)
+						{
+							$condition_string = $condition_string." ". $this->prep_algo_condition($nested_rule, $attributes) ." ";
+							$first = false;
+						}
+						else
+						{
+							$condition_string = $condition_string." AND ". $this->prep_algo_condition($nested_rule, $attributes) ." ";
+						}
+					}
+					else if ( $condition_obj->condition == "OR")
+					{
+						if($first == true)
+						{
+							$condition_string = $condition_string." ". $this->prep_algo_condition($nested_rule, $attributes) ." ";
+							$first = false;
+						}
+						else
+						{
+							$condition_string = $condition_string." OR ". $this->prep_algo_condition($nested_rule, $attributes) ." ";
+						}
+					}
+					else //Empty is AND
+					{
+						throw new Exception("Invalid Condition Found in Filter Description");	
+					}
+				}
+
+				$condition_string = " ( ". $condition_string ." ) ";
+			}
+			else
+			{
+				$condition_string = " ( true ) ";
+			}
+		}
+		else if( isset($condition_obj->id) && isset($condition_obj->operator) )
+		{
+			$condition_string = $this->getRuleToQuery($condition_obj, $attributes);
+		}
+		else
+		{
+			throw new Exception("Invalid Element Found in Filter Description");
+		}
+		return $condition_string;
+	}
+
+	public function getRuleToQuery($rule, &$attributes)
+	{
+		// note if there is AND/OR in definition add brackets
+		$filter_str = "";
+		if( isset($rule->id) && isset($rule->operator) )
+		{
+			if ( $rule->operator == "atr_equal_to" )
+			{
+				if( isset($rule->value) )
+				{
+					$attributes [] = $rule->id;
+					// $filter_str = " t.".$rule->id." = ".floatval($rule->value)." ";
+				}
+				else
+				{
+					throw new Exception("Invalid Value Found in Filter Description");
+				}
+			}
+			else if ( $rule->operator == "atr_greater_then" )
+			{
+				if( isset($rule->value) )
+				{
+					$attributes [] = $rule->id;
+					// $filter_str = " t.".$rule->id." = ".floatval($rule->value)." ";
+				}
+				else
+				{
+					throw new Exception("Invalid Value Found in Filter Description");
+				}
+			}
+			else if ( $rule->operator == "atr_less_then" )
+			{
+				if( isset($rule->value) )
+				{
+					$attributes [] = $rule->id;
+					// $filter_str = " t.".$rule->id." = ".floatval($rule->value)." ";
+				}
+				else
+				{
+					throw new Exception("Invalid Value Found in Filter Description");
+				}
+			}
+			else if ( $rule->operator == "atr_starts_with" )
+			{
+				if( isset($rule->value) )
+				{
+					$attributes [] = $rule->id;
+					// $filter_str = " t.".$rule->id." = ".floatval($rule->value)." ";
+				}
+				else
+				{
+					throw new Exception("Invalid Value Found in Filter Description");
+				}
+			}
+			else if ( $rule->operator == "atr_ends_with" )
+			{
+				if( isset($rule->value) )
+				{
+					$attributes [] = $rule->id;
+					// $filter_str = " t.".$rule->id." = ".floatval($rule->value)." ";
+				}
+				else
+				{
+					throw new Exception("Invalid Value Found in Filter Description");
+				}
+			}
+			else if ( $rule->operator == "atr_is_contains" )
+			{
+				if( isset($rule->value) )
+				{
+					$attributes [] = $rule->id;
+					// $filter_str = " t.".$rule->id." = ".floatval($rule->value)." ";
+				}
+				else
+				{
+					throw new Exception("Invalid Value Found in Filter Description");
+				}
+			}
+			else if ( $rule->operator == "atr_is_not_contains" )
+			{
+				if( isset($rule->value) )
+				{
+					$attributes [] = $rule->id;
+					// $filter_str = " t.".$rule->id." = ".floatval($rule->value)." ";
+				}
+				else
+				{
+					throw new Exception("Invalid Value Found in Filter Description");
+				}
+			}
+			else if ( $rule->operator == "atr_is_empty" )
+			{
+				$attributes [] = $rule->id;
+				// $filter_str = " t.".$rule->id." > ".floatval($rule->value)." ";
+			}
+			else if ( $rule->operator == "atr_is_null" )
+			{
+				$attributes [] = $rule->id;
+				// $filter_str = " t.".$rule->id." < ".floatval($rule->value)." ";
+			}
+			else
+			{
+				throw new Exception("Invalid Operator Found in Filter Description");
+			}
+		}
+		else
+		{
+			throw new Exception("Invalid Element Found in Filter Description");	
+		}
+
+		return $filter_str;
+	}
+}

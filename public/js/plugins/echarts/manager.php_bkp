@@ -1,0 +1,1268 @@
+<?php
+$baseUrl = Yii::app()->baseUrl;
+$cs = Yii::app()->getClientScript();
+
+$cs->registerCssFile($baseUrl. "/themes/inspinia/js/plugins/myDatatables/datatables.min.css");
+$cs->registerCssFile($baseUrl. "/themes/inspinia/css/plugins/toastr/toastr.min.css");
+$cs->registerCssFile($baseUrl. "/themes/inspinia/css/plugins/chosen/bootstrap-chosen.css");
+$cs->registerCssFile($baseUrl . '/themes/inspinia/js/plugins/jstree/dist/themes/default/style.min.css');
+
+$cs->registerScriptFile($baseUrl. "/themes/inspinia/js/plugins/myDatatables/datatables.min.js", CClientScript::POS_BEGIN);
+$cs->registerScriptFile($baseUrl. "/themes/inspinia/js/plugins/myDatatables/dataTables.buttons.min.js", CClientScript::POS_BEGIN);
+$cs->registerScriptFile($baseUrl . "/themes/inspinia/js/plugins/toastr/toastr.min.js", CClientScript::POS_BEGIN);
+$cs->registerScriptFile($baseUrl. "/themes/inspinia/js/plugins/chosen/chosen.jquery.js", CClientScript::POS_BEGIN);
+
+?>
+
+<style type="text/css">
+	.table-hover tbody tr:hover {
+		background-color: #f9f7f7;
+		color: black;
+	}
+	.table td.actions
+	{
+		text-align: center;
+		font-size: 13px;
+		padding: 0px;
+		vertical-align: middle;
+		color: black;
+		width: 100px;
+	}
+	.table thead th
+	{
+		background: #2f4050 !important;
+		color: white;
+	}
+	.table thead th.sorting_asc
+	{
+		color: #a7b1c2;
+		background: #293846 !important;
+		border-bottom: 4px solid #19aa8d;
+	}
+	.table thead th.sorting_desc
+	{
+		color: #a7b1c2;
+		background: #293846 !important;
+		border-bottom: 4px solid #19aa8d;
+	}
+	#example_processing
+	{
+		display: none !important;
+	}
+	.swal2-container
+	{
+		z-index: 2100;
+	}
+	.dt-actions
+	{
+		text-align: center;
+	}
+	.dt-column-bg{max-width: 250px;}
+	.dt-column-vbg{width: 400px;}
+	.dt-column-md{max-width: 150px;}
+
+	div.dataTables_wrapper {
+		margin: 0 auto;
+	}
+
+	.main_tool_box
+	{
+		display: flex;
+		top: 7px;
+	}
+
+	.select2-selection__rendered {
+		line-height: 31px !important;
+	}
+	.select2-container .select2-selection--single {
+		height: 35px !important;
+	}
+	.select2-selection__arrow {
+		height: 34px !important;
+	}
+
+	.ibox-content
+	{
+		padding: 5px 5px 5px 5px;
+	}
+
+	.lpad2
+	{
+		padding: 2px 2px 2px 2px;
+	}
+
+	.no_bottom_margin
+	{
+		margin-bottom: 0px;
+	}
+
+	.wrapper-content
+	{
+		padding: 5px 5px 40px 5px;
+	}
+
+	.dataTables_wrapper
+	{
+		padding-bottom: 0px;
+	}
+
+	#filter_ibox
+	{
+		border: #dadada 1px solid;
+		margin-bottom: 5px;
+	}
+
+	#filter_ibox
+	{
+		border: #dadada 1px solid;
+		margin-bottom: 5px;
+	}
+
+	#filter_ibox .ibox-title
+	{
+		padding: 5px 90px 5px 12px;;
+	}
+
+	#filter_ibox .tabs-container .panel-body
+	{
+		padding: 8px;
+	}
+
+	#filter_ibox .tabs-container .panel-body
+	{
+		padding: 8px;
+	}
+	
+	.jst-anchor:hover
+	{
+		text-decoration: underline;
+	}
+	.jst-anchor
+	{
+		font-size: 12px;
+	}
+
+	#jstree_wrap
+	{
+		height: 700px;
+		overflow: auto;
+	}
+
+	.rule-header{ display: inline } 
+	.error-container{ display: inline } 
+	.rule-filter-container{ display: inline } 
+	.rule-operator-container{ display: inline } 
+	.rule-value-container{ display: inline } 
+	.rules-group-container{ width: 100%; }
+	.query-builder .btn-group.pull-right.group-actions{float: right;}
+	.rule-value-container{width: 40%}
+
+	.modal_blue .modal-header{
+		padding: 2px 4px;
+		height: 54px;
+		background: rgba(47, 66, 80, 1);
+		color: white;
+		border-radius: 2px 2px 0px 0px;
+	}
+	.modal_blue .modal-header .close {
+		padding: 2rem;
+		margin: -1rem -1rem -1rem auto;
+	}
+	.modal_blue .close {
+		background: white;
+		border-radius: 85px;
+		width: 5px;
+		height: 5px;
+		padding: 19px !important;
+		margin: 5px 5px 0px -30px !important;
+	}
+	.modal_blue .close-times{
+		margin: -13px 0px 0px -6px;
+		position: absolute;
+	}
+	.modal_blue .modal-lg {
+		max-width: 1400px;
+		width: 80%;
+	}
+
+	.modal_blue div.modal-body
+	{
+		padding: 20px 30px 0px 30px;
+	}
+
+
+	.orgchart .node .verticalEdge, .orgchart .node .horizontalEdge 
+	{
+		display: none;
+	}
+	.orgchart .node:hover, .orgchart .node.focused 
+	{
+		background: none !important;
+	}
+
+	.orgchart a.role-update-btn
+	{
+		position: absolute;
+		right: 6px;
+		top: 4px;
+		color: black;
+	}
+
+	#role-chart-container
+	{
+		height: 600px;
+	}
+
+	.orgchart
+	{
+		background-image: linear-gradient(90deg, rgba(188, 188, 188, 0.2) 10%, rgba(0, 0, 0, 0) 10%), linear-gradient(rgba(189, 189, 189, 0.2) 10%, rgba(0, 0, 0, 0) 10%);
+		display: block;
+	}
+
+	.orgchart .node .title
+	{
+		background-color: rgb(46, 95, 155);
+		height: unset;
+		line-height: 25px;
+		overflow: none;
+		text-overflow: unset;
+		white-space: nowrap;
+		padding: 3px;
+	}
+
+	.orgchart .node .content
+	{
+		border: 1px solid rgb(46, 95, 155);
+		height: unset;
+		padding: 5px;
+	}
+
+	.orgchart .lines .rightLine
+	{
+		border-right: 1px solid rgb(46, 95, 155);
+	}
+	.orgchart .lines .topLine
+	{
+		border-top: 2px solid rgb(46, 95, 155);
+	}
+	.orgchart .lines .downLine
+	{
+		background-color: rgb(46, 95, 155);
+	}
+	.orgchart .lines .leftLine
+	{
+		border-left: 1px solid rgb(46, 95, 155);
+	}
+	.orgchart .node
+	{
+		width: unset;
+	}
+	.orgchart .node .title .symbol
+	{
+		display: none;
+	}
+	.orgchart table
+	{
+		font-family: -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica Neue,Arial,sans-serif;
+	}
+
+	tr.nodes table
+	{
+		display: inline;
+	}
+
+	#moi_details_tbl_wrap td.sd_h
+	{
+		font-weight: bold;
+	}
+
+	.table > tbody > tr > th,
+	.table > tfoot > tr > th,
+	.table > tbody > tr > td,
+	.table > tfoot > tr > td
+	{
+		padding: 2px !important;
+		color: #333;
+	}
+
+	#kpi_type_dt_srch
+	{
+		background-color: #FFFFFF;
+		background-image: none;
+		border: 1px solid #e5e6e7;
+		border-radius: 1px;
+		color: inherit;
+		padding-top: 6px;
+		padding-right: 12px;
+		padding-bottom: 5px;
+		padding-left: 12px;
+		margin-right: 5px;
+	}
+
+	#kpidt_type_dt_srch
+	{
+		background-color: #FFFFFF;
+		background-image: none;
+		border: 1px solid #e5e6e7;
+		border-radius: 1px;
+		color: inherit;
+		padding-top: 6px;
+		padding-right: 12px;
+		padding-bottom: 5px;
+		padding-left: 12px;
+		margin-right: 5px;
+	}
+
+	#cntr_techid_dt_srch
+	{
+		background-color: #FFFFFF;
+		background-image: none;
+		border: 1px solid #e5e6e7;
+		border-radius: 1px;
+		color: inherit;
+		padding-top: 6px;
+		padding-right: 12px;
+		padding-bottom: 5px;
+		padding-left: 12px;
+		margin-right: 5px;
+	}
+
+	#kpi_techid_dt_srch
+	{
+		background-color: #FFFFFF;
+		background-image: none;
+		border: 1px solid #e5e6e7;
+		border-radius: 1px;
+		color: inherit;
+		padding-top: 6px;
+		padding-right: 12px;
+		padding-bottom: 5px;
+		padding-left: 12px;
+		margin-right: 5px;
+	}
+
+	#ck_techid_dt_srch
+	{
+		background-color: #FFFFFF;
+		background-image: none;
+		border: 1px solid #e5e6e7;
+		border-radius: 1px;
+		color: inherit;
+		padding-top: 6px;
+		padding-right: 12px;
+		padding-bottom: 5px;
+		padding-left: 12px;
+		margin-right: 5px;
+	}
+
+	#formula-builder table
+	{
+		width: 100%;
+		min-width: 200px;
+	}
+
+	#formula-builder button
+	{
+		width: 100%;
+		font-size: 14px !important;
+		font-weight: bold !important;
+		padding: 1px !important;
+		min-height: 27px;
+	}
+
+	#formula-builder .btn-8
+	{
+		width: 12.5%;
+	}
+
+	#formula-builder .clear-btn
+	{
+		margin: 1px;
+	}
+
+	#formula-builder .btn-calc
+	{
+		color: #00000070;
+		background-color: #e7eaec;
+		border-color: #2f405026;
+	}
+
+	#kpi_form_wrap label
+	{
+		margin-bottom: 0px;
+	}
+
+	#kpi_form_wrap .form-group
+	{
+		margin-bottom: 10px;
+	}
+
+
+	#kpi_form_wrap label
+	{
+		margin-bottom: 2px;
+		color: #0c5460;
+		font-size: 11px;
+	}
+
+	#kpi_form_wrap .form-group
+	{
+		margin-bottom: 6px;
+	}
+
+	#kpi_form_wrap hr
+	{
+		margin-top: 0px;
+		margin-bottom: 6px;
+		border-top: 1px solid #f5f5f5;
+	}
+
+	#kpi_form_wrap .form-control, .single-line
+	{
+		padding: 4px 7px;
+		color: #1F1F1F;
+		font-size: 13px;
+	}
+
+	#kpi_form_wrap .chosen-container-single .chosen-single
+	{
+		padding: 1px 7px;
+	}
+
+	#kpi_form_wrap .chosen-container-single .chosen-single
+	{
+		color: #1F1F1F;
+	}
+
+	#kpi_form_wrap .chosen-container-single .chosen-single span
+	{
+		font-size: 13px;
+	}
+
+	.dt-column-bg
+	{
+		white-space: nowrap !important;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		max-width: 200px;
+	}
+
+	.de_comm
+	{
+		background-color: #fd6a02;
+		/*color: black;*/
+	}
+
+	/* KPI formula Style START*/
+	#formula_wrap {
+		line-height: 1.8;
+		text-align: center;
+	}
+
+	#formula_modal .modal-dialog {
+		max-width: 70%;
+	}
+
+	.formula-view-span
+	{
+		padding: 1px 5px;
+		display: inline-block;
+		margin: 2px 1px;
+		text-align: left;
+	}
+
+	.formula-view-kpi
+	{
+		background: #2eacf7;
+		border-radius: 5px;
+		font-weight: normal;
+	}
+
+	.formula-view-counter {
+		border-radius: 5px;
+		font-weight: normal;
+		background: #ddecf4;
+		border: 1px solid #3ab6ff;
+	}
+
+	.formula-view-operand {
+		border-radius: 5px;
+		font-weight: normal;
+		background: #b7b7b7;
+		color: #000;
+		border: 1px solid #888;
+	}
+
+	.formula-view-round, .formula-view-round-up, .formula-view-round-down {
+		border-radius: 5px;
+		text-transform: uppercase;
+		font-weight: bold;
+		background: #efb8ff;
+		border: 1px solid #c015f0;
+		color: #444;
+		background: #f6e6fb;
+
+	}
+
+	.formula-view-ifnull {
+		border-radius: 5px;
+		text-transform: uppercase;
+		font-weight: bold;
+		border: 1px solid #009f09;
+		color: #444;
+		background: #eaffeb;
+	}
+
+	.formula-view-decode {
+		border-radius: 5px;
+		text-transform: uppercase;
+		font-weight: bold;
+		border: 1px solid #017b6a;
+		color: #444;
+		background: #89e8da;
+	}
+
+	.formula-view-log {
+		border-radius: 5px;
+		background: #fbece1;
+		border: 1px solid #994405;
+		color: #444;
+		font-weight: bold;
+	}
+
+	.formula-view-round-brackets {
+		border-radius: 5px;
+		font-weight: normal;
+		background: #fbfbe4;
+		border: 1px solid #f76800;
+		color: black;
+	}
+
+	.formula-view-int-val, .formula-view-float-val  {
+		border-radius: 5px;
+		font-weight: normal;
+		background: #ffbebe;
+		color: #333;
+		border: 1px solid #d56464;
+	}
+
+	.formula-view-plus
+	{
+		background: #886208;
+		color: white;
+	}
+
+	.formula-view-minus
+	{
+		background: #886208;
+		color: white;
+	}
+
+	.formula-view-product
+	{
+		background: #886208;
+		color: white;
+	}
+
+	.formula-view-division
+	{
+		background: #886208;
+		color: white;
+	}
+
+	
+	/* KPI formula Style End*/
+
+	.lo_pad
+	{
+		padding-right: 5px;
+		padding-left: 5px;
+	}
+
+	.bspad
+	{
+		margin-bottom: 7px;
+	}
+
+	.bri_available
+	{
+		color: blue;
+	}
+
+</style>
+
+<link href="<?php echo Yii::app()->request->baseUrl; ?>/themes/inspinia/js/plugins/selectize/dist/css/selectize.bootstrap3.css" rel="stylesheet">
+<link href="<?php echo Yii::app()->request->baseUrl; ?>/themes/inspinia/js/plugins/bootstrap-select/dist/css/bootstrap-select.min.css" rel="stylesheet">
+
+<div id="main_content_div" class="wrapper wrapper-content animated fadeIn">
+
+	<div class="row">
+		<div class="col-lg-3 col-3 lpad2">
+			<div class="ibox" id="topology_ibox">
+			
+				<div class="ibox-title">
+					<h3>Business Refrential Integration: <?php echo $kpi_lkp[$domain_id]["vendors"][$vendor_id]["label"]."-".$kpi_lkp[$domain_id]["label"] ?></h3>
+				</div>
+				<div class="ibox-content">
+
+					<div class="sk-spinner sk-spinner-wave">
+						<div class="sk-rect1"></div>
+						<div class="sk-rect2"></div>
+						<div class="sk-rect3"></div>
+						<div class="sk-rect4"></div>
+						<div class="sk-rect5"></div>
+					</div>
+
+					<div class="btn-group">
+						<input type="button" value="Expand All" class="btn btn-danger btn-xs" id="expand_all">
+						<input type="button" value="Collapse All" class="btn btn-primary btn-xs" id="collapse_all">
+						<input type="button" value="Unselect All" class="btn btn-success btn-xs" id="unselect_all">
+					</div>
+
+					<div class="form-group">
+						<input type="text" id="jstree_q" class="different form-control" placeholder="Search MOC Topology" />
+					</div>
+
+					<div id="jstree_wrap">
+						<div id="jstree" class="jstree-black">
+						</div>
+					</div>
+
+				</div>
+			</div>
+			
+		</div>
+		<div class="col-lg-9 col-9 lpad2">
+			
+			<div class="row">
+				<div class="col-lg-12 col-md-12 col-sm-12">
+					<div class="ibox" id="main_ibox">
+						<div class="ibox-title">
+							<ol class="breadcrumb">
+								<?php foreach ($moc_path as $mocb)
+								{
+									if( $mocb["curr"] )
+									{
+										echo '<li class="breadcrumb-item active">';
+										echo '<a href="'.Yii::app()->createUrl('integration/businessRefrential/manager', array('domain'=>$domain_id, 'vendor'=>$vendor_id, 'moc_id'=>$mocb["id"])).'"><strong>'.$mocb["label"].'</strong></a>';
+										echo "</li>";
+									}
+									else
+									{
+										echo '<li class="breadcrumb-item">';
+										echo '<a href="'.Yii::app()->createUrl('integration/businessRefrential/manager', array('domain'=>$domain_id, 'vendor'=>$vendor_id, 'moc_id'=>$mocb["id"])).'">'.$mocb["label"].'</a>';
+										echo "</li>";
+									}
+								} ?>
+							</ol>
+
+							<div class="ibox-tools">
+								<button class="btn btn-success btn-xs" onclick="update_busref_attribute()"> Update Bussiness Refrential Data</button>
+							</div>
+						</div>
+						<div class="ibox-content">
+
+							<div class="sk-spinner sk-spinner-wave">
+								<div class="sk-rect1"></div>
+								<div class="sk-rect2"></div>
+								<div class="sk-rect3"></div>
+								<div class="sk-rect4"></div>
+								<div class="sk-rect5"></div>
+							</div>
+
+							<?php 
+							if( isset($moc->last_status) )
+							{
+								$last_status = json_decode($moc->last_status, true);
+								if( isset($last_status["success"]) && isset($last_status["message"]) && isset($last_status["run_at"]) )
+								{
+									if( $last_status["success"] === true )
+										echo '<div class="alert alert-success">';
+									else
+										echo '<div class="alert alert-danger">';
+
+									echo '<b>Last Sync done At: '.$last_status["run_at"].'</b><br>';
+									echo $last_status["message"];
+									echo '</div>';
+								}
+							}
+							?>
+
+							<div class="form-group">
+								<h3 class="m-t-lg text-center">Data-Source</h3>
+								<select id="site_type" name="site_type" class="form-control chosen-select">
+									<?php
+									foreach ($site_types as $tid => $type_det) {
+										echo '<option value="'.$tid.'">'.$type_det["label"].'</option>';
+									}
+									?>
+								</select>
+							</div>
+
+							<div class="hr-line-dashed"></div>
+
+							<h3 class="m-t-lg text-center">Entity Matching Configuration</h3>
+
+							<div class="row">
+								<div class="col-6">
+									<div class="form-group">
+										<label class="font-normal">CM Attributes</label>
+										<select id="cm_attributes" name="cm_attributes" multiple class="form-control chosen-select">
+											<?php
+												foreach ($moc->parameter_labels as $pk => $plbl) {
+													echo '<option value="'.$plbl.'">'.$plbl.'</option>';
+												}
+											?>
+										</select>
+									</div>
+								</div>
+
+								<div class="col-6">
+									<div class="form-group">
+										<label class="font-normal">Combine attributes with</label>
+										<input type='text' class="form-control" id="cm_combr" autocomplete="off" placeholder="Leave empty for no seperator"/>
+									</div>
+								</div>
+							</div>
+
+							<div class="row">
+								<div class="col-6">
+									<div class="form-group">
+										<label class="font-normal">Data-Source Attributes</label>
+										<select id="ds_attributes" name="ds_attributes" multiple class="form-control chosen-select">
+										</select>
+									</div>
+								</div>
+
+								<div class="col-6">
+									<div class="form-group">
+										<label class="font-normal">Combine attributes with</label>
+										<input type='text' class="form-control" id="ds_combr" autocomplete="off" placeholder="Leave empty for no seperator" />
+									</div>
+								</div>
+							</div>
+
+							<div class="hr-line-dashed"></div>
+
+							<div class="col-12 form-group">
+								<h3 class="m-t-lg text-center">Attribute Settings</h3>
+								<div class="alert alert-info">All attributes will be synced with default labels if no configuration is added.</div>
+
+								<div id="attr_sett_wrap">
+								</div>
+
+								<div class="form-group align-right">
+									<input type="button" class="btn btn-success" onclick="add_attr_setting()" value="Add CM Attribute"/>
+								</div>
+							</div>
+
+							<div class="hr-line-dashed"></div>
+
+							<div class="form-group align-right">
+								<input type="button" class="btn btn-danger" onclick="reset_settings()" value="Reset Configuration"/>
+								<input type="button" class="btn btn-primary" onclick="save_settings()" value="Save Configuration"/>
+							</div>
+
+						</div>
+					</div>
+				</div>
+			</div>
+
+		</div>
+	</div>
+</div>
+
+<script src="<?php echo $baseUrl; ?>/themes/inspinia/js/plugins/jstree/dist/jstree.min.js"></script>
+<script src="<?php echo $baseUrl; ?>/include/JQuery-expression-builder/src/expression-builder.js"></script>
+<script>
+
+	var domain_id = <?php echo $domain_id; ?>;
+	var vendor_id = <?php echo $vendor_id; ?>;
+	var kpi_lkp = <?php echo json_encode($kpi_lkp); ?>;
+	var curr_moc_id = <?php echo $moc->id; ?>;
+	var moc_path = <?php echo json_encode($moc_path); ?>;
+	var sel_site_type = null;
+	var exist_configs = null;
+
+	<?php if( $moc->business_ref_configs != null ): ?>
+		exist_configs = <?php echo $moc->business_ref_configs; ?>;
+	<?php endif; ?>
+
+	var attr_sett_ind = 0;
+	var attr_set_lkp = [];
+	var site_attr_lkp = <?php echo json_encode($site_attr_lkp); ?>;
+
+	$('.chosen-select').chosen({width: "100%",no_results_text: "No result found.",search_contains: true});
+	$(document).ready(function()
+	{
+		$('.chosen-select').chosen({width: "100%",no_results_text: "No result found.",search_contains: true});
+
+		$('#jstree').jstree({
+			// "checkbox" : {
+			//  "keep_selected_style" : false
+			// },
+			// "checkbox",
+			"plugins": ["search"],
+			"core": {
+				"data": <?php echo json_encode($moc_tree); ?>,
+				"themes": {
+					"icons": false,
+				}
+			},
+			"search": {
+				"show_only_matches": true,
+				// "show_only_matches_children": true,
+				search_callback: function(searchString, node)
+				{
+					if (node.data.toUpperCase().includes(searchString.toUpperCase()) == true) {
+						return node;
+					}
+				}
+			}
+		});
+
+		var to = false;
+		$('#jstree_q').keyup(function() {
+			if (to) {
+				clearTimeout(to);
+			}
+			to = setTimeout(function() {
+				var v = $('#jstree_q').val();
+				$('#jstree').jstree(true).search(v);
+			}, 250);
+		});
+
+		$('#jstree').on('ready.jstree', function() {
+			console.log("Tree is ready.");
+			$('#jstree').jstree("open_all");
+		});
+
+		$('#jstree').on('ready.jstree', function () {
+			$('#jstree').jstree('select_node', curr_moc_id+'');
+			$('#main_ibox').children('.ibox-content').removeClass('sk-loading');
+			$('#topology_ibox').children('.ibox-content').removeClass('sk-loading');
+		});
+
+		$("#jstree").on("select_node.jstree",
+			function(evt, data)
+			{
+				if( parseInt(data.node.id) != curr_moc_id )
+				{
+					var win = window.open("<?php echo Yii::app()->createUrl('integration/businessRefrential/manager')."?domain={$domain_id}&vendor={$vendor_id}"; ?>&moc_id="+data.node.id, "_self");
+					win.focus();
+				}
+			}
+		);
+
+		$('#expand_all').on('click', function() {
+			$('#jstree').jstree("open_all");
+		});
+
+		$('#collapse_all').on('click', function() {
+			$('#jstree').jstree("close_all");
+		});
+
+		$('#unselect_all').on('click', function()
+		{
+			$('#jstree').jstree("deselect_all");
+		});
+	});
+
+	$('#site_type').on('change', function(e)
+	{
+		var st = $("#site_type").val().trim();
+		if( site_attr_lkp["lkp_"+st] !== undefined )
+		{
+			sel_site_type = parseInt(st);
+
+			attr_sett_ind = 0;
+			attr_set_lkp = [];
+			$("#attr_sett_wrap").html("");
+
+			$('#cm_attributes').val([]);
+			$('#cm_attributes').trigger("chosen:updated");
+			$('#cm_combr').val("");
+
+			$('#ds_attributes').find('option').remove();
+			$('#ds_attributes').val([]);
+
+			for (var key in site_attr_lkp["lkp_"+st])
+			{
+				if (site_attr_lkp["lkp_"+st].hasOwnProperty(key))
+				{
+					$('#ds_attributes').append($('<option>', {
+						value: key,
+						text: site_attr_lkp["lkp_"+st][key],
+					}));
+				}
+			}
+			$('#ds_attributes').trigger("chosen:updated");
+			$('#ds_combr').val("");
+		}
+		else
+		{
+			attr_sett_ind = 0;
+			attr_set_lkp = [];
+			$("#attr_sett_wrap").html("");
+
+			$('#cm_attributes').val([]);
+			$('#cm_attributes').trigger("chosen:updated");
+			$('#cm_combr').val("");
+
+			$('#ds_attributes').find('option').remove();
+			$('#ds_attributes').val([]);
+			$('#ds_attributes').trigger("chosen:updated");
+			$('#ds_combr').val("");
+
+			swal({
+			  type: 'warning',
+			  title: 'Invalid Site Type!',
+			  text: 'Select a valid Site Type.',
+			});
+			return false;
+		}
+	});
+
+	if( exist_configs != null && exist_configs.site_type !== undefined && site_attr_lkp["lkp_"+exist_configs.site_type] !== undefined )
+		$('#site_type').val(exist_configs.site_type);
+
+	$('#site_type').trigger("change");
+
+	function add_attr_setting()
+	{
+		var options = "";
+		if( site_attr_lkp["lkp_"+sel_site_type] !== undefined )
+		{
+			for (var key in site_attr_lkp["lkp_"+sel_site_type])
+			{
+				if (site_attr_lkp["lkp_"+sel_site_type].hasOwnProperty(key))
+				{
+					options += '<option value="'+key+'">'+site_attr_lkp["lkp_"+sel_site_type][key]+'</option>';
+				}
+			}
+		}
+		else
+		{
+			swal({
+			  type: 'warning',
+			  title: 'Invalid Site Type!',
+			  text: 'Select a valid Site Type.',
+			});
+			return;
+		}
+
+		attr_sett_ind ++;
+		var ind = "attr_indk_"+attr_sett_ind;
+
+		attr_set_lkp.push(ind);
+
+		var html = '<div class="row bspad tran_conf" id="'+ind+'" >\
+		<div class="col-5 lo_pad">\
+			<select class="attr_id form-control">\
+				'+options+'\
+			</select>\
+			</div>\
+			<div class="col-5 lo_pad">\
+				<input type="text" class="attr_label form-control" placeholder="CM Label (leave empty to keep same)">\
+			</div>\
+			<div class="col-2 lo_pad">\
+				<input type="button" class="btn btn-danger" onclick="remove_key_transform(\''+ind+'\')" value="Remove"/>\
+			</div>\
+		</div>';
+
+		$("#attr_sett_wrap").append( html );
+
+		return ind;
+	}
+
+	function remove_key_transform(ind)
+	{
+		if( attr_set_lkp.indexOf(ind) >= 0 )
+		{
+			$("#"+ind+".tran_conf").remove();
+			attr_set_lkp.splice( attr_set_lkp.indexOf(ind), 1 );
+		}
+	}
+
+	function save_settings()
+	{
+		var conf_ent = {};
+
+		conf_ent.domain_id = domain_id;
+		conf_ent.vendor_id = vendor_id;
+		conf_ent.moc_id = curr_moc_id;
+
+		if( site_attr_lkp["lkp_"+sel_site_type] !== undefined )
+		{
+			conf_ent.site_type = sel_site_type;
+		}
+		else
+		{
+			swal({title: 'Warning!', html: 'Select a valid Site Type.', type: 'warning', timer: 5000,});
+			return false;
+		}		
+
+		var attr_ents = [];
+		var attr_errors = false;
+		if( attr_set_lkp.length > 0 )
+		{
+			for (var i = 0; i < attr_set_lkp.length; i++)
+			{
+				var mel = $("#"+attr_set_lkp[i]+".tran_conf");
+				if( mel.length )
+				{
+					mel.removeClass('has-error');
+
+					var attr_id = mel.find('.attr_id').val();
+					var attr_label = mel.find('.attr_label').val();
+
+					if( attr_id !== undefined && attr_id != null && attr_id.trim() != "" )
+					{
+						var attr_labelf = null;
+
+						if( attr_label !== undefined && attr_label != null && attr_label.trim() != "" )
+							attr_labelf = attr_label.trim();
+
+						attr_ents.push({attr_id:attr_id,attr_label:attr_labelf});
+					}
+					else
+					{
+						mel.addClass('has-error');
+						attr_errors = true;
+					}
+				}
+				else
+				{
+					attr_errors = true;
+					swal({
+					  type: 'error',
+					  title: 'Cofiguration Conflict!',
+					  text: 'We have reached a Conflict State. If problem persists, contact Administrator.',
+					});
+					return false;
+				}
+			}
+		}
+
+		if( attr_errors )
+		{
+			swal({title: 'Cofiguration Invalid!', html: 'Fix the highlighted errors in Attribute Configurations.', type: 'warning', timer: 5000,});
+			return false;
+		}
+
+		conf_ent.attr_confs = attr_ents;
+
+		var cm_attributes = $("#cm_attributes").val();
+		var ds_attributes = $("#ds_attributes").val();
+
+		if( cm_attributes.length < 1 )
+		{
+			swal({title: 'Cofiguration Invalid!', html: 'Add at-least one attribute for CM mapping.', type: 'warning', timer: 5000,});
+			return false;
+		}
+		if( ds_attributes.length < 1 )
+		{
+			swal({title: 'Cofiguration Invalid!', html: 'Add at-least one attribute for Data-Source mapping.', type: 'warning', timer: 5000,});
+			return false;
+		}
+		conf_ent.cm_attributes = cm_attributes;
+		conf_ent.ds_attributes = ds_attributes;
+
+		if( $("#cm_combr").val().trim() !== "" )
+		{
+			conf_ent.cm_combr = $("#cm_combr").val().trim();
+		}
+		if( $("#ds_combr").val().trim() !== "" )
+		{
+			conf_ent.ds_combr = $("#ds_combr").val().trim();
+		}
+
+		$('#main_ibox').children('.ibox-content').addClass('sk-loading');
+		$('#topology_ibox').children('.ibox-content').addClass('sk-loading');
+
+		$.ajax({
+			type: "POST",
+			url: "<?php echo Yii::app()->createUrl('integration/businessRefrential/updateConfigs');?>",
+			dataType: 'json',
+			data: { conf_ent: JSON.stringify(conf_ent) },
+			cache: false,
+			success: function(resp)
+			{
+				$('#main_ibox').children('.ibox-content').removeClass('sk-loading');
+				$('#topology_ibox').children('.ibox-content').removeClass('sk-loading');
+
+				if( resp.success )
+				{
+					swal({
+						title: 'Configs Updated',
+						html: 'Business Refrential Updated Successfully',
+						type: 'success',
+						timer: 3000
+					}).then(function()
+					{
+						location.reload(); 
+						return true;
+					});
+				}
+				else
+				{
+					swal({title: 'Error in Configs Update!', html: "Error Occured While managing Business Refrential Configurations: <b>"+resp.message+"</b>", type: 'error', timer: 15000});
+					console.error(resp);
+					return false;
+				}
+			},
+			error: function(xhr, status, error)
+			{
+				swal({title: 'Error in Configs Update!', html: "Error Occured While managing Business Refrential Configurations, kidnly contact Administrator ", type: 'error', timer: 15000});
+				console.error(xhr);
+				return false;
+			}
+		});
+
+		return true;
+	}
+
+	function reset_settings()
+	{
+		var conf_ent = {};
+
+		conf_ent.domain_id = domain_id;
+		conf_ent.vendor_id = vendor_id;
+		conf_ent.moc_id = curr_moc_id;
+
+		$('#main_ibox').children('.ibox-content').addClass('sk-loading');
+		$('#topology_ibox').children('.ibox-content').addClass('sk-loading');
+
+		$.ajax({
+			type: "POST",
+			url: "<?php echo Yii::app()->createUrl('integration/businessRefrential/resetConfigs');?>",
+			dataType: 'json',
+			data: { conf_ent: JSON.stringify(conf_ent) },
+			cache: false,
+			success: function(resp)
+			{
+				$('#main_ibox').children('.ibox-content').removeClass('sk-loading');
+				$('#topology_ibox').children('.ibox-content').removeClass('sk-loading');
+
+				if( resp.success )
+				{
+					swal({
+						title: 'Configs Reset',
+						html: 'Business Refrential Reset Successfully',
+						type: 'success',
+						timer: 3000
+					}).then(function()
+					{
+						location.reload(); 
+						return true;
+					});
+				}
+				else
+				{
+					swal({title: 'Error in Configs Update!', html: "Error Occured While managing Business Refrential Configurations: <b>"+resp.message+"</b>", type: 'error', timer: 15000});
+					console.error(resp);
+					return false;
+				}
+			},
+			error: function(xhr, status, error)
+			{
+				swal({title: 'Error in Configs Update!', html: "Error Occured While managing Business Refrential Configurations, kidnly contact Administrator ", type: 'error', timer: 15000});
+				console.error(xhr);
+				return false;
+			}
+		});
+
+		return true;
+	}
+
+	function draw_old_settings()
+	{
+		if( exist_configs != null )
+		{
+			if( exist_configs.attribute_configs !== undefined && exist_configs.attribute_configs.length > 0 )
+			{
+				for (var i = 0; i < exist_configs.attribute_configs.length; i++)
+				{
+					var nind = add_attr_setting();
+
+					var mel = $("#"+nind+".tran_conf");
+					if( mel.length )
+					{
+						mel.find('.attr_id').val(exist_configs.attribute_configs[i].attr_id);
+						mel.find('.attr_label').val(exist_configs.attribute_configs[i].attr_label);
+					}
+				}
+			}
+
+			if( exist_configs.cm_attributes !== undefined && exist_configs.cm_attributes.length > 0 )
+			{
+				$('#cm_attributes').val(exist_configs.cm_attributes);
+				$('#cm_attributes').trigger("chosen:updated");
+			}
+
+			if( exist_configs.ds_attributes !== undefined && exist_configs.ds_attributes.length > 0 )
+			{
+				$('#ds_attributes').val(exist_configs.ds_attributes);
+				$('#ds_attributes').trigger("chosen:updated");
+			}
+
+			if( exist_configs.cm_combr !== undefined && exist_configs.cm_combr.trim() != "" )
+			{
+				$('#cm_combr').val(exist_configs.cm_combr);
+			}
+
+			if( exist_configs.ds_combr !== undefined && exist_configs.ds_combr.trim() != "" )
+			{
+				$('#ds_combr').val(exist_configs.ds_combr);
+			}
+		}
+	}
+	draw_old_settings();
+
+	function update_busref_attribute()
+	{
+		$('#main_ibox').children('.ibox-content').addClass('sk-loading');
+		$('#topology_ibox').children('.ibox-content').addClass('sk-loading');
+		$.post( "<?php echo Yii::app()->createUrl('integration/businessRefrential/updateAttributes'); ?>", 
+		{
+			domain_id: domain_id,
+			vendor_id: vendor_id,
+			moc_id: <?php echo $moc->id; ?>,
+		})
+		.done(function( resp_dt )
+		{
+			$('#main_ibox').children('.ibox-content').removeClass('sk-loading');
+			$('#topology_ibox').children('.ibox-content').removeClass('sk-loading');
+
+			var resp_data = JSON.parse(resp_dt);
+			if( resp_data.success )
+			{
+				swal({title: 'Success!', html: "Business Refrential Attributes Computed Successfully.", type: 'success', timer: 15000});
+
+				setTimeout(function() 
+				{
+					location.reload();
+				},1000);
+			}
+			else
+			{
+				swal({title: 'Error!', html: "Error Computing Business Refrential Attributes: "+resp_data.message, type: 'error', timer: 15000});
+				console.error(resp_data);
+				return false;
+			}
+
+		}).fail(function() 
+		{
+			$('#main_ibox').children('.ibox-content').removeClass('sk-loading');
+			$('#topology_ibox').children('.ibox-content').removeClass('sk-loading');
+			toastr.options = {
+				closeButton: true,
+				progressBar: true,
+				showMethod: 'slideDown',
+				timeOut: 10000
+			};
+			toastr.error( "We encountered an error while fetching data. Kindly Refresh the Page. If Error Presists please contact Administrator.", 'Error' );
+		});
+	}
+
+</script>

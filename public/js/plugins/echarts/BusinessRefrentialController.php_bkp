@@ -1,0 +1,521 @@
+<?php
+
+class BusinessRefrentialController extends IntegrationController
+{
+	public function filters()
+	{
+		return array(
+			// 'setCreds',
+			'accessSimpleCheck',
+		);
+	}
+
+	public function actionManager($domain, $vendor)
+	{
+		$kpi_lkp = Yii::app()->params["kpi_lkp"];
+
+		$domain_id = intval($domain);
+		$vendor_id = intval($vendor);
+
+		if ( !isset($kpi_lkp[$domain_id]) || !isset($kpi_lkp[$domain_id]["vendors"][$vendor_id]) )
+		{
+			throw new CHttpException(404, 'The requested page does not exist.');
+		}
+
+		$moc = null;
+		if( isset($_GET["moc_id"]) && trim($_GET["moc_id"]) != "" )
+		{
+			$moc = $kpi_lkp[$domain_id]["vendors"][$vendor_id]["moc"]["class"]::model()->findByPk( intval($_GET["moc_id"]) );
+		}
+		else
+		{
+			// if no MOC selected set to Server Level
+			$moc = $kpi_lkp[$domain_id]["vendors"][$vendor_id]["moc"]["class"]::model()->findByPk( 1 );
+		}
+
+		if( $moc == null )
+			throw new CHttpException(404,'The requested page does not exist.');
+
+		if( isset($moc->parameter_labels) )
+			$moc->parameter_labels = json_decode($moc->parameter_labels, true);
+		else
+			$moc->parameter_labels = array();
+
+		$moc_resp = $this->get_moc_tree( $kpi_lkp[$domain_id]["vendors"][$vendor_id]["moc"]["class"], $moc->id);
+
+		$moc_tree = $moc_resp["moc_tree"];
+		$moc_path = $moc_resp["moc_path"];
+
+		unset($moc_resp);
+
+		$ems_col = null;
+
+		if( $moc->id != 1 )
+		{
+			$ems_col = array("key"=>"cm_ems_name", "label"=>"EMS");
+		}
+
+		$site_types = IntegrationFunctionHelper::get_site_types();
+		$site_attr_lkp = array();
+
+		foreach ($site_types as $tid => $type_det)
+		{
+			$attr_resp = IntegrationFunctionHelper::site_attributes_by_type($tid);
+			if( $attr_resp->success )
+			{
+				$site_attr_lkp ["lkp_".$tid] = $attr_resp->data;
+			}
+			else
+			{
+				throw new CHttpException(500,'Error while communicating with Data-Source: '.$attr_resp->message);
+			}
+		}
+		
+		$this->render('manager', array(
+			'moc'=>$moc,
+			'kpi_lkp' => $kpi_lkp,
+			'moc_tree' => $moc_tree,
+			'moc_path' => $moc_path,
+			'domain_id' => $domain_id,
+			'vendor_id' => $vendor_id,
+			'ems_col'=>$ems_col,
+			'site_types'=>$site_types,
+			'site_attr_lkp'=>$site_attr_lkp,
+		));
+	}
+
+	private function get_moc_tree($moc_class, $moc_id = null)
+	{
+		$full_moc_list = $moc_class::model()->findAll();
+
+		$res_array = array();
+		$res_array["moc_tree"] = array();
+		$res_array["moc_path"] = array();
+		$mc_lkp = array();
+
+		foreach ($full_moc_list as $moc)
+		{
+			if( $moc->parent_id == null )
+			{
+				$res_array["moc_tree"] [] = $this->getFgTreeUnder($moc, $full_moc_list);
+			}
+
+			if( !isset($mc_lkp[$moc->id]) )
+			{
+				$mc_lkp[$moc->id] = array(
+					"user_label" => $moc->user_label,
+					"name" => $moc->name,
+					"parent_id" => $moc->parent_id,
+				);
+			}
+		}
+
+		usort($res_array["moc_tree"], function($a, $b)
+		{
+		    return strcmp(strtolower($a->data), strtolower($b->data));
+		});
+
+
+		if( $moc_id != null && isset($mc_lkp[$moc_id]) )
+		{
+			$res_array["moc_path"][] = array(
+				"id" => $moc_id,
+				"label" => $mc_lkp[$moc_id]["user_label"],
+				"sname" => $mc_lkp[$moc_id]["name"],
+				"curr" => true,
+			);
+
+			$parent_tlkf = $mc_lkp[$moc_id]["parent_id"];
+			while ( $parent_tlkf != null && isset($mc_lkp[$parent_tlkf]) )
+			{
+				$res_array["moc_path"][] = array(
+					"id" => $parent_tlkf,
+					"label" => $mc_lkp[$parent_tlkf]["user_label"],
+					"sname" => $mc_lkp[$parent_tlkf]["name"],
+					"curr" => false,
+				);
+
+				$parent_tlkf = $mc_lkp[$parent_tlkf]["parent_id"];
+			}
+
+			$res_array["moc_path"] = array_reverse($res_array["moc_path"]);
+		}
+
+		return $res_array;
+	}
+
+	private function getFgTreeUnder($moc, $full_moc_list)
+	{
+		$item_obj = new stdClass();
+		$item_obj->id = $moc->id;
+		$item_obj->data = $moc->name;
+
+		$item_obj->text = "<i class=\"fa fa-bars\"></i>  ".$moc->user_label;
+
+		if( isset($moc->business_ref_configs) )
+			$item_obj->text = "<i class=\"fa fa-bars\"></i> <text class=\"bri_available\">".$moc->user_label."</text>";
+		else
+			$item_obj->text = "<i class=\"fa fa-bars\"></i> <text>".$moc->user_label."</text>";
+
+
+		$item_obj->type = "root";
+		$item_obj->children = array();
+
+		$level_child = self::getItemChild($moc, $full_moc_list);
+		
+    	foreach ($level_child as $child) 
+    	{
+    		$item_obj->children[] =  self::getFgTreeUnder($child, $full_moc_list);
+		}
+
+
+		usort($item_obj->children, function($a, $b)
+		{
+		    return strcmp(strtolower($a->data), strtolower($b->data));
+		});
+
+		return $item_obj;
+	}
+
+	private function getItemChild($moc, $full_moc_list)
+	{
+		$childarr = array();
+		
+		foreach ($full_moc_list as $cmoc)
+		{
+			if( $cmoc->parent_id == $moc->id)
+				$childarr [] = $cmoc;
+		}
+		return $childarr;
+	}
+
+	public function actionUpdateConfigs()
+	{
+		ini_set("memory_limit", '8192M');
+		set_time_limit(300);
+
+		$resp = new stdClass;
+		$resp->success = true;
+		$resp->message = "";
+
+		if( isset($_POST["conf_ent"]) && !empty($_POST["conf_ent"]) )
+		{
+			$configs = json_decode($_POST["conf_ent"], true);
+
+			if( json_last_error() == JSON_ERROR_NONE )
+			{
+				$domain_id = null;
+				$vendor_id = null;
+
+				$kpi_lkp = Yii::app()->params["kpi_lkp"];
+				if( isset($configs["domain_id"]) && trim($configs["domain_id"]) != "" && isset($configs["vendor_id"]) && trim($configs["vendor_id"]) != "" )
+				{
+					$domain_id = intval($configs["domain_id"]);
+					$vendor_id = intval($configs["vendor_id"]);
+
+					if ( !isset($kpi_lkp[$domain_id]) || !isset($kpi_lkp[$domain_id]["vendors"][$vendor_id]) )
+					{
+						$resp->success = false;
+						$resp->message = "Invalid Request!";
+
+						echo json_encode($resp);
+						Yii::app()->end();
+					}
+				}
+				else
+				{
+					$resp->success = false;
+					$resp->message = "Invalid Request!";
+
+					echo json_encode($resp);
+					Yii::app()->end();
+				}
+
+				if( isset($configs["moc_id"]) && trim($configs["moc_id"]) != "" )
+				{
+					$moc_id = intval($configs["moc_id"]);
+					$moc = $kpi_lkp[$domain_id]["vendors"][$vendor_id]["moc"]["class"]::model()->findByPk( $moc_id );
+
+					if( $moc == null )
+					{
+						$resp->success = false;
+						$resp->message = "Invalid Request!";
+
+						echo json_encode($resp);
+						Yii::app()->end();
+					}
+				}
+
+				if( isset($moc->parameter_labels) )
+					$moc->parameter_labels = json_decode($moc->parameter_labels, true);
+				else
+					$moc->parameter_labels = array();
+
+
+				$final_confs = array();
+				
+				$site_types = IntegrationFunctionHelper::get_site_types();
+				if( !isset($configs["site_type"]) || trim($configs["site_type"]) == "" || !isset($site_types[intval($configs["site_type"])]) || !isset($configs["cm_attributes"]) || sizeof($configs["cm_attributes"]) < 1 || !isset($configs["ds_attributes"]) || sizeof($configs["ds_attributes"]) < 1 )
+				{
+					$resp->success = false;
+					$resp->message = "Invalid Request!";
+
+					echo json_encode($resp);
+					Yii::app()->end();
+				}
+
+				$fattrs = null;
+				$final_confs["site_type"] = intval($configs["site_type"]);
+				$attr_resp = IntegrationFunctionHelper::site_attributes_by_type( intval($configs["site_type"]) );
+				if( $attr_resp->success )
+				{
+					$fattrs = $attr_resp->data;
+				}
+				else
+				{
+					throw new CHttpException(500,'Error while communicating with Data-Source: '.$attr_resp->message);
+				}
+
+				if( isset($configs["attr_confs"]) && sizeof($configs["attr_confs"]) > 0 )
+				{
+					foreach ($configs["attr_confs"] as $key => $atr_conf)
+					{
+						if( !isset($atr_conf["attr_id"]) || !isset($fattrs[$atr_conf["attr_id"]] ) )
+						{
+							$resp->success = false;
+							$resp->message = "Invalid Request!";
+
+							echo json_encode($resp);
+							Yii::app()->end();
+						}
+
+						if( isset($atr_conf["attr_label"]) && trim($atr_conf["attr_label"]) != "" )
+						{
+							$configs["attr_confs"][$key]["attr_label"] = trim($atr_conf["attr_label"]);
+						}
+						else
+						{
+							$configs["attr_confs"][$key]["attr_label"] = null;
+						}
+					}
+
+					$final_confs["attribute_configs"] = $configs["attr_confs"];
+				}
+
+				foreach ($configs["cm_attributes"] as $cm_attr)
+				{
+					if( !in_array($cm_attr, $moc->parameter_labels) )
+					{
+						$resp->success = false;
+						$resp->message = "Invalid Request!";
+
+						echo json_encode($resp);
+						Yii::app()->end();
+					}
+				}
+
+				$final_confs["cm_attributes"] = $configs["cm_attributes"];
+
+				foreach ($configs["ds_attributes"] as $ds_attr)
+				{
+					if( !isset($fattrs[$ds_attr]) )
+					{
+						$resp->success = false;
+						$resp->message = "Invalid Request!";
+
+						echo json_encode($resp);
+						Yii::app()->end();
+					}
+				}
+
+				$final_confs["ds_attributes"] = $configs["ds_attributes"];
+
+				if( isset($configs["cm_combr"]) && trim($configs["cm_combr"]) != "" )
+				{
+					$final_confs["cm_combr"] = trim($configs["cm_combr"]);
+				}
+
+				if( isset($configs["ds_combr"]) && trim($configs["ds_combr"]) != "" )
+				{
+					$final_confs["ds_combr"] = trim($configs["ds_combr"]);
+				}
+
+				$farray = array(
+					"business_ref_configs" => json_encode($final_confs),
+					"business_ref_labels" => null,
+					"last_status" => null,
+				);
+
+				$sdb = $kpi_lkp[$domain_id]["vendors"][$vendor_id]["schema_db"];
+				$mtbln = $kpi_lkp[$domain_id]["vendors"][$vendor_id]["moc"]["table"];
+				$inresp = Yii::app()->$sdb->createCommand()->update( $mtbln, $farray, " id = ".$moc_id );
+				if( !$inresp )
+				{
+					$resp->success = false;
+					$resp->message = "Error Managing Business Refrential Configurations in DB after everything";
+				}
+			}
+			else
+			{
+				$resp->success = false;
+				$resp->message = "Invalid Request!";
+			}
+		}
+		else
+		{
+			$resp->success = false;
+			$resp->message = "Invalid Request!";
+		}
+
+		echo json_encode($resp);
+		Yii::app()->end();
+	}
+
+	public function actionResetConfigs()
+	{
+		ini_set("memory_limit", '8192M');
+		set_time_limit(300);
+
+		$resp = new stdClass;
+		$resp->success = true;
+		$resp->message = "";
+
+		if( isset($_POST["conf_ent"]) && !empty($_POST["conf_ent"]) )
+		{
+			$configs = json_decode($_POST["conf_ent"], true);
+
+			if( json_last_error() == JSON_ERROR_NONE )
+			{
+				$domain_id = null;
+				$vendor_id = null;
+
+				$kpi_lkp = Yii::app()->params["kpi_lkp"];        
+				if( isset($configs["domain_id"]) && trim($configs["domain_id"]) != "" && isset($configs["vendor_id"]) && trim($configs["vendor_id"]) != "" )
+				{
+					$domain_id = intval($configs["domain_id"]);
+					$vendor_id = intval($configs["vendor_id"]);
+
+					if ( !isset($kpi_lkp[$domain_id]) || !isset($kpi_lkp[$domain_id]["vendors"][$vendor_id]) )
+					{
+						$resp->success = false;
+						$resp->message = "Invalid Request!";
+
+						echo json_encode($resp);
+						Yii::app()->end();
+					}
+				}
+				else
+				{
+					$resp->success = false;
+					$resp->message = "Invalid Request!";
+
+					echo json_encode($resp);
+					Yii::app()->end();
+				}
+
+				if( isset($configs["moc_id"]) && trim($configs["moc_id"]) != "" )
+				{
+					$moc_id = intval($configs["moc_id"]);
+					$moc = $kpi_lkp[$domain_id]["vendors"][$vendor_id]["moc"]["class"]::model()->findByPk( $moc_id );
+
+					if( $moc == null )
+					{
+						$resp->success = false;
+						$resp->message = "Invalid Request!";
+
+						echo json_encode($resp);
+						Yii::app()->end();
+					}
+				}
+
+				$farray = array(
+					"business_ref_configs" => null,
+					"business_ref_labels" => null,
+					"last_status" => null,
+				);
+
+				$sdb = $kpi_lkp[$domain_id]["vendors"][$vendor_id]["schema_db"];
+				$mtbln = $kpi_lkp[$domain_id]["vendors"][$vendor_id]["moc"]["table"];
+				$moitbln = $kpi_lkp[$domain_id]["vendors"][$vendor_id]["moi"]["table"];
+
+
+				$inresp = Yii::app()->$sdb->createCommand()->update( $mtbln, $farray, " id = ".$moc_id );
+				if( !$inresp )
+				{
+					$resp->success = false;
+					$resp->message = "Error Managing Business Refrential Configurations in DB after everything";
+				}
+
+				// Update MOIs here
+				if( $moc->business_ref_configs != null && $moc->last_status != null )
+				{
+					// only if there was a setting present previously and it was ran (indicatued by last_status)
+					$farray = array(
+						"business_ref_data" => null,
+					);
+
+					$inresp = Yii::app()->$sdb->createCommand()->update( $moitbln, $farray, " moc_id = ".$moc_id );
+					if( !$inresp )
+					{
+						$resp->success = false;
+						$resp->message = "Error Managing Business Refrential Configurations in MOIs";
+					}
+				}
+				// Update MOIs here
+			}
+			else
+			{
+				$resp->success = false;
+				$resp->message = "Invalid Request!";
+			}
+		}
+		else
+		{
+			$resp->success = false;
+			$resp->message = "Invalid Request!";
+		}
+
+		echo json_encode($resp);
+		Yii::app()->end();
+	}
+
+	public function actionUpdateAttributes()
+	{
+		$kpi_lkp = Yii::app()->params["kpi_lkp"];
+
+		if ( !isset($_POST["domain_id"]) || !isset($_POST["vendor_id"]) || !isset($_POST["moc_id"]) )
+		{
+			throw new CHttpException(404, 'The requested page does not exist.');
+		}
+
+		$domain_id = intval($_POST["domain_id"]);
+		$vendor_id = intval($_POST["vendor_id"]);
+		$moc_id = intval($_POST["moc_id"]);
+
+		if ( !isset($kpi_lkp[$domain_id]) || !isset($kpi_lkp[$domain_id]["vendors"][$vendor_id]) )
+		{
+			throw new CHttpException(404, 'The requested page does not exist.');
+		}
+
+		$moc = $kpi_lkp[$domain_id]["vendors"][$vendor_id]["moc"]["class"]::model()->findByPk($moc_id);
+		if( $moc == null )
+			throw new CHttpException(404, 'The requested page does not exist.');
+
+		$resp = new stdClass;
+		$resp->success = true;
+		$resp->message = "";
+
+		if( isset($moc->business_ref_configs) )
+		{
+			$moi_upd_resp = IntegrationFunctionHelper::update_moc_business_refrential( $domain_id, $vendor_id, $moc_id );
+			if( !$moi_upd_resp->success )
+			{
+				$resp->success = false;
+				$resp->message = "Error: ".$moi_upd_resp->message;
+			}
+		}
+
+		echo json_encode($resp);
+		Yii::app()->end();
+	}
+}
