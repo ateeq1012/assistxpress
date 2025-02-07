@@ -36,38 +36,42 @@
     .rule-value-container textarea {border-radius: 5px; }
     .select2-results__option[aria-selected=true] {display: none; }
     #escalation-table td {padding: 3px 8px !important; }
+    #reminder-table td {padding: 3px 8px !important; }
     .checkbox-cell {min-width: 55px !important; }
 </style>
 <div class="wrapper wrapper-content animated fadeInRight">
     <div class="container">
         <div class="row">
             <div class="col-lg-12">
-                <form id="sla_form" method="POST" action="{{ route('sla_rules.update', $sla_rule->id) }}" enctype="multipart/form-data">
-                    @csrf
-                    @method('PUT')
-                    <div class="ibox-title">
-                        <h5>Edit SLA Rule</h5>
-                        <div class="ibox-tools">
-                            <a href="{{ route('sla_rules.index') }}" class="btn btn-success btn-xs" style="color:white !important;">Manage SLA Rules</a>
-                            <button id='submit' type="submit" class="btn btn-primary btn-xs">Update SLA Rule</button>
-                        </div>
+                <div class="ibox-title">
+                    <h5>Edit SLA Rule</h5>
+                    <div class="ibox-tools">
+                        <a href="{{ route('sla_rules.index') }}" class="btn btn-success btn-xs" style="color:white !important;">Manage SLA Rules</a>
+                        <button id='submit-button' type="submit" class="btn btn-primary btn-xs">Update SLA Rule</button>
                     </div>
-                    <div class="ibox-content">
-                        @if (session('error'))
-                            <div class="alert alert-danger alert-dismissable">
-                                <button aria-hidden="true" data-dismiss="alert" class="close" type="button">×</button>
-                                {{ session('error') }}
-                            </div>
-                        @endif
-                        @if ($errors->any())
-                            <div class="alert alert-danger">
-                                <ul>
-                                    @foreach ($errors->all() as $error)
-                                        <li>{{ $error }}</li>
-                                    @endforeach
-                                </ul>
-                            </div>
-                        @endif
+                </div>
+                <div class="ibox-content">
+                    @if (session('error'))
+                        <div class="alert alert-danger alert-dismissable">
+                            <button aria-hidden="true" data-dismiss="alert" class="close" type="button">×</button>
+                            {{ session('error') }}
+                        </div>
+                    @endif
+                    @if ($errors->any())
+                        <div class="alert alert-danger">
+                            <ul>
+                                @foreach ($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
+
+                    <div id='ajax-errors'></div>
+                    
+                    <form id="sla_form" method="POST" action="{{ route('sla_rules.update', $sla_rule->id) }}" enctype="multipart/form-data">
+                        @csrf
+                        @method('PUT')
 
                         <div class="tabs-container">
                             <ul class="nav nav-tabs" role="tablist">
@@ -80,18 +84,18 @@
                                 <div role="tabpanel" id="tab-1" class="tab-pane active">
                                     <div class="panel-body">
                                         <div class="form-group">
-                                            <label for="rule_name">SLA Rule Name</label>
-                                            <input type="text" name="rule_name" class="form-control" value="{{ old('rule_name', $sla_rule->name) ?? '' }}">
+                                            <label for="name">SLA Rule Name</label>
+                                            <input type="text" name="name" class="form-control" value="{{ $sla_rule->name ?? '' }}">
                                         </div>
 
                                         <div class="form-group">
                                             <label for="description">Description</label>
-                                            <textarea name="description" class="form-control" id="description">{{ old('description', $sla_rule->description) ?? '' }}</textarea>
+                                            <textarea name="description" class="form-control" id="description">{{ $sla_rule->description ?? '' }}</textarea>
                                         </div>
 
                                         <div class="form-group">
                                             <label for="color">Color</label>
-                                            <input type="color" class="form-control p-0" name='color' id="color" value="{{ old('color', $sla_rule->color) ?? '#d1dade' }}"  title="Choose your color">
+                                            <input type="color" class="form-control p-0" name='color' id="color" value="{{ $sla_rule->color ?? '#d1dade' }}"  title="Choose your color">
                                         </div>
                                         <div class="panel panel-primary">
                                             <div class="panel-heading"><strong>Execution SLA: </strong></div>
@@ -100,13 +104,13 @@
                                                     <div class="col-lg-6 pr-0">
                                                         <div class="form-group <?php echo ($errors->has('response_time')) ? 'has-error' : ''; ?>">
                                                             <label for="response_time">Time to Own (TTO) SLA:<small>(hh:mm)</small></label>
-                                                            <input type="text" name="response_time" class="form-control" placeholder="hh:mm" value="{{ old('response_time', $sla_settings['response_time']) ?? '' }}">
+                                                            <input type="text" name="response_time" class="form-control" placeholder="hh:mm" value="{{ $sla_settings['response_time'] ?? '' }}">
                                                         </div>
                                                     </div>
                                                     <div class="col-lg-6">
                                                         <div class="form-group <?php echo ($errors->has('resolution_time')) ? 'has-error' : ''; ?>">
                                                             <label for="resolution_time">Time to Resolve (TTR) SLA:<small>(hh:mm)</small></label>
-                                                            <input type="text" name="resolution_time" class="form-control" placeholder="hh:mm" value="{{ old('resolution_time', $sla_settings['resolution_time']) ?? '' }}">
+                                                            <input type="text" name="resolution_time" class="form-control" placeholder="hh:mm" value="{{ $sla_settings['resolution_time'] ?? '' }}">
                                                         </div>
                                                     </div>
                                                 </div>
@@ -135,13 +139,13 @@
                                                     <div class="col-lg-2">
                                                         <div class="form-group <?php echo ($errors->has('start_time')) ? 'has-error' : ''; ?>">
                                                             <label for="start_time">Day Start: <small>(hh:mm)</small></label>
-                                                            <input type="text" name="start_time" class="form-control" placeholder="hh:mm" value="{{ old('start_time', $sla_settings['start_time']) ?? '' }}">
+                                                            <input type="text" name="start_time" class="form-control" placeholder="hh:mm" value="{{ $sla_settings['start_time'] ?? '' }}">
                                                         </div>
                                                     </div>
                                                     <div class="col-lg-2">
                                                         <div class="form-group <?php echo ($errors->has('end_time')) ? 'has-error' : ''; ?>">
                                                             <label for="end_time">Day End: <small>(hh:mm)</small></label>
-                                                            <input type="text" name="end_time" class="form-control" placeholder="hh:mm" value="{{ old('end_time', $sla_settings['end_time']) ?? '' }}">
+                                                            <input type="text" name="end_time" class="form-control" placeholder="hh:mm" value="{{ $sla_settings['end_time'] ?? '' }}">
                                                         </div>
                                                     </div>
                                                 </div>
@@ -210,11 +214,7 @@
                                                                                 data-rv="{{ $esc_key }}_{{ $notif_key }}"
                                                                                 data-cv="c_{{ $percentage }}"
                                                                                 value="{{ $percentage }}"
-                                                                                @if (old("reminder"))
-                                                                                    {{ old("reminder.{$esc_key}.{$notif_key}.{$percentage}") == $percentage ? 'checked' : '' }}
-                                                                                @elseif (isset($sla_settings['escalations'][$esc_key][$notif_key][$percentage]))
-                                                                                    checked
-                                                                                @endif
+                                                                                {{ ($sla_settings['reminders'][$esc_key][$notif_key][$percentage] ?? '') == $percentage ? 'checked' : '' }}
                                                                             >
                                                                             @if (!$loop->last)
                                                                                 <a href="#" class="ml-2 replicate-btn" title="Replicate Settings Right"><i class="fa fa-angle-double-right"></i></a>
@@ -250,10 +250,8 @@
                                                                 @if(session('user_routes')['users.search'] ?? false)
                                                                     <select data-placeholder="Search Users" id="issuer_esc_l1" name="issuer_esc_l1[]" class="form-control users-search-field" multiple="multiple">
                                                                         @foreach ($users as $id => $name)
-                                                                            @if(old('issuer_esc_l1') !== null && in_array($id, old('issuer_esc_l1', [])))
-                                                                                <option value="{{ $id }}" selected>{{ $name }}</option>
-                                                                            @elseif(isset($sla_settings['escalation_users']['l1']['issuer_esc_l1']) && in_array($id, $sla_settings['escalation_users']['l1']['issuer_esc_l1']))
-                                                                                <option value="{{ $id }}" {{ old('issuer_esc_l1') === null ? 'selected' : '' }} >{{ $name }}</option>
+                                                                            @if(in_array($id, $sla_settings['escalation_users']['l1']['issuer_esc_l1'] ?? []))
+                                                                                <option value="{{ $id }}"  selected>{{ $name }}</option>
                                                                             @endif
                                                                         @endforeach
                                                                     </select>
@@ -264,13 +262,7 @@
                                                                     class="form-control mt-1"
                                                                     placeholder="Add emails for people that are not in the system"
                                                                     id="issuer_esc_l1_emails"
-                                                                    rows="2">
-                                                                    @if(old('issuer_esc_l1_emails'))
-                                                                        {{old('issuer_esc_l1_emails')}}
-                                                                    @elseif(isset($sla_settings['escalation_users']['l1']['issuer_esc_l1_emails']))
-                                                                        {{$sla_settings['escalation_users']['l1']['issuer_esc_l1_emails']}}
-                                                                    @endif
-                                                                </textarea>
+                                                                    rows="2">{{$sla_settings['escalation_users']['l1']['issuer_esc_l1_emails'] ?? ''}}</textarea>
                                                             </div>
                                                         </div>
                                                         <div class="col-4 pl-1 pr-1">
@@ -279,9 +271,7 @@
                                                                 @if(session('user_routes')['users.search'] ?? false)
                                                                     <select data-placeholder="Search Users" id="issuer_esc_l2" name="issuer_esc_l2[]" class="form-control users-search-field" multiple="multiple">
                                                                         @foreach ($users as $id => $name)
-                                                                            @if(old() !== null && in_array($id, old('issuer_esc_l2', [])))
-                                                                                <option value="{{ $id }}"  selected>{{ $name }}</option>
-                                                                            @elseif(isset($sla_settings['escalation_users']['l2']['issuer_esc_l2']) && in_array($id, $sla_settings['escalation_users']['l2']['issuer_esc_l2'] ?? []))
+                                                                            @if(in_array($id, $sla_settings['escalation_users']['l2']['issuer_esc_l2'] ?? []))
                                                                                 <option value="{{ $id }}"  selected>{{ $name }}</option>
                                                                             @endif
                                                                         @endforeach
@@ -293,13 +283,7 @@
                                                                     class="form-control mt-1"
                                                                     placeholder="Add emails for people that are not in the system"
                                                                     id="issuer_esc_l2_emails"
-                                                                    rows="2">
-                                                                    @if(old('issuer_esc_l2_emails'))
-                                                                        {{old('issuer_esc_l2_emails')}}
-                                                                    @elseif(isset($sla_settings['escalation_users']) && isset($sla_settings['escalation_users']['l2']) && isset($sla_settings['escalation_users']['l2']['issuer_esc_l2_emails']))
-                                                                        {{$sla_settings['escalation_users']['l2']['issuer_esc_l2_emails']}}
-                                                                    @endif
-                                                                </textarea>
+                                                                    rows="2">{{$sla_settings['escalation_users']['l2']['issuer_esc_l2_emails'] ?? ''}}</textarea>
                                                             </div>
                                                         </div>
                                                         <div class="col-4 pl-1 pr-1">
@@ -308,9 +292,7 @@
                                                                 @if(session('user_routes')['users.search'] ?? false)
                                                                     <select data-placeholder="Search Users" id="issuer_esc_l3" name="issuer_esc_l3[]" class="form-control users-search-field" multiple="multiple">
                                                                         @foreach ($users as $id => $name)
-                                                                            @if(old() !== null && in_array($id, old('issuer_esc_l3', [])))
-                                                                                <option value="{{ $id }}"  selected>{{ $name }}</option>
-                                                                            @elseif(isset($sla_settings['escalation_users']['l3']['issuer_esc_l3']) && in_array($id, $sla_settings['escalation_users']['l3']['issuer_esc_l3'] ?? []))
+                                                                            @if(in_array($id, $sla_settings['escalation_users']['l3']['issuer_esc_l3'] ?? []))
                                                                                 <option value="{{ $id }}"  selected>{{ $name }}</option>
                                                                             @endif
                                                                         @endforeach
@@ -322,13 +304,7 @@
                                                                     class="form-control mt-1"
                                                                     placeholder="Add emails for people that are not in the system"
                                                                     id="issuer_esc_l3_emails"
-                                                                    rows="2">
-                                                                    @if(old('issuer_esc_l3_emails'))
-                                                                        {{old('issuer_esc_l3_emails')}}
-                                                                    @elseif(isset($sla_settings['escalation_users']) && isset($sla_settings['escalation_users']['l3']) && isset($sla_settings['escalation_users']['l3']['issuer_esc_l3_emails']))
-                                                                        {{$sla_settings['escalation_users']['l3']['issuer_esc_l3_emails']}}
-                                                                    @endif
-                                                                </textarea>
+                                                                    rows="2">{{$sla_settings['escalation_users']['l3']['issuer_esc_l3_emails'] ?? '' }}</textarea>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -346,9 +322,7 @@
                                                                 @if(session('user_routes')['users.search'] ?? false)
                                                                     <select data-placeholder="Search Users" id="executor_esc_l1" name="executor_esc_l1[]" class="form-control users-search-field" multiple="multiple">
                                                                         @foreach ($users as $id => $name)
-                                                                            @if(old() !== null && in_array($id, old('executor_esc_l1', [])))
-                                                                                <option value="{{ $id }}"  selected>{{ $name }}</option>
-                                                                            @elseif(isset($sla_settings['escalation_users']['l1']['executor_esc_l1']) && in_array($id, $sla_settings['escalation_users']['l1']['executor_esc_l1'] ?? []))
+                                                                            @if(in_array($id, $sla_settings['escalation_users']['l1']['executor_esc_l1'] ?? []))
                                                                                 <option value="{{ $id }}"  selected>{{ $name }}</option>
                                                                             @endif
                                                                         @endforeach
@@ -360,13 +334,7 @@
                                                                     class="form-control mt-1"
                                                                     placeholder="Add emails for people that are not in the system"
                                                                     id="executor_esc_l1_emails"
-                                                                    rows="2">
-                                                                    @if(old('executor_esc_l1_emails'))
-                                                                        {{old('executor_esc_l1_emails')}}
-                                                                    @elseif(isset($sla_settings['escalation_users']) && isset($sla_settings['escalation_users']['l1']) && isset($sla_settings['escalation_users']['l1']['executor_esc_l1_emails']))
-                                                                        {{$sla_settings['escalation_users']['l1']['executor_esc_l1_emails']}}
-                                                                    @endif
-                                                                </textarea>
+                                                                    rows="2">{{$sla_settings['escalation_users']['l1']['executor_esc_l1_emails'] ?? ''}}</textarea>
                                                             </div>
                                                         </div>
                                                         <div class="col-4 pl-1 pr-1">
@@ -375,9 +343,7 @@
                                                                 @if(session('user_routes')['users.search'] ?? false)
                                                                     <select data-placeholder="Search Users" id="executor_esc_l2" name="executor_esc_l2[]" class="form-control users-search-field" multiple="multiple">
                                                                         @foreach ($users as $id => $name)
-                                                                            @if(old() !== null && in_array($id, old('executor_esc_l2', [])))
-                                                                                <option value="{{ $id }}"  selected>{{ $name }}</option>
-                                                                            @elseif(isset($sla_settings['escalation_users']['l2']['executor_esc_l2']) && in_array($id, $sla_settings['escalation_users']['l2']['executor_esc_l2'] ?? []))
+                                                                            @if(in_array($id, $sla_settings['escalation_users']['l2']['executor_esc_l2'] ?? []))
                                                                                 <option value="{{ $id }}"  selected>{{ $name }}</option>
                                                                             @endif
                                                                         @endforeach
@@ -389,13 +355,7 @@
                                                                     class="form-control mt-1"
                                                                     placeholder="Add emails for people that are not in the system"
                                                                     id="executor_esc_l2_emails"
-                                                                    rows="2">
-                                                                    @if(old('executor_esc_l2_emails'))
-                                                                        {{old('executor_esc_l2_emails')}}
-                                                                    @elseif(isset($sla_settings['escalation_users']) && isset($sla_settings['escalation_users']['l2']) && isset($sla_settings['escalation_users']['l2']['executor_esc_l2_emails']))
-                                                                        {{$sla_settings['escalation_users']['l2']['executor_esc_l2_emails']}}
-                                                                    @endif
-                                                                </textarea>
+                                                                    rows="2">{{$sla_settings['escalation_users']['l2']['executor_esc_l2_emails'] ?? ''}}</textarea>
                                                             </div>
                                                         </div>
                                                         <div class="col-4 pl-1 pr-1">
@@ -404,9 +364,7 @@
                                                                 @if(session('user_routes')['users.search'] ?? false)
                                                                     <select data-placeholder="Search Users" id="executor_esc_l3" name="executor_esc_l3[]" class="form-control users-search-field" multiple="multiple">
                                                                         @foreach ($users as $id => $name)
-                                                                            @if(old() !== null && in_array($id, old('executor_esc_l3', [])))
-                                                                                <option value="{{ $id }}"  selected>{{ $name }}</option>
-                                                                            @elseif(isset($sla_settings['escalation_users']['l3']['executor_esc_l3']) && in_array($id, $sla_settings['escalation_users']['l3']['executor_esc_l3'] ?? []))
+                                                                            @if(in_array($id, $sla_settings['escalation_users']['l3']['executor_esc_l3'] ?? []))
                                                                                 <option value="{{ $id }}"  selected>{{ $name }}</option>
                                                                             @endif
                                                                         @endforeach
@@ -418,13 +376,7 @@
                                                                     class="form-control mt-1"
                                                                     placeholder="Add emails for people that are not in the system"
                                                                     id="executor_esc_l3_emails"
-                                                                    rows="2">
-                                                                    @if(old('executor_esc_l3_emails'))
-                                                                        {{old('executor_esc_l3_emails')}}
-                                                                    @elseif(isset($sla_settings['escalation_users']) && isset($sla_settings['escalation_users']['l3']) && isset($sla_settings['escalation_users']['l3']['executor_esc_l3_emails']))
-                                                                        {{$sla_settings['escalation_users']['l3']['executor_esc_l3_emails']}}
-                                                                    @endif
-                                                                </textarea>
+                                                                    rows="2">{{$sla_settings['escalation_users']['l3']['executor_esc_l3_emails'] ?? ''}}</textarea>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -470,11 +422,7 @@
                                                                                 data-rv="{{$esc_key}}_{{$notif_key}}"
                                                                                 data-cv="c_{{ $percentage }}"
                                                                                 value="{{$percentage}}"
-                                                                                @if (old("escalation"))
-                                                                                    {{ old("escalation.{$esc_key}.{$notif_key}.{$percentage}") == $percentage ? 'checked' : '' }}
-                                                                                @elseif (isset($sla_settings['escalations'][$esc_key][$notif_key][$percentage]))
-                                                                                    checked
-                                                                                @endif
+                                                                                {{ ($sla_settings['escalations'][$esc_key][$notif_key][$percentage] ?? '') == $percentage ? 'checked' : '' }}
                                                                             >
                                                                             @if (!$loop->last)
                                                                                 <a href="#" class="ml-2 replicate-btn" title="Replicate Settings Right"><i class="fa fa-angle-double-right"></i></a>
@@ -499,13 +447,141 @@
                                 </div>
                             </div>
                         </div>
-                    </div>
-                </form>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
 </div>
 <script type="text/javascript">
+
+    document.getElementById('submit-button').addEventListener('click', function () {
+        const form = document.getElementById('sla_form');
+        if (form.checkValidity()) {
+
+            var errorr_title = "";
+            var errorr_text = "";
+
+            if ($('[name="name"]').val() == '') {
+                Swal.fire({
+                    title: 'Input Error',
+                    text: 'SLA Rule Name not given!',
+                    icon: 'warning',
+                });
+                e.preventDefault(e);
+                return false;
+            }
+            if ($('[name="response_time"]').val() + $('[name="resolution_time"]').val() == '') {
+                Swal.fire({
+                    title: 'No SLA Timers Given',
+                    text: 'Atleast one SLA Timers must be provided!',
+                    icon: 'warning',
+                });
+                e.preventDefault(e);
+                return false;
+            }
+
+            var query_result = $('#builder-basic').queryBuilder('getRules');
+
+            if (!$.isEmptyObject(query_result)) {
+                $("#qb_rules").val(JSON.stringify(query_result));
+            } else {
+                Swal.fire({
+                    title: 'Warning.',
+                    text: 'There is an Error in Condition Applied Rules.',
+                    icon: 'warning',
+                });
+                e.preventDefault(e);
+                return false;
+            }
+
+            const formData = new FormData(form);
+
+            Swal.fire({
+                title: "Saving...",
+                text: "Please wait",
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            fetch(form.action, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                },
+                body: formData,
+            })
+                .then(async (response) => {
+                    Swal.close();
+
+                    if (response.status === 422) {
+                        // Validation error handling
+                        const errorData = await response.json();
+                        const errorMessages = Object.values(errorData.errors)
+                            .map(errorArray => errorArray.join(' '))
+                            .join('</li>\n<li>');
+
+                        $('#ajax-errors').html(`
+                            <div class="alert alert-danger alert-dismissable">
+                                <button aria-hidden="true" data-dismiss="alert" class="close" type="button">×</button>
+                                <ul><li>${errorMessages}</li></ul>
+                            </div>
+                        `);
+
+                        $('#form-wrapper').animate({ scrollTop: 0 }, 'fast');
+
+                        Swal.fire({
+                            title: 'Errors were found, in submitted data.',
+                            icon: 'warning',
+                        });
+
+                    } else {
+                        Swal.fire({
+                            title: 'Error Saving Task.',
+                            icon: 'warning',
+                        });
+
+                    }
+
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        Swal.fire({
+                            title: 'Success!',
+                            text: data.message || 'Task Created Successfully.',
+                            icon: 'success',
+                            showConfirmButton: false,
+                            timer: 1000,
+                            timerProgressBar: true
+                        }).then(() => {
+                            window.location.href = '{{ route('sla_rules.index') }}';
+                        });
+
+                    } else {
+                        Swal.fire({
+                            title: 'Error',
+                            text: data.message || 'Something went wrong.',
+                            icon: 'error',
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    Swal.fire({
+                        title: 'Error',
+                        text: 'An error occurred while submitting the form. Please try again.',
+                        icon: 'error',
+                    });
+                });
+        } else {
+            form.reportValidity();
+        }
+    });
+
     document.addEventListener("DOMContentLoaded", function () {
         // Replicate settings down the column
         document.querySelectorAll('a[title="Replicate Settings Down"]').forEach(function (btn) {
@@ -709,7 +785,7 @@
             width: "100%",
             language: {
                 noResults: function () {
-                    return "Not Options Found";
+                    return "No options found";
                 }
             }
         });
@@ -802,7 +878,7 @@
             var errorr_title = "";
             var errorr_text = "";
 
-            if ($('[name="rule_name"]').val() == '') {
+            if ($('[name="name"]').val() == '') {
                 Swal.fire({
                     title: 'Input Error',
                     text: 'SLA Rule Name not given!',

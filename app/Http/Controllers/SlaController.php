@@ -52,6 +52,7 @@ class SlaController extends Controller
         $task_types = TaskType::pluck('name', 'id')->toArray();
         $priorities = TaskPriority::pluck('name', 'id')->toArray();
         $statuses = Status::pluck('name', 'id')->toArray();
+        $users_resp = User::select('id', 'name', 'email')->get();
 
         $sla_reminders_setup = config('lookup')['sla_reminders'];
         $sla_escalations_setup = config('lookup')['sla_escalations'];
@@ -60,19 +61,19 @@ class SlaController extends Controller
     }
     public function store(Request $request)
     {
-        // echo "<pre><strong>" . __FILE__ . " Line: [". __LINE__ ."]</strong> @ " .date("Y-m-d H:i:s"). "<br>"; print_r( $request->all() ); echo "</pre><br>"; exit;
         $now_ts = date('Y-m-d H:i:s');
+        // echo "<pre><strong>" . __FILE__ . " Line: [". __LINE__ ."]</strong> @ " .date("Y-m-d H:i:s"). "<br>"; print_r( $request->all() ); echo "</pre><br>"; exit;
         $status_ids = Status::pluck('id')->toArray();
 
         $validator = Validator::make($request->all(), [
-            'rule_name' => 'required|string',
+            'name' => 'required|string|max:255|unique:sla_rules',
             'description' => 'nullable|string',
             'color' => 'required|min:7|max:7',
             'response_time' => [
                 'required_without:resolution_time',
                 function ($attribute, $value, $fail) {
                     if (!preg_match('/^\d+:[0-5][0-9]$/', $value)) {
-                        $fail('The ' . $attribute . ' must be in the format HH:MM (e.g., 200:45). Hours can be any number.');
+                        $fail('The ' . $attribute . ' must be in the format HH:MM (e.g., 25:45). Hours can be any number.');
                     }
                 },
             ],
@@ -80,7 +81,7 @@ class SlaController extends Controller
                 'required_without:response_time',
                 function ($attribute, $value, $fail) use ($request) {
                     if ($request->has('response_time') && !preg_match('/^\d+:[0-5][0-9]$/', $value)) {
-                        $fail('The ' . $attribute . ' must be in the format HH:MM (e.g., 200:45). Hours can be any number.');
+                        $fail('The ' . $attribute . ' must be in the format HH:MM (e.g., 26:45). Hours can be any number.');
                     }
                 },
             ],
@@ -307,7 +308,7 @@ class SlaController extends Controller
         ], [
             //msgs
         ], [
-            'rule_name' => 'Rule Name',
+            'name' => 'Rule Name',
             'description' => 'Description',
             'color' => 'Color',
             'response_time' => 'Response Time',
@@ -334,13 +335,9 @@ class SlaController extends Controller
         ]);
         
         if ($validator->fails()) {
-            $users_resp = User::select('id', 'name', 'email')->get();
-            $users = [];
-            foreach ($users_resp as $user) {
-                $users[$user->id] = $user->name . " (".$user->email.")";
-            }
-            return back()->withErrors($validator->errors())->withInput()->with('users', $users);
+            return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
         }
+
         $validatedData = $validator->validated();
 
         $json = json_decode($validatedData['qb_rules']);
@@ -380,7 +377,7 @@ class SlaController extends Controller
             ],
         ];
 
-        $sla_rule->name = $validatedData['rule_name'];
+        $sla_rule->name = $validatedData['name'];
         $sla_rule->description = $validatedData['description'];
         $sla_rule->color = $validatedData['color'];
         $sla_rule->order = $request->order ?? Sla::max('order') + 1;
@@ -393,9 +390,9 @@ class SlaController extends Controller
         $sla_rule->updated_at = $now_ts;
 
         if($sla_rule->save()) {
-            return redirect()->route('sla_rules.index')->with('success', 'Status created successfully.');
+            return response()->json(['success' => true, 'message' => 'SLA rule created successfully.'], 201);
         } else {
-            return back()->withErrors(['msg' => ['Failed to create status.']])->withInput();
+            return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
         }
     }
 
@@ -408,16 +405,39 @@ class SlaController extends Controller
         $task_types = TaskType::pluck('name', 'id')->toArray();
         $priorities = TaskPriority::pluck('name', 'id')->toArray();
         $statuses = Status::pluck('name', 'id')->toArray();
-        $users_resp = User::select('id', 'name', 'email')->get();
+
+        $escalation_user_ids = [];
+        if (isset($sla_settings['escalation_users']) && isset($sla_settings['escalation_users']['l1']) && isset($sla_settings['escalation_users']['l1']['issuer_esc_l1']) && count($sla_settings['escalation_users']['l1']['issuer_esc_l1']) > 0) {
+            $escalation_user_ids =  array_merge($escalation_user_ids, $sla_settings['escalation_users']['l1']['issuer_esc_l1']);
+        }
+        if (isset($sla_settings['escalation_users']) && isset($sla_settings['escalation_users']['l1']) && isset($sla_settings['escalation_users']['l1']['executor_esc_l1']) && count($sla_settings['escalation_users']['l1']['executor_esc_l1']) > 0) {
+            $escalation_user_ids =  array_merge($escalation_user_ids, $sla_settings['escalation_users']['l1']['executor_esc_l1']);
+        }
+        if (isset($sla_settings['escalation_users']) && isset($sla_settings['escalation_users']['l2']) && isset($sla_settings['escalation_users']['l2']['issuer_esc_l2']) && count($sla_settings['escalation_users']['l2']['issuer_esc_l2']) > 0) {
+            $escalation_user_ids =  array_merge($escalation_user_ids, $sla_settings['escalation_users']['l2']['issuer_esc_l2']);
+        }
+        if (isset($sla_settings['escalation_users']) && isset($sla_settings['escalation_users']['l2']) && isset($sla_settings['escalation_users']['l2']['issuer_esc_l2']) && count($sla_settings['escalation_users']['l2']['issuer_esc_l2']) > 0) {
+            $escalation_user_ids =  array_merge($escalation_user_ids, $sla_settings['escalation_users']['l2']['issuer_esc_l2']);
+        }
+        if (isset($sla_settings['escalation_users']) && isset($sla_settings['escalation_users']['l3']) && isset($sla_settings['escalation_users']['l3']['issuer_esc_l3']) && count($sla_settings['escalation_users']['l3']['issuer_esc_l3']) > 0) {
+            $escalation_user_ids =  array_merge($escalation_user_ids, $sla_settings['escalation_users']['l3']['issuer_esc_l3']);
+        }
+        if (isset($sla_settings['escalation_users']) && isset($sla_settings['escalation_users']['l3']) && isset($sla_settings['escalation_users']['l3']['issuer_esc_l3']) && count($sla_settings['escalation_users']['l3']['issuer_esc_l3']) > 0) {
+            $escalation_user_ids =  array_merge($escalation_user_ids, $sla_settings['escalation_users']['l3']['issuer_esc_l3']);
+        }
+
         $users = [];
-        foreach ($users_resp as $user) {
-            $users[$user->id] = $user->name . " (".$user->email.")";
+        if(count($escalation_user_ids) > 0) {
+            $users_resp = User::select('id', 'name', 'email')->whereIn('id', $escalation_user_ids)->get();
+            foreach ($users_resp as $user) {
+                $users[$user->id] = $user->name . "(". $user->email .")";
+            }
         }
 
         $sla_reminders_setup = config('lookup')['sla_reminders'];
         $sla_escalations_setup = config('lookup')['sla_escalations'];
 
-        return view('sla_rules.edit', compact('sla_rule', 'sla_settings', 'projects', 'task_types', 'statuses', 'priorities', 'sla_reminders_setup', 'sla_escalations_setup', 'users' ));
+        return view('sla_rules.edit', compact('sla_rule', 'sla_settings', 'projects', 'task_types', 'statuses', 'priorities', 'sla_reminders_setup', 'sla_escalations_setup', 'users'));
     }
 
     public function update(Request $request, $id)
@@ -429,7 +449,7 @@ class SlaController extends Controller
         $status_ids = Status::pluck('id')->toArray();
 
         $validator = Validator::make($request->all(), [
-            'rule_name' => 'required|string',
+            'name' => 'required|string|max:255|unique:sla_rules,name,' . $id,
             'description' => 'nullable|string',
             'color' => 'required|min:7|max:7',
             'response_time' => [
@@ -671,7 +691,7 @@ class SlaController extends Controller
         ], [
             //msgs
         ], [
-            'rule_name' => 'Rule Name',
+            'name' => 'Rule Name',
             'description' => 'Description',
             'color' => 'Color',
             'response_time' => 'Response Time',
@@ -698,12 +718,7 @@ class SlaController extends Controller
         ]);
         
         if ($validator->fails()) {
-            $users_resp = User::select('id', 'name', 'email')->get();
-            $users = [];
-            foreach ($users_resp as $user) {
-                $users[$user->id] = $user->name . " (".$user->email.")";
-            }
-            return back()->withErrors($validator->errors())->withInput()->with('users', $users);
+            return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
         }
         $validatedData = $validator->validated();
 
@@ -742,7 +757,7 @@ class SlaController extends Controller
             ],
         ];
 
-        $sla_rule->name = $validatedData['rule_name'];
+        $sla_rule->name = $validatedData['name'];
         $sla_rule->description = $validatedData['description'];
         $sla_rule->color = $validatedData['color'];
         $sla_rule->order = $request->order ?? Sla::max('order') + 1;
@@ -753,7 +768,7 @@ class SlaController extends Controller
         $sla_rule->updated_at = $now_ts;
 
         if($sla_rule->save()) {
-            return redirect()->route('sla_rules.index')->with('success', 'Status saved successfully.');
+            return response()->json(['success' => true, 'message' => 'SLA rule saved successfully.'], 201);
         } else {
             return back()->withErrors(['msg' => ['Failed to save status.']])->withInput();
         }

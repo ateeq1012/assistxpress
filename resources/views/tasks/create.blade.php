@@ -261,7 +261,7 @@
 			width: "100%",
 			language: {
 				noResults: function () {
-					return "Not Options Found";
+					return "No options found";
 				}
 			}
 		});

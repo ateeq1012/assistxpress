@@ -371,8 +371,8 @@ class UserController extends Controller
         }
 
         $query = User::query()
-            ->where('name', 'LIKE', "%{$search}%")
-            ->orWhere('email', 'LIKE', "%{$search}%");
+            ->where('name', 'ILIKE', "%{$search}%")
+            ->orWhere('email', 'ILIKE', "%{$search}%");
 
         if ( count($already_added_users) > 0 ) {
             $query->whereNotIn('id', $already_added_users);

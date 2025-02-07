@@ -120,6 +120,11 @@ return [
             'description' => 'Edit Statuses',
             'public' => true,
         ],
+        'status-reorder' => [
+            'routes' => ['statuses.reorder-web-POST'],
+            'description' => 'Change Status Order',
+            'public' => true,
+        ],
         'status-view' => [
             'routes' => ['statuses.show-web-GET'],
             'description' => 'View Statuses',

@@ -939,6 +939,7 @@ class TaskController extends Controller
 			$task->planned_start = isset($validatedData['planned_start']) ? trim($validatedData['planned_start']) : null;
 			$task->planned_end = isset($validatedData['planned_end']) ? trim($validatedData['planned_end']) : null;
 			$task->updated_at = $now_ts;
+			echo "<pre><strong>" . __FILE__ . " Line: [". __LINE__ ."]</strong> @ " .date("Y-m-d H:i:s"). "<br>"; print_r( $task ); echo "</pre><br>"; exit;
 
 			if (!$task->save()) {
 				throw new \Exception("Failed to save the task.");
@@ -1186,13 +1187,13 @@ class TaskController extends Controller
 		}
 
 		$allowed_status_ids = [];
+		$task_files = [];
 		if ($mode == 'edit') {
 
 			$task = Task::where('id', $task_id)->first();
 
 			$task_files_data = TaskAttachment::select('id', 'name', 'task_id', 'field_id', 'created_by', 'created_at')->with('creator')->where('task_id', $task_id)->get()->toArray();
 
-			$task_files = [];
 			foreach ($task_files_data as $file) {
 				if ($file['creator']) {
 					$file['creator_name'] = $file['creator']['name'];

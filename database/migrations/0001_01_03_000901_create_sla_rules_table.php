@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('sla_rules', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
+            $table->string('name')->unique();
             $table->text('description');
             $table->char('color', 7)->default('#d1dade');
             $table->integer('order')->default(0);

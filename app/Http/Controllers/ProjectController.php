@@ -10,6 +10,7 @@ use App\Models\Project;
 use App\Models\ProjectUser;
 use App\Models\User;
 use App\Models\TaskType;
+use App\Models\Task;
 use App\Models\ProjectTaskType;
 
 class ProjectController extends Controller
@@ -231,9 +232,24 @@ class ProjectController extends Controller
     public function destroy($id)
     {
         $project = Project::findOrFail($id);
-        $project->delete();
+        $tasks = Task::where('project_id', $id)->count();
+        if($tasks > 0) {
+            return redirect()->back()->with('error', $tasks . ' exist against the project.');
+        }
+        DB::beginTransaction();
+        try {
+            DB::table('project_groups')->where('project_id', $id)->delete();
+            DB::table('project_task_types')->where('project_id', $id)->delete();
+            DB::table('project_users')->where('project_id', $id)->delete();
 
-        return redirect()->route('projects.index')->with('success', 'Project deleted successfully.');
+            $project->delete();
+            DB::commit();
+            return redirect()->route('projects.index')->with('success', 'Project deleted successfully.');
+            
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()->with('error', 'Failed to delete project: ' . $e->getMessage());
+        }
     }
 
 }

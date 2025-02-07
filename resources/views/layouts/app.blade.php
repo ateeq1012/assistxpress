@@ -74,7 +74,7 @@ use Illuminate\Http\Request;
 					
 					@if(session('user_routes')['sla_rules.index'] ?? false)
 						<li @if(request()->route()->getName() == 'sla_rules.index') class="active" @endif>
-							<a href="{{ route('sla_rules.index') }}"><i class="fa fa-clock-o"></i> SLA Rules</a>
+							<a href="{{ route('sla_rules.index') }}"><i class="fa fa-clock-o"></i> SLAs</a>
 						</li>
 					@endif
 
@@ -83,7 +83,7 @@ use Illuminate\Http\Request;
 						<ul class="nav nav-second-level collapse">
 							@if(session('user_routes')['workflows.index'] ?? false)
 								<li @if(request()->route()->getName() == 'workflows.index') class="active" @endif>
-									<a href="{{ route('workflows.index') }}">Workflows</a>
+									<a href="{{ route('workflows.index') }}">Status Transitions</a>
 								</li>
 							@endif
 							@if(session('user_routes')['task_types.index'] ?? false)

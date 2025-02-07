@@ -55,6 +55,7 @@ Route::middleware(['auth', CheckUserRoleRoute::class])->group(function () {
     Route::delete('groups/{group}/remove-user/{user}', [GroupController::class, 'remove_user'])->name('groups.remove_user');
 
     Route::resource('statuses', StatusController::class);
+    Route::post('/statuses/reorder', [StatusController::class, 'reorder'])->name('statuses.reorder');
 
     Route::resource('task_priorities', TaskPriorityController::class);
     

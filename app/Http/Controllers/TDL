@@ -4,72 +4,34 @@ ACL:
 	UserSpecific ACL ---------------------------------------- DONE
 	Conditional Data Access --------------------------------- TBD
 Entities:
-	- Projects (aka projects) ----------------------------- 
-		- projects table
-			php artisan make:migration create_projects_table
-
-		- user_projects table
-			php artisan make:migration create_user_projects_table
-
-		- group_projects table
-			php artisan make:migration create_group_projects_table
-
-	- Task Types -------------------------------------------- 
-		php artisan make:migration create_task_types_table
-	
-		- Task Type Custom Fields -------------------------------
-			php artisan make:migration create_task_type_custom_fields_table
-
-		- Task Type Approvals
-			php artisan make:migration create_task_type_approval_settings_table
-
-	- Status Management ------------------------------------- 
-		php artisan make:migration create_statuses_table
-
-	- Workflow
-		php artisan make:migration create_workflows_table
-		- Status Transitions
-			php artisan make:migration create_workflow_status_transitions_table
-		- field settings
-			php artisan make:migration create_workflow_field_settings_table
-
-	- Tasks ------------------------------------------------- 
-		php artisan make:migration create_tasks_table
-		
-		- Task Priorities
-			php artisan make:migration create_task_priorities_table
-
-		- Task Attachements
-			php artisan make:migration create_task_attachements_table
-
-		- Task Comments
-			php artisan make:migration create_task_comments_table
-
-		- Task Checklist
-			php artisan make:migration create_task_checklists_table
-
-		- Task Custom Fields
-			php artisan make:migration create_task_custom_fields_table
-
-		- Task Audit Logs
-			php artisan make:migration create_task_audit_logs_table
-
-Workflow Engine:
-	Task Types
-		Approvals
-		Fields
-		Workflow
-			Status_transitions
-			field settings
+	- Projects (aka projects) ------------------------------- DONE (MIN) 
+	- Task Types -------------------------------------------- DONE (MIN) 
+	- Status Management ------------------------------------- DONE
+	- Workflow ---------------------------------------------- DONE (MIN)
+	- Tasks ------------------------------------------------- WIP
+		- Task Priorities ------ DONE
+		- Task Attachements ---- TBD (might not be required)
+		- Task Comments -------- TBD
+		- Task Checklist ------- TBD
+		- Task Custom Fields --- DONE
+		- Task Audit Logs ------ TBD
+Workflow Engine:--------------------------------------------- DONE (MIN)
+	- Status_transitions ------- DONE
+	- field settings ----------- TBD
 SLA:
-	Modify escalations for reminders up to 100% and escalations after 100%
+	FE ------------------------------------------------------- DONE
+	BE ------------------------------------------------------- TBD
 Notifications:
+	EMAIL ---------------------------------------------------- TBD
+	SMS   ---------------------------------------------------- TBD
+	WHATSAPP ------------------------------------------------- TBD
 Reporting:
+	 Custom -------------------------------------------------- TBD
+	 Dynamic ------------------------------------------------- TBD
 Dashboarding:
-Approvals:
-
-Cleanup and housekeeping on:
-	Group Delete
-	Role Delete
-	etc.
-
+	 Custom -------------------------------------------------- TBD
+	 Dynamic ------------------------------------------------- TBD
+Approvals: --------------------------------------------------- TBD
+Handle Deletion for all entities ----------------------------- TBD
+Handle History for all entities  ----------------------------- TBD
+Data Import -------------------------------------------------- TBD
