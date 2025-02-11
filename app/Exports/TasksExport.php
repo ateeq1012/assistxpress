@@ -128,6 +128,14 @@ class TasksExport implements FromCollection, WithMapping, WithColumnFormatting, 
 
     public function map($task): array
     {
+        $response_Time_SLA = null;
+        $response_Time_Spent = null;
+        $response_SLA_percentage = null;
+        $response_SLA_Status = null;
+        $resolution_Time_SLA = null;
+        $resolution_Time_Spent = null;
+        $resolution_SLA_percentage = null;
+        $response_SLA_Status = null;
         $row = [
             $task->id,
             $this->project_lkp[$task->project_id]['name'] ?? '',
@@ -142,6 +150,14 @@ class TasksExport implements FromCollection, WithMapping, WithColumnFormatting, 
             $this->groups_lkp[$task->executor_group_id] ?? '',
             $this->users_lkp[$task->updated_by] ?? '',
             $this->sla_rules_lkp[$task->sla_rule_id]['name'] ?? '',
+            $response_Time_SLA,
+            $response_Time_Spent,
+            $response_SLA_percentage,
+            $response_SLA_Status,
+            $resolution_Time_SLA,
+            $resolution_Time_Spent,
+            $resolution_SLA_percentage,
+            $response_SLA_Status,
             $task->created_at,
             $task->updated_at
         ];
@@ -169,6 +185,14 @@ class TasksExport implements FromCollection, WithMapping, WithColumnFormatting, 
             'Assignee Group',
             'Last Updated By',
             'SLA Rule',
+            'Response Time SLA',
+            'Response Time Spent',
+            'Response SLA %',
+            'Response SLA Status',
+            'Resolution Time SLA',
+            'Resolution Time Spent',
+            'Resolution SLA %',
+            'Response SLA Status',
             'Created at',
             'Updated at',
         ];
@@ -208,6 +232,40 @@ class TasksExport implements FromCollection, WithMapping, WithColumnFormatting, 
             'fill' => [
                 'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
                 'color' => ['argb' => 'FF1AB394'],
+            ],
+            'borders' => [
+                'bottom' => [
+                    'borderStyle' => Border::BORDER_THICK,
+                    'color' => ['argb' => 'FF000000'],
+                ],
+            ],
+        ]);
+        
+        $sheet->getStyle('N1:Q1')->applyFromArray([
+            'font' => [
+                'bold' => true,
+                'color' => ['argb' => 'FFFFFFFF'],
+            ],
+            'fill' => [
+                'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'color' => ['argb' => 'FF4BACC6'],
+            ],
+            'borders' => [
+                'bottom' => [
+                    'borderStyle' => Border::BORDER_THICK,
+                    'color' => ['argb' => 'FF000000'],
+                ],
+            ],
+        ]);
+
+        $sheet->getStyle('R1:U1')->applyFromArray([
+            'font' => [
+                'bold' => true,
+                'color' => ['argb' => 'FFFFFFFF'],
+            ],
+            'fill' => [
+                'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'color' => ['argb' => 'FF31869B'],
             ],
             'borders' => [
                 'bottom' => [
