@@ -90,10 +90,10 @@
                             <div class="panel-body">
                                 <table class="table table-striped table-bordered mb-0">
                                     <tr>
-                                        <th colspan="1" style="width:150px !important;">Response SLA</th>
-                                        <td colspan="3" style="width:150px !important;"><?php echo (isset($sla_settings['response_time'])) ? '<span class="badge badge-success">' . $sla_settings['response_time'] . '</span>' : '<span class="badge">Does not Apply</span>';?></td>
-                                        <th colspan="1" >Resolution SLA</th>
-                                        <td colspan="3" ><?php echo (isset($sla_settings['resolution_time']))  ? '<span class="badge badge-success">' . $sla_settings['resolution_time']  . '</span>' : '<span class="badge">Does not Apply</span>';?></td>
+                                        <th colspan="2" style="width:150px !important;">Time to Own (TTO) SLA:<small>(hh:mm)</small></th>
+                                        <td colspan="2" style="width:150px !important;"><?php echo (isset($sla_settings['response_time'])) ? '<span class="badge badge-success">' . $sla_settings['response_time'] . '</span>' : '<span class="badge">Does not Apply</span>';?></td>
+                                        <th colspan="2" >Time to Resolve (TTR) SLA:<small>(hh:mm)</th>
+                                        <td colspan="2" ><?php echo (isset($sla_settings['resolution_time']))  ? '<span class="badge badge-success">' . $sla_settings['resolution_time']  . '</span>' : '<span class="badge">Does not Apply</span>';?></td>
                                     </tr>
                                     <tr>
                                         <th colspan="1">Service Days</th>
@@ -144,13 +144,13 @@
                                         <tr>
                                             <th>Escalation</th>
                                             <th>Notify</th>
-                                            @foreach ($percentage_arr as $percentage => $label)
+                                            @foreach ($sla_reminders_setup['percentage_arr'] as $percentage => $label)
                                                 <th>{{$label}}</th>
                                             @endforeach
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @foreach ($escalations_setup as $esc_key => $escalations_setup)
+                                        @foreach ($sla_escalations_setup['escalation_roles'] as $esc_key => $escalations_setup)
                                             @php
                                                 $outerLoop = $loop;
                                             @endphp
@@ -164,7 +164,7 @@
                                                             <td style="display: none;"></td> <!-- to handle replicate down conflict-->
                                                         @endif
                                                         <td>{{$notif_label}}</td>
-                                                        @foreach ($percentage_arr as $percentage => $label)
+                                                        @foreach ($sla_reminders_setup['percentage_arr'] as $percentage => $label)
                                                             <td class="checkbox-cell">
                                                                 <div class="btn-group">
                                                                     @if (isset($sla_settings['escalations'][$esc_key][$notif_key][$percentage]))

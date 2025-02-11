@@ -251,5 +251,4 @@ class ProjectController extends Controller
             return redirect()->back()->with('error', 'Failed to delete project: ' . $e->getMessage());
         }
     }
-
 }

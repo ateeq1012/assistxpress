@@ -16,14 +16,21 @@ use App\Models\Status;
 use App\Models\TaskPriority;
 use App\Models\Group;
 use App\Models\User;
+use App\Models\UserGroup;
 use App\Models\TaskCustomField;
+use App\Models\TaskComment;
 use App\Models\Workflow;
 use App\Models\WorkflowStatusTransition;
 use App\Helpers\GeneralHelper;
 use App\Models\Sla;
 use App\Models\TaskAttachment;
 use App\Models\Project;
+use App\Models\ProjectGroup;
+use App\Models\TaskAuditLog;
 use ZipArchive;
+
+use App\Exports\TasksExport;
+use Maatwebsite\Excel\Facades\Excel;
 
 class TaskController extends Controller
 {
@@ -45,7 +52,7 @@ class TaskController extends Controller
 			$_EXCLUDED_FIELDS = ['File Upload'];
 			if(!in_array($custom_field['name'], $_EXCLUDED_FIELDS))
 			{
-				$selected_fields[$custom_field['field_id']] = $custom_field['name'];
+				// $selected_fields[$custom_field['field_id']] = $custom_field['name'];
 			}
 		}
 
@@ -240,7 +247,6 @@ class TaskController extends Controller
 
 	public function store(Request $request)
 	{
-
 		$now_ts = date('Y-m-d H:i:s');
 
 		$validator = Validator::make($request->all(), [
@@ -306,7 +312,7 @@ class TaskController extends Controller
 		$all_users = User::where('enabled', true)->pluck('name', 'id')->toArray();
 
 		$req_creator_group = $request->input('creator_group_id', null);
-		if(count($creator_groups) == null && count($creator_groups) > 0) {
+		if($req_creator_group == null && count($creator_groups) > 0) {
 			$req_creator_group = array_keys($creator_groups)[0];
 		}
 
@@ -649,16 +655,60 @@ class TaskController extends Controller
 		$creator = new \App\Models\User();
 		$creator->id = $task->created_by;
 		$creator_groups = $creator->load('groups')->groups->pluck('name', 'id')->toArray();
-		$all_groups = []; //Group::where('enabled', true)->pluck('name', 'id')->toArray();
+		$assignee_group = [];
+		if(isset($task->executor_group_id)) {
+			$assignee_group = Group::where('id', $task->executor_group_id)->pluck('name', 'id')->toArray();
+		}
+		$assignee = [];
+		if(isset($task->executor_id)) {
+			$assignee = User::where('id', $task->executor_id)->pluck('name', 'id')->toArray();
+		}
+		$all_groups = [];
 
-		return view('tasks.edit', compact('task', 'projects', 'task_types', 'statuses', 'priorities', 'creator_groups', 'all_groups'));
+
+
+		// For History
+		$task_info = Task::with('status', 'priority', 'tasktype', 'creator', 'executor', 'creatorGroup', 'executorGroup', 'taskCustomField', 'updater', 'sla')->findOrFail($id);
+		
+		$task_logs = TaskAuditLog::with('creator')->where('task_id', $id)->orderBy('created_at', 'desc')->get()->toArray();
+		$task_comments = TaskComment::with('creator')->where('task_id', $id)->orderBy('created_at', 'desc')->get()->toArray();
+
+		$log_field_ids = [];
+		foreach ($task_logs as $log) {
+			if($log['field_type'] == 2) {
+				$log_field_ids[$log['field_name']] = true; 
+			}
+		}
+
+		$fileds_to_make_history = Task::$fileds_to_make_history;
+
+		$project_lkp = Project::pluck('name', 'id')->toArray();
+		$task_type_lkp = TaskType::pluck('name', 'id')->toArray();
+		$priority_lkp = TaskPriority::pluck('name', 'id')->toArray();
+		$status_lkp = Status::pluck('name', 'id')->toArray();
+
+		$custom_fields_lkp = array_column(
+			CustomField::whereIn('id', array_column($task_info->TaskCustomField->toArray(), 'field_id'))->orWhereIn('field_id', $log_field_ids)->get()->toArray(),
+			null,
+			'id'
+		);
+
+		$custom_field_id_lkp = array_column($custom_fields_lkp, 'name', 'field_id');
+
+		return view('tasks.edit', compact(
+			'task', 'projects', 'task_types', 'statuses', 'priorities', 'creator_groups', 'all_groups', 'assignee_group', 'assignee',
+
+			// for history
+			'task_info', 'custom_fields_lkp', 'fileds_to_make_history', 'task_logs', 'custom_field_id_lkp', 'project_lkp', 'task_type_lkp', 'priority_lkp', 'status_lkp', 'task_comments'
+		));
 	}
 
 	public function update(Request $request, $id)
 	{
 		$now_ts = date('Y-m-d H:i:s');
 
-		$task = Task::where('id', $id)->first();
+		$task = Task::with('taskCustomField')->where('id', $id)->first();
+
 		if (empty($task)) {
 			return response()->json(['success' => false, 'errors' => ['task' => ['Task Not Found!']]], 422);
 		}
@@ -725,23 +775,25 @@ class TaskController extends Controller
 		$all_groups = Group::where('enabled', true)->pluck('name', 'id')->toArray();
 		$all_users = User::where('enabled', true)->pluck('name', 'id')->toArray();
 
-		$req_creator_group = $request->input('creator_group_id', null);
+		/*$req_creator_group = $request->input('creator_group_id', null);
 		if(count($creator_groups) == null && count($creator_groups) > 0) {
 			$req_creator_group = array_keys($creator_groups)[0];
-		}
+		}*/
 
 		$attribute_names['creator_group_id'] = 'Creator Group';
-		$validation_array['creator_group_id'] = ['nullable'];
-		if(count($creator_groups) > 1) {
+		$validation_array['creator_group_id'] = ['nullable', 'integer'];
+		/*if(count($creator_groups) > 1) {
 			$validation_array['creator_group_id'][] = 'in:' . implode(',', array_keys($creator_groups));
 		}
-		$request->merge(['creator_group_id' => $req_creator_group]);
+		$request->merge(['creator_group_id' => $req_creator_group]);*/
 
 		$attribute_names['executor_group_id'] = 'Executor Group';
 		$validation_array['executor_group_id'] = ['nullable', 'in:' . implode(',', array_keys($all_groups)) ];
 		$attribute_names['executor_id'] = 'Executor';
 		$validation_array['executor_id'] = ['nullable', 'in:' . implode(',', array_keys($all_users)) ];
 
+		$custom_fields = [];
+		$file_fields = [];
 		foreach ($field_settings as $fid => $fs) {
 			$rules = [];
 
@@ -793,6 +845,7 @@ class TaskController extends Controller
 									$invalid_options[] = $opt;
 								}
 							}
+
 							if (count($invalid_options) > 0) {
 								$fail("Invalid Options (".implode(', ', $invalid_options).") provided for field {$fs['name']}");
 							}
@@ -820,6 +873,7 @@ class TaskController extends Controller
 					$file_fields[$fs['field_id']] = [
 						'id' => $fs['id'],
 						'field_id' => $fs['field_id'],
+						'name' => $fs['name'],
 						'has_multiple' => $allowMultiple,
 					];
 
@@ -924,6 +978,9 @@ class TaskController extends Controller
 
 		$validatedData = $validator_final->validated();
 
+
+		$originalTask = $task->getAttributes();
+
 		DB::beginTransaction();
 
 		try {
@@ -932,26 +989,29 @@ class TaskController extends Controller
 			$task->task_type_id = trim($validatedData['task_type']);
 			$task->status_id = trim($validatedData['status_id']);
 			$task->priority_id = isset($validatedData['priority_id']) ? trim($validatedData['priority_id']) : null;
-			$task->creator_group_id = isset($validatedData['creator_group_id']) ? trim($validatedData['creator_group_id']) : null;
+			$task->creator_group_id = isset($validatedData['creator_group_id']) ? trim($validatedData['creator_group_id']) : $task->creator_group_id;
 			$task->updated_by = $creator->id;
 			$task->executor_id = isset($validatedData['executor_id']) ? trim($validatedData['executor_id']) : null;
 			$task->executor_group_id = isset($validatedData['executor_group_id']) ? trim($validatedData['executor_group_id']) : null;
 			$task->planned_start = isset($validatedData['planned_start']) ? trim($validatedData['planned_start']) : null;
 			$task->planned_end = isset($validatedData['planned_end']) ? trim($validatedData['planned_end']) : null;
 			$task->updated_at = $now_ts;
-			echo "<pre><strong>" . __FILE__ . " Line: [". __LINE__ ."]</strong> @ " .date("Y-m-d H:i:s"). "<br>"; print_r( $task ); echo "</pre><br>"; exit;
+
 
 			if (!$task->save()) {
 				throw new \Exception("Failed to save the task.");
 			}
 
-			$custom_field_data = [];
+        	$this->logTaskChanges($task->id, $originalTask, $task->getAttributes(), $creator->id, $now_ts);
 
 			TaskCustomField::where('task_id', $task->id)->delete();
 
+			$custom_field_data = [];
+			$custom_field_history = [];
+			$original_custom_field_data = array_column($task->taskCustomField->toArray(), null, 'field_id');
+
 			foreach ($field_settings as $field_id => $field_config) {
 				if (isset($validatedData[$field_id]) && !isset($file_fields[$field_id])) {
-
 					
 					if (in_array($field_config['field_type'], ['Dropdown List', 'Radio Buttons'])) {
 						$validatedData[$field_id] = [
@@ -969,6 +1029,36 @@ class TaskController extends Controller
 								'value' => implode(', ', $sel_opts),
 								'jsonval' => json_encode($validatedData[$field_id]),
 							];
+
+							if(isset($original_custom_field_data[$field_config['id']])) {
+								$original_json_val = json_decode($original_custom_field_data[$field_config['id']]['jsonval'], true);
+								$original_opts = array_values($original_json_val);
+								$new_opts = array_values($validatedData[$field_id]);
+								sort($original_opts);
+								sort($new_opts);
+
+								if ($original_opts !== $new_opts) {
+									$custom_field_history[] = [
+										'task_id' => $task->id,
+										'field_name' => $field_config['field_id'],
+										'field_type' => 2,
+										'old_value' => implode(', ', $original_opts),
+										'new_value' => implode(', ', $new_opts),
+										'created_by' => $creator->id,
+										'created_at' => $now_ts,
+									];
+								}
+							} else {
+								$custom_field_history[] = [
+									'task_id' => $task->id,
+									'field_name' => $field_config['field_id'],
+									'field_type' => 2,
+									'old_value' => null,
+									'new_value' => implode(', ', $sel_opts),
+									'created_by' => $creator->id,
+									'created_at' => $now_ts,
+								];
+							}
 						}
 					} else {
 						$custom_field_data[] = [
@@ -977,6 +1067,29 @@ class TaskController extends Controller
 							'value' => $validatedData[$field_id],
 							'jsonval' => null,
 						];
+						if(isset($original_custom_field_data[$field_config['id']])) {
+							if (trim($original_custom_field_data[$field_config['id']]['value']) != trim($validatedData[$field_id])) {
+								$custom_field_history[] = [
+									'task_id' => $task->id,
+									'field_name' => $field_config['field_id'],
+									'field_type' => 2,
+									'old_value' => $original_custom_field_data[$field_config['id']]['value'],
+									'new_value' => $validatedData[$field_id],
+									'created_by' => $creator->id,
+									'created_at' => $now_ts,
+								];
+							}
+						} else {
+							$custom_field_history[] = [
+								'task_id' => $task->id,
+								'field_name' => $field_config['field_id'],
+								'field_type' => 2,
+								'old_value' => null,
+								'new_value' => $validatedData[$field_id],
+								'created_by' => $creator->id,
+								'created_at' => $now_ts,
+							];
+						}
 					}
 				}
 			}
@@ -984,9 +1097,13 @@ class TaskController extends Controller
 			if (!empty($custom_field_data)) {
 				TaskCustomField::insert($custom_field_data);
 			}
+			if (!empty($custom_field_history)) {
+				TaskAuditLog::insert($custom_field_history);
+			}
 			$task_attachements_data = [];
 			$storagePath = 'public/uploads/task_attachements';
 			$counter = 1;
+			$file_attachement_history = [];
 			foreach ($file_fields as $file_field) {
 				if (isset($validatedData[$file_field['field_id']])) {
 					if ($file_field['has_multiple']) {
@@ -998,6 +1115,16 @@ class TaskController extends Controller
 								'url' => $path,
 								'task_id' => $task->id,
 								'field_id' => $file_field['id'],
+								'created_by' => $creator->id,
+								'created_at' => $now_ts,
+							];
+							$file_attachement_history[] = [
+								'task_id' => $task->id,
+								'field_name' => $file_field['field_id'],
+								'field_type' => 2,
+								'old_value' => null,
+								'new_value' => $file->getClientOriginalName(),
+								'file_path' => $path,
 								'created_by' => $creator->id,
 								'created_at' => $now_ts,
 							];
@@ -1015,6 +1142,16 @@ class TaskController extends Controller
 							'created_by' => $creator->id,
 							'created_at' => $now_ts,
 						];
+						$file_attachement_history[] = [
+							'task_id' => $task->id,
+							'field_name' => $file_field['field_id'],
+							'field_type' => 2,
+							'old_value' => null,
+							'new_value' => $file->getClientOriginalName(),
+							'file_path' => $path,
+							'created_by' => $creator->id,
+							'created_at' => $now_ts,
+						];
 						$counter++;
 					}
 				}
@@ -1022,28 +1159,102 @@ class TaskController extends Controller
 			
 			if (!empty($task_attachements_data)) {
 				TaskAttachment::insert($task_attachements_data);
+				TaskAuditLog::insert($file_attachement_history);
 			}
 
 			DB::commit();
-			return response()->json(['success' => true, 'message' => 'Task Created Successfully'], 201);
+			return response()->json(['success' => true, 'message' => 'Task Updated Successfully'], 201);
 		
 		} catch (\Exception $e) {		
 			DB::rollBack();
-			return response()->json(['error' => $e->getMessage()], 500);
+			return response()->json([
+			    'error' => $e->getLine() . ": " . $e->getMessage() . "\n" . 
+			    implode("\n", array_map(function($trace) {
+			        return isset($trace['file']) ? $trace['file'] . ' on line ' . $trace['line'] : '';
+			    }, $e->getTrace()))
+			], 500);
+
 		}
+	}
+
+	protected function logTaskChanges($taskId, $originalData, $newData, $userId, $now_ts)
+	{
+		$fileds_to_make_history = Task::$fileds_to_make_history;
+		$history = [];
+	    foreach ($newData as $field => $newValue) {
+	        if (isset($fileds_to_make_history[$field]) && isset($originalData[$field]) && trim($originalData[$field]) != trim($newValue)) {
+	            $history[] = [
+	                'task_id' => $taskId,
+	                'field_name' => $field,
+					'field_type' => 1,
+	                'old_value' => $originalData[$field] ?? null,
+	                'new_value' => $newValue,
+	                'created_by' => $userId,
+	                'created_at' => $now_ts,
+	            ];
+	        }
+	    }
+	    if(count($history) > 0) {
+			TaskAuditLog::insert($history);
+	    }
+	}
+
+	public function add_comment(Request $request)
+	{
+		$validator = Validator::make($request->all(), [
+			'comment' => 'required|string',
+			'task_id' => 'required|integer',
+		], [
+			//msgs
+		], [
+			'comment' => 'Comment',
+			'task_id' => 'Task Id',
+		]);
+		if ($validator->fails()) {
+			return response()->json(['success' => false, 'msg' => 'Invalid Request'], 422);
+		}
+		
+		$validatedData = $validator->validated();
+
+		TaskComment::insert([
+			'task_id' => $validatedData['task_id'],
+			'text' => $validatedData['comment'],
+			'created_by' => Auth::user()->id,
+		]);
+
+		return response()->json(['success' => true, 'msg' => 'Success'], 201);
 	}
 
 	public function show($id)
 	{
-		$task = Task::with('status', 'priority', 'tasktype', 'creator', 'executor', 'creatorGroup', 'executorGroup', 'taskCustomField', 'updater', 'sla')->findOrFail($id);
+		$task_info = Task::with('status', 'priority', 'tasktype', 'creator', 'executor', 'creatorGroup', 'executorGroup', 'taskCustomField', 'updater', 'sla')->findOrFail($id);
+		
+		$task_logs = TaskAuditLog::with('creator')->where('task_id', $id)->orderBy('created_at', 'desc')->get()->toArray();
+		$task_comments = TaskComment::with('creator')->where('task_id', $id)->orderBy('created_at', 'desc')->get()->toArray();
+
+		$log_field_ids = [];
+		foreach ($task_logs as $log) {
+			if($log['field_type'] == 2) {
+				$log_field_ids[$log['field_name']] = true; 
+			}
+		}
+
+		$fileds_to_make_history = Task::$fileds_to_make_history;
+
+		$project_lkp = Project::pluck('name', 'id')->toArray();
+		$task_type_lkp = TaskType::pluck('name', 'id')->toArray();
+		$priority_lkp = TaskPriority::pluck('name', 'id')->toArray();
+		$status_lkp = Status::pluck('name', 'id')->toArray();
 
 		$custom_fields_lkp = array_column(
-			CustomField::whereIn('id', array_column($task->TaskCustomField->toArray(), 'field_id'))->get()->toArray(),
+			CustomField::whereIn('id', array_column($task_info->TaskCustomField->toArray(), 'field_id'))->orWhereIn('field_id', array_keys($log_field_ids))->get()->toArray(),
 			null,
 			'id'
 		);
 
-		return view('tasks.show', compact('task', 'custom_fields_lkp'));
+		$custom_field_id_lkp = array_column($custom_fields_lkp, 'name', 'field_id');
+
+		return view('tasks.show', compact('task_info', 'custom_fields_lkp', 'fileds_to_make_history', 'task_logs', 'custom_field_id_lkp', 'project_lkp', 'task_type_lkp', 'priority_lkp', 'status_lkp', 'task_comments'));
 	}
 
 	/**
@@ -1103,43 +1314,6 @@ class TaskController extends Controller
 			\Log::error('File deletion error: ' . $e->getMessage());
 
 			return response()->json(['success' => false, 'message' => 'Unable to delete file.'], 500);
-		}
-	}
-
-	public function download_file($id)
-	{
-		$file = TaskAttachment::findOrFail($id);
-		$filePath = storage_path('app/' . $file->url);
-		
-		if (!file_exists($filePath)) {
-			return redirect()->back()->with('error', 'File not found.');
-		}
-
-		$fileSize = filesize($filePath);
-		
-		$extension = strtolower(pathinfo($file->url, PATHINFO_EXTENSION));
-		
-		$excludedExtensions = ['zip', 'tar', 'rar', 'gz', '7z'];
-
-		if (in_array($extension, $excludedExtensions)) {
-			return response()->download($filePath, $file->name);
-		}
-
-		if ($fileSize > 1 * 1024 * 1024) {
-			$zipFileName = 'files_' . time() . '.zip';
-			$zipFilePath = storage_path('app/public/' . $zipFileName);
-
-			$zip = new ZipArchive();
-
-			if ($zip->open($zipFilePath, ZipArchive::CREATE) === TRUE) {
-				$zip->addFile($filePath, $file->name);
-				$zip->close();
-				return response()->download($zipFilePath)->deleteFileAfterSend(true);
-			} else {
-				return redirect()->back()->with('error', 'Failed to create zip file.');
-			}
-		} else {
-			return response()->download($filePath, $file->name);
 		}
 	}
 
@@ -1264,4 +1438,115 @@ class TaskController extends Controller
 
 		return response()->json(['success' => true, 'data' => compact('allowed_statuses', 'custom_fields', 'task_files')], 200);
 	}
+
+    public function search_project_groups(Request $request)
+    {
+		$validator = Validator::make($request->all(), [
+			'q' => 'required|string',
+			'project_id' => 'required|numeric',
+			'enabled_only' => 'required|in:true,false',
+			// 'task_type' => 'required|numeric',
+		], [
+			//msgs
+		], [
+			'q' => 'Search String',
+			'project_id' => 'Project',
+			'enabled_only' => 'Group Enabled Status',
+			// 'task_type' => 'Task Type',
+		]);
+
+		if ($validator->fails()) {
+			return response()->json(['success' => false, 'msg' => 'Invalid Request'], 422);
+		}
+		
+		$validatedData = $validator->validated();
+
+        $project_id = $validatedData['project_id'];
+		$search_term = $validatedData['q'];
+		$enabled_only = filter_var($validatedData['enabled_only'], FILTER_VALIDATE_BOOLEAN);
+
+		$project_group_ids = ProjectGroup::where('project_id', $project_id)->pluck('group_id')->toArray();
+		$query = Group::whereIn('id', $project_group_ids)->where('name', 'ILIKE', '%' . $search_term . '%');
+        if($enabled_only == true) {
+        	$query->where('enabled', true);
+        }
+        $groups_lkp = $query->get()->toArray();
+
+		return response()->json(['success' => true, 'data' => $groups_lkp], 200);
+    }
+
+    public function search_group_users(Request $request)
+    {
+		$validator = Validator::make($request->all(), [
+			'q' => 'required|string',
+			'group_id' => 'required|numeric',
+		], [
+			//msgs
+		], [
+			'q' => 'Search String',
+			'group_id' => 'User Group',
+		]);
+		if ($validator->fails()) {
+			return response()->json(['success' => false, 'msg' => 'Invalid Request'], 422);
+		}
+		
+		$validatedData = $validator->validated();
+
+        $group_id = $validatedData['group_id'];
+		$search_term = $validatedData['q'];
+
+
+		$group_user_ids = UserGroup::where('group_id', $group_id)->pluck('user_id')->toArray();
+		$users_lkp = User::whereIn('id', $group_user_ids)
+			->where('enabled', true)
+			->where('name', 'ILIKE', '%' . $search_term . '%')
+			->get()->toArray();
+
+		return response()->json(['success' => true, 'data' => $users_lkp], 200);
+    }
+
+	public function download_file($id)
+	{
+		$file = TaskAttachment::findOrFail($id);
+		$filePath = storage_path('app/' . $file->url);
+		
+		if (!file_exists($filePath)) {
+			return redirect()->back()->with('error', 'File not found.');
+		}
+
+		$fileSize = filesize($filePath);
+		
+		$extension = strtolower(pathinfo($file->url, PATHINFO_EXTENSION));
+		
+		$excludedExtensions = ['zip', 'tar', 'rar', 'gz', '7z'];
+
+		if (in_array($extension, $excludedExtensions)) {
+			return response()->download($filePath, $file->name);
+		}
+
+		if ($fileSize > 1 * 1024 * 1024) {
+			$zipFileName = 'files_' . time() . '.zip';
+			$zipFilePath = storage_path('app/public/' . $zipFileName);
+
+			$zip = new ZipArchive();
+
+			if ($zip->open($zipFilePath, ZipArchive::CREATE) === TRUE) {
+				$zip->addFile($filePath, $file->name);
+				$zip->close();
+				return response()->download($zipFilePath)->deleteFileAfterSend(true);
+			} else {
+				return redirect()->back()->with('error', 'Failed to create zip file.');
+			}
+		} else {
+			return response()->download($filePath, $file->name);
+		}
+	}
+
+    public function download(Request $request)
+    {
+        $search = $request->only(['dn_filters']);
+        $searchParams = json_decode($search['dn_filters'], true);
+        $now_ts = date('Ymd_Hms');
+        return Excel::download(new TasksExport($searchParams), "tasks_{$now_ts}.xlsx");
+    }
 }

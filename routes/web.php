@@ -81,7 +81,10 @@ Route::middleware(['auth', CheckUserRoleRoute::class])->group(function () {
     Route::post('tasks/get-task-data', [TaskController::class, 'get_task_data'])->name('tasks.get_task_data');
     Route::delete('tasks/{id}/rm-file', [TaskController::class, 'rm_file'])->name('tasks.rm_file');
     Route::get('tasks/download-file/{id}', [TaskController::class, 'download_file'])->name('tasks.download_file');
-
+    Route::post('tasks/search-project-groups', [TaskController::class, 'search_project_groups'])->name('tasks.search_project_groups');
+    Route::post('tasks/search-group-users', [TaskController::class, 'search_group_users'])->name('tasks.search_group_users');
+    Route::post('tasks/add-comment', [TaskController::class, 'add_comment'])->name('tasks.add_comment');
+    Route::post('/tasks/download', [TaskController::class, 'download'])->name('tasks.download');
     
     Route::resource('sla_rules', SlaController::class);
 

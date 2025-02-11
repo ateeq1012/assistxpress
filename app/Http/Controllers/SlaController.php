@@ -51,7 +51,7 @@ class SlaController extends Controller
         $projects = Project::pluck('name', 'id')->toArray();
         $task_types = TaskType::pluck('name', 'id')->toArray();
         $priorities = TaskPriority::pluck('name', 'id')->toArray();
-        $statuses = Status::pluck('name', 'id')->toArray();
+        $statuses = Status::whereNotIn('type', [3,4])->pluck('name', 'id')->toArray();
         $users_resp = User::select('id', 'name', 'email')->get();
 
         $sla_reminders_setup = config('lookup')['sla_reminders'];
@@ -404,7 +404,7 @@ class SlaController extends Controller
         $projects = Project::pluck('name', 'id')->toArray();
         $task_types = TaskType::pluck('name', 'id')->toArray();
         $priorities = TaskPriority::pluck('name', 'id')->toArray();
-        $statuses = Status::pluck('name', 'id')->toArray();
+        $statuses = Status::whereNotIn('type', [3,4])->pluck('name', 'id')->toArray();
 
         $escalation_user_ids = [];
         if (isset($sla_settings['escalation_users']) && isset($sla_settings['escalation_users']['l1']) && isset($sla_settings['escalation_users']['l1']['issuer_esc_l1']) && count($sla_settings['escalation_users']['l1']['issuer_esc_l1']) > 0) {
@@ -795,8 +795,9 @@ class SlaController extends Controller
         $statuses = array_column($statuses, 'name', 'id');
 
         $sla_reminders_setup = config('lookup')['sla_reminders'];
+        $sla_escalations_setup = config('lookup')['sla_escalations'];
 
-        return view('sla_rules.show', compact('sla_rule', 'sla_settings', 'projects', 'task_types', 'statuses', 'status_lkp', 'priorities', 'sla_reminders_setup' ));
+        return view('sla_rules.show', compact('sla_rule', 'sla_settings', 'projects', 'task_types', 'statuses', 'status_lkp', 'priorities', 'sla_reminders_setup', 'sla_escalations_setup' ));
     }
     
     public function destroy($id) {
@@ -809,7 +810,12 @@ class SlaController extends Controller
 
             DB::table('tasks')
                 ->where('sla_rule_id', $id)
-                ->update(['sla_rule_id' => null, 'time_spent' => 0]);
+                ->update([
+                    'sla_rule_id' => null,
+                    'response_time' => null,
+                    'tto' => 0
+                    'ttr' => 0
+                ]);
 
             $status->delete();
 

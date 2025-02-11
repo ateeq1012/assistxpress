@@ -1,6 +1,3 @@
-<?php
-	use App\Helpers\GeneralHelper;
-?>
 @extends('layouts.app')
 
 @section('content')
@@ -24,7 +21,7 @@
 </style>
 <div class="ibox pt-2">
 	<div class="ibox-title">
-		<h5>View Tassk:{{$task->id}}</h5>
+		<h5>View Tassk:{{$task_info->id}}</h5>
 		<div class="ibox-tools">
 			<a href="{{ route('tasks.index') }}" class="btn btn-primary btn-xs">Manage Tasks</a>
 		</div>
@@ -46,79 +43,45 @@
 				</ul>
 			</div>
 		@endif
-
-		<table class="table table-striped table-bordered">
-			<thead>
-				<tr>
-					<th>Field</th>
-					<th>Value</th>
-				</tr>
-			</thead>
-			<tbody>
-				<tr>
-					<th>Task Type</th>
-					<td>{{$task->tasktype->name}}</td>
-				</tr>
-				<tr>
-					<th>Subject</th>
-					<td>{{$task->subject}}</td>
-				</tr>
-				<tr>
-					<th>Description</th>
-					<td>{{$task->description}}</td>
-				</tr>
-				<tr>
-					<th>Status</th>
-					<td style="font-size:unset; background-color:{{ $task->status->color }}; color:{{ GeneralHelper::invert_color($task->status->color) }}">{{$task->status->name}}</td>
-				</tr>
-				<tr>
-					<th>Priority</th>
-					@if (isset($task->priority))
-						<td style="font-size:unset; background-color:{{ $task->priority->color }}; color:{{ GeneralHelper::invert_color($task->priority->color) }}">{{$task->priority->name}}</td>
-					@else
-						<td>{{$task->priority->name}}</td>
-					@endif
-				</tr>
-				<tr>
-					<th>SLA Rule Name</th>
-					<td>{{$task->sla->name ?? ''}}</td>
-				</tr>
-
-
-				@foreach ($task->taskCustomField as $tcfk => $field)
-					<tr>
-						<th>{{$custom_fields_lkp[$field->field_id]['name']}}</th>
-						<td>{{$field->value}}</td>
-					</tr>
-				@endforeach
-
-
-				<tr>
-					<th>Creator</th>
-					<td>{{$task->creator->name ?? ''}}</td>
-				</tr>
-				<tr>
-					<th>Creator Group</th>
-					<td>{{$task->creatorGroup->name ?? ''}}</td>
-				</tr>
-				<tr>
-					<th>Assignee</th>
-					<td>{{$task->executor->name ?? ''}}</td>
-				</tr>
-				<tr>
-					<th>Assignee Group</th>
-					<td>{{$task->executorGroup->name ?? ''}}</td>
-				</tr>
-				<tr>
-					<th>Last Updated By</th>
-					<td>{{$task->updater->name ?? ''}}</td>
-				</tr>
-				<tr>
-					<th>Last Updated On</th>
-					<td>{{$task->updated_on ?? ''}}</td>
-				</tr>
-			</tbody>
-		</table>
+		<div class="tabs-container mb-2">
+			<ul class="nav nav-tabs" role="tablist">
+				<li><a class="nav-link active" data-toggle="tab" href="#tab-info">Info</a></li>
+				<li><a class="nav-link" data-toggle="tab" href="#tab-comments">Comments</a></li>
+				<li><a class="nav-link" data-toggle="tab" href="#tab-history">History</a></li>
+			</ul>
+			<div class="tab-content">
+				<div role="tabpanel" id="tab-info" class="tab-pane active">
+					<div class="panel-body" style="max-height: 750px;overflow: auto;">
+						@include('tasks.info', [
+						    'task_info' => $task_info,
+						    'custom_fields_lkp' => $custom_fields_lkp,
+						])
+					</div>
+				</div>
+				<div role="tabpanel" id="tab-comments" class="tab-pane">
+					<div class="panel-body" style="max-height: 750px;overflow: auto;">
+						@include('tasks.comments', [
+						    'task_comments' => $task_comments,
+						])
+					</div>
+				</div>
+				<div role="tabpanel" id="tab-history" class="tab-pane">
+					<div class="panel-body" style="max-height: 750px;overflow: auto;">
+						@include('tasks.history', [
+						    'task_info' => $task_info,
+						    'custom_fields_lkp' => $custom_fields_lkp,
+						    'fileds_to_make_history' => $fileds_to_make_history,
+						    'task_logs' => $task_logs,
+						    'custom_field_id_lkp' => $custom_field_id_lkp,
+						    'project_lkp' => $project_lkp,
+						    'task_type_lkp' => $task_type_lkp,
+						    'priority_lkp' => $priority_lkp,
+						    'status_lkp' => $status_lkp
+						])
+					</div>
+				</div>
+			</div>
+		</div>
 	</div>
 </div>
 

@@ -14,9 +14,9 @@ return new class extends Migration
         Schema::create('task_comments', function (Blueprint $table) {
             $table->id();
             $table->integer('task_id');
-            $table->text('comment');
+            $table->text('text');
             $table->integer('created_by');
-            $table->timestamp('created_at');
+            $table->timestamp('created_at')->useCurrent();
             $table->foreign('created_by')->references('id')->on('users')->onDelete("NO ACTION");
         });
     }

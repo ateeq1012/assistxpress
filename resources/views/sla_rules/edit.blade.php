@@ -116,7 +116,7 @@
                                                 </div>
                                                 <div class="row">
                                                     <div class="col-lg-8 pr-0"> <div class="alert alert-info">Keep service days empty for all days.</div> </div>
-                                                    <div class="col-lg-4 pr-0"> <div class="alert alert-info">Keep service windows options empty for 24 hrs.</div> </div>
+                                                    <div class="col-lg-4"> <div class="alert alert-info">Keep service windows options empty for 24 hrs.</div> </div>
                                                 </div>
                                                 <div class="row">
                                                     <div class="col-lg-8 pr-0">

@@ -52,126 +52,184 @@
 	}
 
 </style>
-<div class="ibox pt-2">
-	<div class="ibox-title">
-		<h5>Update Task:{{$task->id}}</h5>
-		<div class="ibox-tools">
-			<a href="{{ route('tasks.index') }}" class="btn btn-primary btn-xs">Manage Tasks</a>
+<div class="row pt-2">
+	<div class="col-7 pt-0 pb-0 pr-0 mr-0">
+		<div class="ibox mb-0">
+			<div class="ibox-title">
+				<h5>Update Task:{{$task->id}}</h5>
+			</div>
+			<div id="form-wrapper" class="ibox-content" style="height:calc(100vh - 185px); overflow-y:scroll; /*background: #eceff1;*/">
+				@if (session('error'))
+					<div class="alert alert-danger alert-dismissable">
+						<button aria-hidden="true" data-dismiss="alert" class="close" type="button">×</button>
+						{{ session('error') }}
+					</div>
+				@endif
+				@if ($errors->any())
+					<div class="alert alert-danger alert-dismissable">
+						<button aria-hidden="true" data-dismiss="alert" class="close" type="button">×</button>
+						<ul>
+							@foreach ($errors->all() as $error)
+								<li>{{ $error }}</li>
+							@endforeach
+						</ul>
+					</div>
+				@endif
+
+				<div id='ajax-errors'></div>
+				<form id="task-form"  action="{{ route('tasks.update', $task->id) }}" method="POST">
+					@csrf
+					@method('PUT')
+					<div class="form-group">
+						<label for="project_id">Project</label>
+						<select name="project_id" class="form-control select2-field" id="project_id" required >
+							<option value="">Select Project</option>
+							@foreach($projects as $project)
+								<option value="{{ $project->id }}" {{ ((old('project_id') == $project->id) || (isset($task) && $task->project_id == $project->id)) ? 'selected' : '' }}>
+									{{ $project->name }}
+								</option>
+							@endforeach
+						</select>
+					</div>
+					<div class="form-group">
+						<label for="task_type">Task Type</label>
+						<select name="task_type" class="form-control select2-field" id="task_type" required >
+							<!-- <option value="">Select Task Type</option> -->
+							@foreach($task_types as $task_type)
+								<option value="{{ $task_type->id }}" {{ ((old('task_type') == $task_type->id) || (isset($task) && $task->task_type_id == $task_type->id)) ? 'selected' : '' }}>
+									{{ $task_type->name }}
+								</option>
+							@endforeach
+						</select>
+					</div>
+					<div class="form-group">
+						<label for="subject">Subject<span class="text-danger">*</span></label>
+						<!-- <input type="text" name="subject" class="form-control" id="subject" value="{{ old('subject', $task->subject ?? '') }}"> -->
+						<input type="text" name="subject" class="form-control" id="subject" value="{{ old('subject', $task->subject) }}" />
+
+					</div>
+
+					<div class="form-group">
+						<label for="description">Description</label>
+						<textarea name="description" class="form-control" id="description">{{ old('description', $task->description ?? '') }}</textarea>
+					</div>
+
+					<div class="form-group">
+						<label for="status_id">Status<span class="text-danger">*</span></label>
+						<select name="status_id" class="form-control" id="status_id">
+							<option value="">Select an option</option>
+						</select>
+					</div>
+
+					<div class="form-group">
+						<label for="priority_id">Priority<span class="text-danger">*</span></label>
+						<select name="priority_id" class="form-control" id="priority_id">
+							<option value="">Select an option</option>
+							@foreach($priorities as $priority)
+								<option value="{{ $priority->id }}" style="font-size:unset; background-color:{{ $priority->color }}; color:{{ GeneralHelper::invert_color($priority->color) }}" {{ old('priority_id') == $priority->id ? 'selected' : '' }}>
+									{{ $priority->name }}
+								</option>
+							@endforeach
+						</select>
+
+					</div>
+
+					<div id="custom-fields-container"></div>
+
+					<hr>
+
+					@if(count($creator_groups) > 1)
+						<div class="form-group">
+							<label for="creator_group_id">Creator Group<span class="text-danger">*</span></label>
+							<select name="creator_group_id" class="form-control select2-field" id="creator_group_id" required>
+								<option value="">Select an option</option>
+								@foreach($creator_groups as $gid => $gname)
+									<option value="{{$gid}}" {{ old('creator_group_id') == $gid ? 'selected' : '' }}>{{$gname}}</option>
+								@endforeach
+							</select>
+						</div>
+					@endif
+					<div class="form-group">
+						<label for="executor_group_id">Assignee Group<span class="text-danger">*</span></label>
+						<select name="executor_group_id" class="form-control select2-field" id="executor_group_id">
+							<option value="">Select an option</option>
+							@foreach($assignee_group as $gid => $gname)
+								<option value="{{$gid}}" {{ old('executor_group_id') == $gid ? 'selected' : '' }}>{{$gname}}</option>
+							@endforeach
+						</select>
+					</div>
+					<div class="form-group">
+						<label for="executor_id">Assignee<span class="text-danger">*</span></label>
+						<select name="executor_id" class="form-control select2-field" id="executor_id">
+							<option value="">Select an option</option>
+							@foreach($assignee as $gid => $gname)
+								<option value="{{$gid}}" {{ old('executor_group_id') == $gid ? 'selected' : '' }}>{{$gname}}</option>
+							@endforeach
+						</select>
+					</div>
+				</form>
+			</div>
+			<div class="ibox-footer">
+				<button id="submit-button" type="submit" class="btn btn-primary">Update</button>
+			</div>
 		</div>
 	</div>
-	<div id="form-wrapper" class="ibox-content" style="height:calc(100vh - 180px); overflow-y:scroll; /*background: #eceff1;*/">
-		@if (session('error'))
-			<div class="alert alert-danger alert-dismissable">
-				<button aria-hidden="true" data-dismiss="alert" class="close" type="button">×</button>
-				{{ session('error') }}
-			</div>
-		@endif
-		@if ($errors->any())
-			<div class="alert alert-danger alert-dismissable">
-				<button aria-hidden="true" data-dismiss="alert" class="close" type="button">×</button>
-				<ul>
-					@foreach ($errors->all() as $error)
-						<li>{{ $error }}</li>
-					@endforeach
-				</ul>
-			</div>
-		@endif
-
-		<div id='ajax-errors'></div>
-
-		<form id="task-form"  action="{{ route('tasks.update', $task->id) }}" method="POST">
-			@csrf
-			@method('PUT')
-			<div class="form-group">
-				<label for="project_id">Project</label>
-				<select name="project_id" class="form-control select2-field" id="project_id" required >
-					<option value="">Select Task Type</option>
-					@foreach($projects as $project)
-						<option value="{{ $project->id }}" {{ ((old('project_id') == $project->id) || (isset($task) && $task->project_id == $project->id)) ? 'selected' : '' }}>
-							{{ $project->name }}
-						</option>
-					@endforeach
-				</select>
-			</div>
-			<div class="form-group">
-				<label for="task_type">Task Type</label>
-				<select name="task_type" class="form-control select2-field" id="task_type" required >
-					<!-- <option value="">Select Task Type</option> -->
-					@foreach($task_types as $task_type)
-						<option value="{{ $task_type->id }}" {{ ((old('task_type') == $task_type->id) || (isset($task) && $task->task_type_id == $task_type->id)) ? 'selected' : '' }}>
-							{{ $task_type->name }}
-						</option>
-					@endforeach
-				</select>
-			</div>
-			<div class="form-group">
-				<label for="subject">Subject<span class="text-danger">*</span></label>
-				<!-- <input type="text" name="subject" class="form-control" id="subject" value="{{ old('subject', $task->subject ?? '') }}"> -->
-				<input type="text" name="subject" class="form-control" id="subject" value="{{ old('subject', $task->subject) }}" />
-
-			</div>
-
-			<div class="form-group">
-				<label for="description">Description</label>
-				<textarea name="description" class="form-control" id="description">{{ old('description', $task->description ?? '') }}</textarea>
-			</div>
-
-			<div class="form-group">
-				<label for="status_id">Status<span class="text-danger">*</span></label>
-				<select name="status_id" class="form-control" id="status_id">
-					<option value="">Select an option</option>
-				</select>
-			</div>
-
-			<div class="form-group">
-				<label for="priority_id">Priority<span class="text-danger">*</span></label>
-				<select name="priority_id" class="form-control" id="priority_id">
-					<option value="">Select an option</option>
-					@foreach($priorities as $priority)
-						<option value="{{ $priority->id }}" style="font-size:unset; background-color:{{ $priority->color }}; color:{{ GeneralHelper::invert_color($priority->color) }}" {{ old('priority_id') == $priority->id ? 'selected' : '' }}>
-							{{ $priority->name }}
-						</option>
-					@endforeach
-				</select>
-
-			</div>
-
-			<div id="custom-fields-container"></div>
-
-			<hr>
-
-			@if(count($creator_groups) > 1)
-				<div class="form-group">
-					<label for="creator_group_id">Creator Group<span class="text-danger">*</span></label>
-					<select name="creator_group_id" class="form-control select2-field" id="creator_group_id" required>
-						<option value="">Select an option</option>
-						@foreach($creator_groups as $gid => $gname)
-							<option value="{{$gid}}" {{ old('creator_group_id') == $gid ? 'selected' : '' }}>{{$gname}}</option>
-						@endforeach
-					</select>
+	<div class="col-5 pt-0 pb-0">
+		<div class="ibox mb-0">
+			<div class="ibox-title">
+				<div class="ibox-tools">
+					<a href="{{ route('tasks.index') }}" class="btn btn-primary btn-xs">Manage Tasks</a>
 				</div>
-			@endif
-			<div class="form-group">
-				<label for="executor_group_id">Assignee Group<span class="text-danger">*</span></label>
-				<select name="executor_group_id" class="form-control select2-field" id="executor_group_id">
-					<option value="">Select an option</option>
-					@foreach($all_groups as $gid => $gname)
-						<option value="{{$gid}}" {{ old('executor_group_id') == $gid ? 'selected' : '' }}>{{$gname}}</option>
-					@endforeach
-				</select>
 			</div>
-			<div class="form-group">
-				<label for="executor_id">Assignee<span class="text-danger">*</span></label>
-				<select name="executor_id" class="form-control select2-field" id="executor_id">
-					<option value="">Select an option</option>
-				</select>
+			<div class="ibox-content">
+		        <div class="tabs-container mb-2">
+		            <ul class="nav nav-tabs" role="tablist">
+						@if(session('user_routes')['tasks.add_comment'] ?? false)
+		                	<li><a class="nav-link active" data-toggle="tab" href="#tab-comments">Comments</a></li>
+						@endif
+		                <li><a class="nav-link" data-toggle="tab" href="#tab-history">History</a></li>
+		            </ul>
+		            <div class="tab-content">
+						@if(session('user_routes')['tasks.add_comment'] ?? false)
+			                <div role="tabpanel" id="tab-comments" class="tab-pane active">
+			                    <div class="panel-body" style=" border-radius: 0px 0px 0px 0px;">
+									<form id="comment-form" action="{{ route('tasks.add_comment') }}" method="POST">
+									    @csrf
+									    <textarea class="form-control" name="comment" id="comment" placeholder="Comment"></textarea>
+									    <input type="task_id" name="task_id" hidden>
+									    <button type="submit" class="btn btn-primary btn-xs mt-1">Submit</button>
+									</form>
+			                    </div>
+			                    <div class="panel-body" style="height:calc(100vh - 344px); overflow-y:scroll; border-radius: 0px 0px 0px 0px;">
+									@include('tasks.comments', [
+									    'task_comments' => $task_comments,
+									])
+			                    </div>
+			                </div>
+						@endif
+
+		                <div role="tabpanel" id="tab-history" class="tab-pane">
+		                    <div class="panel-body" style="height:calc(100vh - 217px); overflow-y:scroll;">
+								@include('tasks.history', [
+									'task_info' => $task_info,
+									'custom_fields_lkp' => $custom_fields_lkp,
+									'fileds_to_make_history' => $fileds_to_make_history,
+									'task_logs' => $task_logs,
+									'custom_field_id_lkp' => $custom_field_id_lkp,
+									'project_lkp' => $project_lkp,
+									'task_type_lkp' => $task_type_lkp,
+									'priority_lkp' => $priority_lkp,
+									'status_lkp' => $status_lkp
+								])
+		                    </div>
+		                </div>
+		            </div>
+		        </div>
 			</div>
-		</form>
-	</div>
-	<div class="ibox-footer">
-		<button id="submit-button" type="submit" class="btn btn-primary">Update</button>
+		</div>
 	</div>
 </div>
+
 
 <script>
 	document.getElementById('submit-button').addEventListener('click', function () {
@@ -283,12 +341,168 @@
 		});
 		let selectedProject = '{{ old('project_id', $task->project_id ?? '') }}';
 		if (selectedProject) {
-		    $('#project_id').val(selectedProject).trigger('change');
+			$('#project_id').val(selectedProject).trigger('change');
 		}
 		let selectedTaskType = '{{ old('task_type', $task->task_type_id ?? '') }}';
 		// if (selectedTaskType) {
 		//     $('#task_type').val(selectedTaskType).trigger('change');
 		// }
+
+		$('#executor_group_id').select2({
+			width: '100%',
+			allowClear: true,
+			placeholder: 'Search for groups',
+			delay: 1000, // Delay before starting search
+			minimumInputLength: 2,
+			ajax: {
+				url: '{{ route("tasks.search_project_groups") }}',
+				dataType: 'json',
+				type: 'POST',
+				delay: 250, // Delay to prevent flooding requests
+				data: function(params) {
+					return {
+						q: params.term,
+						enabled_only: true,
+						project_id: $('#project_id').val()
+					};
+				},
+				processResults: function(data) {
+					return {
+						results: $.map(data.data, function(item) {
+							return {
+								id: item.id,
+								text: item.name
+							};
+						})
+					};
+				},
+				cache: true,
+				headers: {
+					'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') // CSRF token
+				},
+				error: function(xhr, status, error) {
+					if(xhr.status == 422) {
+						Swal.fire({
+							title: 'Invalid Request',
+							icon: 'warning',
+						});
+					} else {
+						Swal.fire({
+							title: 'Error',
+							text: 'Unable to search user group',
+							icon: 'error',
+						});
+					}
+				}
+			}
+		});
+		$('#executor_id').select2({
+			width: '100%',
+			allowClear: true,
+			placeholder: 'Search Users',
+			delay: 1000, // Delay before starting search
+			minimumInputLength: 2,
+			ajax: {
+				url: '{{ route("tasks.search_group_users") }}',
+				dataType: 'json',
+				type: 'POST',
+				delay: 250, // Delay to prevent flooding requests
+				data: function(params) {
+					return {
+						q: params.term,
+						group_id: $('#executor_group_id').val()
+					};
+				},
+				processResults: function(data) {
+					return {
+						results: $.map(data.data, function(item) {
+							return {
+								id: item.id,
+								text: item.name
+							};
+						})
+					};
+				},
+				cache: true,
+				headers: {
+					'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') // CSRF token
+				},
+				error: function(xhr, status, error) {
+					if(xhr.status == 422) {
+						Swal.fire({
+							title: 'Invalid Request',
+							icon: 'warning',
+						});
+					} else {
+						Swal.fire({
+							title: 'Error',
+							text: 'Unable to search user',
+							icon: 'error',
+						});
+					}
+				}
+			}
+		});
+
+		$('#comment-form').on('submit', function(e) {
+		    e.preventDefault();
+
+		    Swal.fire({
+		        title: "Saving comment...",
+		        text: "Please wait",
+		        allowOutsideClick: false,
+		        allowEscapeKey: false,
+		        didOpen: () => {
+		            Swal.showLoading();
+		        }
+		    });
+
+		    var comment = $('#comment').val();
+		    var task_id = $('#task_id').val(); // Assuming you have a hidden task_id input
+
+		    $.ajax({
+		        url: $(this).attr('action'),
+		        method: 'POST',
+		        data: {
+		            _token: $('input[name="_token"]').val(),
+		            comment: comment,
+		            task_id : {{$task->id}},
+		        },
+		        success: function(response) {
+		            if (response.success) {
+		                Swal.fire({
+		                    title: 'Comment Saved',
+		                    icon: 'success',
+		                    showConfirmButton: false,
+		                    timer: 1500,
+		                    timerProgressBar: true
+		                });
+		                $('#comment').val('');
+		            } else {
+		                Swal.fire({
+		                    title: 'Error',
+		                    text: response.msg || 'An unknown error occurred.',
+		                    icon: 'error',
+		                });
+		            }
+		        },
+		        error: function(xhr) {
+		            if (xhr.status === 422) {
+		                Swal.fire({
+		                    title: 'Validation Error',
+		                    html: xhr.responseJSON.msg,
+		                    icon: 'error',
+		                });
+		            } else {
+		                Swal.fire({
+		                    title: 'Error',
+		                    text: 'An error occurred while submitting the comment. Please try again.',
+		                    icon: 'error',
+		                });
+		            }
+		        }
+		    });
+		});
 	});
 
 	function setFormTempData () {
@@ -321,8 +535,8 @@
 	$('#project_id').change(function() {
 		let selectedStatus = $('#status_id').val();
 		get_fields('project_id', function () {
-	        $('#task_type').trigger('change');
-	    });
+			$('#task_type').trigger('change');
+		});
 	});
 
 	$('#task_type').change(function() {
@@ -332,7 +546,10 @@
 		}
 	});
 
-
+	$('#executor_group_id').change(function() {
+		$('#executor_id').val('').trigger('change');
+	});
+	
 	function get_fields (changed_field, callback) {
 
 		let selected_task_type = $('#'+changed_field).val();
@@ -417,12 +634,12 @@
 						Swal.fire({title: "", text: "No statuses wer allowed, Please check the Workflow against the selected Task Type", icon: "warning" });
 						$('#status_id').prop('disabled', true).select2();
 					}
-		            if (typeof callback === 'function' && callCallback) {
-		                callback();
-		            } else if (closeSwal) {
-		            	// $('.swal2-container').hide();
-		            	Swal.close();
-		            }
+					if (typeof callback === 'function' && callCallback) {
+						callback();
+					} else if (closeSwal) {
+						// $('.swal2-container').hide();
+						Swal.close();
+					}
 				}
 			});
 
@@ -737,23 +954,23 @@
 
 					let url = downloadFileRouteBase.replace('__TASK_ID__', file.id);
 					html += `<div id="file-box-${file.id}" class="file-box" style="width:auto; max-width:49%">
-					    <button aria-hidden="true" data-dismiss="alert" class="close remove-file" onclick="rm_file(${file.id})" type="button">×</button>
-					    <div class="file" style="margin: 0px 5px 5px 0px; display: flex;">
-					        <span class="corner"></span>
-					        <div class="icon" style="padding: 3px 16px 0px 3px; height: 73px;">
-					            <a href="${url}" target="_blank">
-					                <i class="${icon}" style="font-size:66px; color: #1ab394;"></i>
-					            </a>
-					        </div>
-					        <div class="file-name" style="width: 100%; border-left:3px solid #e7eaec; border-top: 0px; padding: 0px 10px;">
-					            <div style="display:inline-grid">
-					                <span style="word-wrap: break-word;">${file.name}</span>
-					                <small>Type: <strong>${fileExtension}</strong></small>
-					                <small>Uploaded By: ${file.creator_name} (${file.creator_email}) ${creator_mobile} </small>
-					                <small> On: ${new Date(file.created_at).toLocaleString()} </small>
-					            </div>
-					        </div>
-					    </div>
+						<button aria-hidden="true" data-dismiss="alert" class="close remove-file" onclick="rm_file(${file.id})" type="button">×</button>
+						<div class="file" style="margin: 0px 5px 5px 0px; display: flex;">
+							<span class="corner"></span>
+							<div class="icon" style="padding: 3px 16px 0px 3px; height: 73px;">
+								<a href="${url}" target="_blank">
+									<i class="${icon}" style="font-size:66px; color: #1ab394;"></i>
+								</a>
+							</div>
+							<div class="file-name" style="width: 100%; border-left:3px solid #e7eaec; border-top: 0px; padding: 0px 10px;">
+								<div style="display:inline-grid">
+									<span style="word-wrap: break-word;">${file.name}</span>
+									<small>Type: <strong>${fileExtension}</strong></small>
+									<small>Uploaded By: ${file.creator_name} (${file.creator_email}) ${creator_mobile} </small>
+									<small> On: ${new Date(file.created_at).toLocaleString()} </small>
+								</div>
+							</div>
+						</div>
 					</div>`;
 				}
 			}
@@ -773,11 +990,11 @@
 		const maxSizeHint = field.settings.max_file_size ? `Max Size: ${field.settings.max_file_size} MB` : '';
 		
 		const hints = `(${maxFilesHint}) (${maxSizeHint})`.trim();
-        const inputName = field.settings.allow_multiple === "yes" ? `${field.field_id}[]` : field.field_id;
+		const inputName = field.settings.allow_multiple === "yes" ? `${field.field_id}[]` : field.field_id;
 
-        const field_files = displayTaskFiles(field, task_files);
+		const field_files = displayTaskFiles(field, task_files);
 
-        if(field_files == '') {
+		if(field_files == '') {
 			return `
 				<div class="form-group">
 					<label for="${field.field_id}">${field.name} ${required} ${hints}</label>
@@ -785,8 +1002,8 @@
 				</div>
 			`;
 
-        } else {
-        	return `
+		} else {
+			return `
 				<div class="col-12" style="padding: 5px 6px;">
 					<div class="panel panel-default" id="attachment-block">
 						<div class="panel-heading pl-2 pt-1 pr-1 pb-0">
@@ -806,63 +1023,63 @@
 					</div>
 				</div>
 			`;
-        }
+		}
 	}
 
 	function rm_file(id) {
-	    Swal.fire({
-	        title: 'Are you sure?',
-	        text: 'You won\'t be able to revert this!',
-	        icon: 'warning',
-	        showCancelButton: true,
-	        confirmButtonColor: '#3085d6',
-	        cancelButtonColor: '#d33',
-	        confirmButtonText: 'Yes, delete it!',
-	        cancelButtonText: 'Cancel'
-	    }).then((result) => {
-	        if (result.isConfirmed) {
-                Swal.fire({
-                    title: "Deleting...",
-                    text: "Please wait",
-                    allowOutsideClick: false,
-                    allowEscapeKey: false,
-                    didOpen: () => {
-                        Swal.showLoading(); // Show the loading spinner
-                    }
-                });
-	            $.ajax({
-	                url: `/tasks/${id}/rm-file`, // Update with the correct route
-	                type: 'DELETE',
-	                headers: {
-	                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') // Required for Laravel CSRF protection
-	                },
-	                success: function(response) {
-	                    if (response.success) {
-	                        Swal.fire(
-	                            'Deleted!',
-	                            response.message,
-	                            'success'
-	                        );
+		Swal.fire({
+			title: 'Are you sure?',
+			text: 'You won\'t be able to revert this!',
+			icon: 'warning',
+			showCancelButton: true,
+			confirmButtonColor: '#3085d6',
+			cancelButtonColor: '#d33',
+			confirmButtonText: 'Yes, delete it!',
+			cancelButtonText: 'Cancel'
+		}).then((result) => {
+			if (result.isConfirmed) {
+				Swal.fire({
+					title: "Deleting...",
+					text: "Please wait",
+					allowOutsideClick: false,
+					allowEscapeKey: false,
+					didOpen: () => {
+						Swal.showLoading(); // Show the loading spinner
+					}
+				});
+				$.ajax({
+					url: `/tasks/${id}/rm-file`, // Update with the correct route
+					type: 'DELETE',
+					headers: {
+						'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') // Required for Laravel CSRF protection
+					},
+					success: function(response) {
+						if (response.success) {
+							Swal.fire(
+								'Deleted!',
+								response.message,
+								'success'
+							);
 
-	                        $(`#file-box-${id}`).remove();
-	                    } else {
-	                        Swal.fire(
-	                            'Error!',
-	                            response.message,
-	                            'error'
-	                        );
-	                    }
-	                },
-	                error: function(xhr) {
-	                    Swal.fire(
-	                        'Error!',
-	                        'Something went wrong while deleting the file.',
-	                        'error'
-	                    );
-	                }
-	            });
-	        }
-	    });
+							$(`#file-box-${id}`).remove();
+						} else {
+							Swal.fire(
+								'Error!',
+								response.message,
+								'error'
+							);
+						}
+					},
+					error: function(xhr) {
+						Swal.fire(
+							'Error!',
+							'Something went wrong while deleting the file.',
+							'error'
+						);
+					}
+				});
+			}
+		});
 	}
 
 	function createNumberField(field) {

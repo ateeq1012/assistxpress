@@ -390,6 +390,7 @@ class UserController extends Controller
     public function download(Request $request)
     {
         $searchParams = $request->only(['name', 'email']);
-        return Excel::download(new UsersExport($searchParams), 'users.xlsx');
+        $now_ts = date('Ymd_Hms');
+        return Excel::download(new UsersExport($searchParams), "users_{$now_ts}.xlsx");
     }
 }

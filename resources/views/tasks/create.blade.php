@@ -78,7 +78,7 @@
 			<div class="form-group">
 				<label for="project_id">Project</label>
 				<select name="project_id" class="form-control select2-field" id="project_id" required >
-					<option value="">Select Task Type</option>
+					<option value="">Select Project</option>
 					@foreach($projects as $project)
 						<option value="{{ $project->id }}">
 							{{ $project->name }}
@@ -143,7 +143,7 @@
 
 			<div class="form-group">
 				<label for="executor_group_id">Assignee Group<span class="text-danger">*</span></label>
-				<select name="executor_group_id" class="form-control select2-field" id="executor_group_id">
+				<select name="executor_group_id" class="form-control" id="executor_group_id">
 					<option value="">Select an option</option>
 					@foreach($all_groups as $gid => $gname)
 						<option value="{{$gid}}">{{$gname}}</option>
@@ -151,7 +151,7 @@
 				</select>
 			</div>
 			<div class="form-group">
-				<label for="executor_id">Assignee<span class="text-danger">*</span></label>
+				<label for="executor_id">Assignee</label>
 				<select name="executor_id" class="form-control select2-field" id="executor_id">
 					<option value="">Select an option</option>
 				</select>
@@ -265,6 +265,102 @@
 				}
 			}
 		});
+
+		$('#executor_group_id').select2({
+		    width: '100%',
+		    allowClear: true,
+		    placeholder: 'Search for groups',
+		    delay: 1000, // Delay before starting search
+		    minimumInputLength: 2,
+		    ajax: {
+		        url: '{{ route("tasks.search_project_groups") }}',
+		        dataType: 'json',
+		        type: 'POST',
+		        delay: 250, // Delay to prevent flooding requests
+		        data: function(params) {
+		            return {
+		                q: params.term,
+		                enabled_only: true,
+		                project_id: $('#project_id').val()
+		            };
+		        },
+		        processResults: function(data) {
+		            return {
+		                results: $.map(data.data, function(item) {
+		                    return {
+		                        id: item.id,
+		                        text: item.name
+		                    };
+		                })
+		            };
+		        },
+		        cache: true,
+		        headers: {
+		            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') // CSRF token
+		        },
+		        error: function(xhr, status, error) {
+		        	if(xhr.status == 422) {
+		        		Swal.fire({
+							title: 'Invalid Request',
+							icon: 'warning',
+						});
+		        	} else {
+		        		Swal.fire({
+							title: 'Error',
+							text: 'Unable to search user group',
+							icon: 'error',
+						});
+		        	}
+		        }
+		    }
+		});
+		$('#executor_id').select2({
+		    width: '100%',
+		    allowClear: true,
+		    placeholder: 'Search Users',
+		    delay: 1000, // Delay before starting search
+		    minimumInputLength: 2,
+		    ajax: {
+		        url: '{{ route("tasks.search_group_users") }}',
+		        dataType: 'json',
+		        type: 'POST',
+		        delay: 250, // Delay to prevent flooding requests
+		        data: function(params) {
+		            return {
+		                q: params.term,
+		                group_id: $('#executor_group_id').val()
+		            };
+		        },
+		        processResults: function(data) {
+		            return {
+		                results: $.map(data.data, function(item) {
+		                    return {
+		                        id: item.id,
+		                        text: item.name
+		                    };
+		                })
+		            };
+		        },
+		        cache: true,
+		        headers: {
+		            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') // CSRF token
+		        },
+		        error: function(xhr, status, error) {
+		        	if(xhr.status == 422) {
+		        		Swal.fire({
+							title: 'Invalid Request',
+							icon: 'warning',
+						});
+		        	} else {
+		        		Swal.fire({
+							title: 'Error',
+							text: 'Unable to search user',
+							icon: 'error',
+						});
+		        	}
+		        }
+		    }
+		});
 	});
 
 	$('#task_type').change(function() {
@@ -273,6 +369,10 @@
 
 	$('#project_id').change(function() {
 		get_fields('project_id');
+	});
+
+	$('#executor_group_id').change(function() {
+	    $('#executor_id').val('').trigger('change');
 	});
 
 	function get_fields (changed_field) {

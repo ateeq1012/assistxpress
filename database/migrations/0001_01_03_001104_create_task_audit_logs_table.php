@@ -14,21 +14,17 @@ return new class extends Migration
         Schema::create('task_audit_logs', function (Blueprint $table) {
             $table->id();
             $table->integer('task_id');
-            $table->integer('project_id'); // without relation
-            $table->integer('task_type_id'); // without relation
             $table->string('field_name');
+            $table->integer('field_type')->comment('[1=>"System Field", 2=>"Custom Field", 3=>"Other"]');
             $table->string('old_value')->nullable();
             $table->string('new_value')->nullable();
+            $table->string('file_path')->nullable();
             $table->integer('created_by');
             $table->timestamp('created_at');
             $table->foreign('task_id')->references('id')->on('tasks')->onDelete("CASCADE");
-            $table->foreign('project_id')->references('id')->on('projects')->onDelete("CASCADE");
-            $table->foreign('task_type_id')->references('id')->on('task_types')->onDelete("CASCADE");
             $table->foreign('created_by')->references('id')->on('users')->onDelete("NO ACTION");
 
             $table->index('task_id');
-            $table->index('project_id');
-            $table->index('task_type_id');
             $table->index('created_by');
 
         });

@@ -25,8 +25,11 @@ return new class extends Migration
             $table->integer('updated_by')->nullable();
             $table->integer('executor_id')->nullable();
             $table->integer('executor_group_id')->nullable();
+
             $table->integer('sla_rule_id')->nullable();
-            $table->integer('time_spent')->default(0);
+            $table->timestamp('response_time')->nullable();
+            $table->integer('tto')->default(0)->comment('Time To Own');
+            $table->integer('ttr')->default(0)->comment('Time To Resolve');
 
             $table->timestamp('planned_start')->nullable();
             $table->timestamp('planned_end')->nullable();

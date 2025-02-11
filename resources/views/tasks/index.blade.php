@@ -172,18 +172,18 @@
                                         </select>
                                     </div>
                                     <div class="form-group pl-1 pr-1" style="min-width: 200px;">
-                                        <select id="executor_id" class="form-control srch_col select2-field" data-placeholder="Assignee">
-                                            <option value="">Assignee</option>
-                                            @foreach ($users as $user)
-                                                <option value="{{$user['id']}}" >{{$user['name']}}</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                    <div class="form-group pl-1 pr-1" style="min-width: 200px;">
                                         <select id="executor_group_id" class="form-control srch_col select2-field" data-placeholder="Assignee Group">
                                             <option value="">Assignee Group</option>
                                             @foreach ($groups as $group)
                                                 <option value="{{$group['id']}}" >{{$group['name']}}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="form-group pl-1 pr-1" style="min-width: 200px;">
+                                        <select id="executor_id" class="form-control srch_col select2-field" data-placeholder="Assignee">
+                                            <option value="">Assignee</option>
+                                            @foreach ($users as $user)
+                                                <option value="{{$user['id']}}" >{{$user['name']}}</option>
                                             @endforeach
                                         </select>
                                     </div>
@@ -226,6 +226,14 @@
                                         <input type="button" value="Apply Filters" class="btn btn-primary btn-sm" onclick="apply_filters();">
                                         <input type="button" value="Reset Table" class="btn btn-danger btn-sm" onclick="reset_page();">
                                         <input type="button" value="Clear Filters" class="btn btn-warning btn-sm" onclick="clear_filters();">
+                                        @if(session('user_routes')['tasks.download'] ?? false)
+                                            <form action="{{ route('tasks.download') }}" method="POST" style="display: inline-block;" target="_blank" id="download-form">
+                                                @csrf
+                                                <input type="hidden" name="dn_filters" id="dn_filters" value="">
+                                                <button id="download-btn" type="submit" class="btn btn-info btn-sm">Download</button>
+                                            </form>
+                                        @endif
+
                                     </div>
                                 </div>
                             </div>
@@ -303,6 +311,24 @@
 </div>
 
 <script>
+
+    document.getElementById('download-btn').addEventListener('click', function(event) {
+        event.preventDefault();
+
+        var col_search_opts = {};
+
+        $(".srch_col").each(function() {
+            if ($(this).val().trim() != '') {
+                col_search_opts[$(this).attr("id")] = $(this).val().trim();
+            }
+        });
+
+        $('#dn_filters').val(JSON.stringify(col_search_opts));  // Convert to JSON string
+
+        document.getElementById('download-form').submit();
+    });
+
+
     $(document).on('click', '.delete-button', function (event) {
         event.preventDefault();
 
@@ -551,14 +577,12 @@
                 col_search_opts[$(this).attr("id")] = $(this).val().trim();
             }
         });
-        console.log(col_search_opts);
 
-         // Store the filter options under a 'filters' key
         tsk_latest_dt_param = { ...tsk_latest_dt_param, filters: col_search_opts };
     
         tsk_dt.column().search('');
-        tsk_dt.ajax.reload(function(json){
-            console.log(json);
+        tsk_dt.ajax.reload(function(json) {
+            // console.log(json);
         }, true);
     }
 

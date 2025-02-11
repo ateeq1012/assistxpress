@@ -328,7 +328,7 @@ class GroupController extends Controller
         }
 
         // Eager load member count
-        $groups = $query->withCount('members') // Assuming the relationship in Group model is 'members'
+        $groups = $query->withCount('members')
             ->limit(10)
             ->get(['id', 'name']);
 

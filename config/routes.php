@@ -54,7 +54,7 @@ return [
             'public' => true,
         ],
         'user-view' => [
-            'routes' => ['users.show-web-GET'],
+            'routes' => ['users.show-web-GET', 'user_role_routes-web-POST'],
             'description' => 'View Users',
             'public' => true,
         ],
@@ -292,18 +292,28 @@ return [
             'public' => true,
         ],
         'task-create' => [
-            'routes' => ['tasks.create-web-GET', 'tasks.store-web-POST', /*'task_types.get_fields-web-POST',*/ 'tasks.get_fields-web-POST'],
+            'routes' => ['tasks.create-web-GET', 'tasks.store-web-POST', /*'task_types.get_fields-web-POST',*/ 'tasks.get_fields-web-POST','tasks.search_project_groups-web-POST','tasks.search_group_users-web-POST',],
             'description' => 'Create Tasks',
             'public' => true,
         ],
         'task-edit' => [
-            'routes' => ['tasks.edit-web-GET','tasks.update-web-PUT', /*'task_types.get_fields-web-POST', */'task_types.get_fields-web-POST'],
+            'routes' => ['tasks.edit-web-GET','tasks.update-web-PUT', /*'task_types.get_fields-web-POST', */'task_types.get_fields-web-POST','tasks.search_project_groups-web-POST','tasks.search_group_users-web-POST',],
             'description' => 'Edit Tasks',
+            'public' => true,
+        ],
+        'task-comment' => [
+            'routes' => ['tasks.add_comment-web-POST'],
+            'description' => 'Comment on Tasks',
             'public' => true,
         ],
         'task-view' => [
             'routes' => ['tasks.show-web-GET'],
             'description' => 'View Tasks',
+            'public' => true,
+        ],
+        'task-download' => [
+            'routes' => ['tasks.download-web-POST'],
+            'description' => 'Download Tasks',
             'public' => true,
         ],
         'task-download-file' => [
