@@ -14,6 +14,8 @@ use App\Models\CustomField;
 use App\Models\Project;
 use App\Models\Sla;
 
+use App\Helpers\SlaHelper;
+
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithColumnFormatting;
@@ -69,7 +71,7 @@ class TasksExport implements FromCollection, WithMapping, WithColumnFormatting, 
         $task_types = TaskType::select('id', 'name', 'color')->get()->toArray();
         $this->task_types_lkp = array_column($task_types, null, 'id');
 
-        $statuses = Status::select('id', 'name', 'color')->get()->toArray();
+        $statuses = Status::get()->toArray();
         $this->statuses_lkp = array_column($statuses, null, 'id');
 
         $priorities = TaskPriority::select('id', 'name', 'color')->get()->toArray();
@@ -81,7 +83,7 @@ class TasksExport implements FromCollection, WithMapping, WithColumnFormatting, 
         $groups = Group::select('id', 'name')->get()->toArray();
         $this->groups_lkp = array_column($groups, 'name', 'id');
         
-        $sla_rules = Sla::select('id', 'name', 'color')->get()->toArray();
+        $sla_rules = Sla::get()->toArray();
         $this->sla_rules_lkp = array_column($sla_rules, null, 'id');
     }
 
@@ -91,7 +93,7 @@ class TasksExport implements FromCollection, WithMapping, WithColumnFormatting, 
         set_time_limit(300);
 
         $filters = $this->searchParams;
-        $query = DB::table('task_view')->select(array_keys($this->final_fields));
+        $query = DB::table('task_view');
 
         if (count($filters) > 0) {
             $_LIKE = ['subject', 'description'];
@@ -128,36 +130,35 @@ class TasksExport implements FromCollection, WithMapping, WithColumnFormatting, 
 
     public function map($task): array
     {
-        $response_Time_SLA = null;
-        $response_Time_Spent = null;
-        $response_SLA_percentage = null;
-        $response_SLA_Status = null;
-        $resolution_Time_SLA = null;
-        $resolution_Time_Spent = null;
-        $resolution_SLA_percentage = null;
-        $response_SLA_Status = null;
+        $task_status = $this->statuses_lkp[$task->status_id];
+
+        $slaInfo = [];
+        if(isset($task->sla_rule_id) && isset($this->sla_rules_lkp[$task->sla_rule_id]) ) {
+            $slaInfo = SlaHelper::getSlaInfo($task_status, $task, $this->sla_rules_lkp[$task->sla_rule_id]);
+        }
+
         $row = [
             $task->id,
             $this->project_lkp[$task->project_id]['name'] ?? '',
             $this->task_types_lkp[$task->task_type_id]['name'] ?? '',
             $task->subject,
             $task->description,
-            $this->statuses_lkp[$task->status_id]['name'] ?? '',
+            $task_status['name'] ?? '',
             $this->priorities_lkp[$task->priority_id]['name'] ?? '',
             $this->groups_lkp[$task->creator_group_id] ?? '',
             $this->users_lkp[$task->created_by] ?? '',
             $this->users_lkp[$task->executor_id] ?? '',
             $this->groups_lkp[$task->executor_group_id] ?? '',
             $this->users_lkp[$task->updated_by] ?? '',
-            $this->sla_rules_lkp[$task->sla_rule_id]['name'] ?? '',
-            $response_Time_SLA,
-            $response_Time_Spent,
-            $response_SLA_percentage,
-            $response_SLA_Status,
-            $resolution_Time_SLA,
-            $resolution_Time_Spent,
-            $resolution_SLA_percentage,
-            $response_SLA_Status,
+            $slaInfo['sla_rule_name'] ?? 'Not Applicable',
+            $slaInfo['response_time_sla'] ?? '',
+            $slaInfo['response_time_spent'] ?? '',
+            $slaInfo['response_sla_percentage'] ?? '',
+            $slaInfo['response_sla_status'] ?? '',
+            $slaInfo['resolution_time_sLA'] ?? '',
+            $slaInfo['resolution_time_spent'] ?? '',
+            $slaInfo['resolution_sla_percentage'] ?? '',
+            $slaInfo['resolution_sla_status'] ?? '',
             $task->created_at,
             $task->updated_at
         ];
@@ -241,7 +242,7 @@ class TasksExport implements FromCollection, WithMapping, WithColumnFormatting, 
             ],
         ]);
         
-        $sheet->getStyle('N1:Q1')->applyFromArray([
+        $sheet->getStyle('M1:Q1')->applyFromArray([
             'font' => [
                 'bold' => true,
                 'color' => ['argb' => 'FFFFFFFF'],

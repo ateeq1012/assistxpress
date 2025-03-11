@@ -188,6 +188,7 @@
 		                	<li><a class="nav-link active" data-toggle="tab" href="#tab-comments">Comments</a></li>
 						@endif
 		                <li><a class="nav-link" data-toggle="tab" href="#tab-history">History</a></li>
+		                <li><a class="nav-link" data-toggle="tab" href="#tab-sla">SLA</a></li>
 		            </ul>
 		            <div class="tab-content">
 						@if(session('user_routes')['tasks.add_comment'] ?? false)
@@ -221,6 +222,18 @@
 									'priority_lkp' => $priority_lkp,
 									'status_lkp' => $status_lkp
 								])
+		                    </div>
+		                </div>
+
+		                <div role="tabpanel" id="tab-sla" class="tab-pane">
+		                    <div class="panel-body" style="height:calc(100vh - 217px); overflow-y:scroll;">
+			                	@if(isset($task->sla_rule_id))
+									@include('tasks.showsla', [
+										'slaInfo' => $slaInfo,
+									])
+			                	@else
+			                		<p>SLA does not apply!</p>
+			                	@endif
 		                    </div>
 		                </div>
 		            </div>

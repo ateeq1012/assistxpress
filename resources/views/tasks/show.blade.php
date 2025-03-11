@@ -48,6 +48,7 @@
 				<li><a class="nav-link active" data-toggle="tab" href="#tab-info">Info</a></li>
 				<li><a class="nav-link" data-toggle="tab" href="#tab-comments">Comments</a></li>
 				<li><a class="nav-link" data-toggle="tab" href="#tab-history">History</a></li>
+				<li><a class="nav-link" data-toggle="tab" href="#tab-sla">SLA</a></li>
 			</ul>
 			<div class="tab-content">
 				<div role="tabpanel" id="tab-info" class="tab-pane active">
@@ -80,6 +81,17 @@
 						])
 					</div>
 				</div>
+                <div role="tabpanel" id="tab-sla" class="tab-pane">
+                    <div class="panel-body" style="height:calc(100vh - 217px); overflow-y:scroll;">
+	                	@if(isset($task_info->sla_rule_id))
+							@include('tasks.showsla', [
+								'slaInfo' => $slaInfo,
+							])
+	                	@else
+	                		<p>SLA does not apply!</p>
+	                	@endif
+                    </div>
+                </div>
 			</div>
 		</div>
 	</div>

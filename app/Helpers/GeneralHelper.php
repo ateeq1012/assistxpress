@@ -83,6 +83,22 @@ class GeneralHelper
         return ($luminance > $threshold) ? '#222222' : '#FFFFFF';
     }
 
+    public static function hh_mm_to_sec($hh_mm)
+    {
+        list($hours, $minutes) = explode(":", $hh_mm);
+        $seconds = ($hours * 3600) + ($minutes * 60);
+        return $seconds;
+    }
+
+    public static function sec_to_hh_mm($seconds)
+    {
+        $hours = floor($seconds / 3600);
+        $minutes = floor(($seconds % 3600) / 60);
+        $hours = str_pad($hours, 2, "0", STR_PAD_LEFT);
+        $minutes = str_pad($minutes, 2, "0", STR_PAD_LEFT);
+        
+        return "{$hours}:{$minutes}";
+    }
 
     public static function process_workflow_transitions($workflow) {
         $transitions = [
@@ -117,12 +133,12 @@ class GeneralHelper
                 {
                     $from = $from==null ? 0 : $from;
                     $transitions['new'][$from."_".$to] = true;
-                    $from_to['new'][$from][] = $to;
+                    $from_to['new'][$from][$to] = $to;
                 }
                 if($transition->transition_type ==  1)
                 {
                     $transitions['creator'][$from."_".$to] = true;
-                    $from_to['creator'][$from][] = $to;
+                    $from_to['creator'][$from][$to] = $to;
                 }
                 if($transition->transition_type ==  2)
                 {
@@ -131,12 +147,12 @@ class GeneralHelper
                         $creator_member_roles[$transition->role_id] = $transition->role_id;
                     }
                     $transitions['creators_group_members'][$from."_".$to] = true;
-                    $from_to['creators_group_members'][$from][] = $to;
+                    $from_to['creators_group_members'][$from][$to] = $to;
                 }
                 if($transition->transition_type ==  3)
                 {
                     $transitions['executor'][$from."_".$to] = true;
-                    $from_to['executor'][$from][] = $to;
+                    $from_to['executor'][$from][$to] = $to;
                 }
                 if($transition->transition_type ==  4)
                 {
@@ -145,7 +161,7 @@ class GeneralHelper
                         $executors_member_roles[$transition->role_id] = $transition->role_id;
                     }
                     $transitions['executors_group_members'][$from."_".$to] = true;
-                    $from_to['executors_group_members'][$from][] = $to;
+                    $from_to['executors_group_members'][$from][$to] = $to;
                 }
                 if($transition->transition_type ==  5)
                 {
@@ -154,7 +170,7 @@ class GeneralHelper
                         $general_users_by_role[$transition->role_id] = $transition->role_id;
                     }
                     $transitions['general_by_role'][$from."_".$to] = true;
-                    $from_to['general_by_role'][$from][] = $to;
+                    $from_to['general_by_role'][$from][$to] = $to;
                 }
                 if($transition->transition_type ==  6)
                 {
@@ -163,17 +179,17 @@ class GeneralHelper
                         $general_users_by_group[$transition->group_id] = $transition->group_id;
                     }
                     $transitions['general_by_group'][$from."_".$to] = true;
-                    $from_to['general_by_group'][$from][] = $to;
+                    $from_to['general_by_group'][$from][$to] = $to;
                 }
             }
         }
         return [
-            // 'transitions' => $transitions,
+            'transitions' => $transitions,
             'from_to' => $from_to,
-            // 'creator_member_roles' => $creator_member_roles,
-            // 'executors_member_roles' => $executors_member_roles,
-            // 'general_users_by_role' => $general_users_by_role,
-            // 'general_users_by_group' => $general_users_by_group,
+            'creator_member_roles' => $creator_member_roles,
+            'executors_member_roles' => $executors_member_roles,
+            'general_users_by_role' => $general_users_by_role,
+            'general_users_by_group' => $general_users_by_group,
         ];
     }
 }

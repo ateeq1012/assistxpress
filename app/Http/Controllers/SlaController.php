@@ -813,7 +813,7 @@ class SlaController extends Controller
                 ->update([
                     'sla_rule_id' => null,
                     'response_time' => null,
-                    'tto' => 0
+                    'tto' => 0,
                     'ttr' => 0
                 ]);
 

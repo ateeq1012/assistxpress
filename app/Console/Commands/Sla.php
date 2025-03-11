@@ -115,10 +115,10 @@ class Sla extends Command
 				$tto = $task->tto ?? 0;
 				$ttr = $task->ttr ?? 0;
 				$resp_sla_wins = $sla_wins;
-				if(!isset($task->response_time) || strtotime($task->response_time) > $last_run_ts) {
+				if(!isset($task->response_time) || strtotime($task->response_time) > strtotime($last_run_ts)) {
 					if(isset($task->response_time)) {
 						// Clip time windows after response time
-						$resp_sla_wins[] = [$task_created_at, date('Y-m-d H:i:s', strtotime($task->response_time))];
+						$resp_sla_wins[] = [[$task_created_at, date('Y-m-d H:i:s', strtotime($task->response_time))]];
 					}
 				}
 

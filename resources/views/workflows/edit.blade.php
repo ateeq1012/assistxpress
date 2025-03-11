@@ -102,7 +102,7 @@
                                                     <td class="checkbox-cell">
                                                         <div class="row m-0 pl-0 pr-0">
                                                             <input type="checkbox" id="transition_0_{{ $st_col->id }}" name="wf_statuses[][]" data-transition-type="new" data-rv="0" data-cv = "{{ $st_col->id }}"
-                                                                {{ isset($saved_transitions['new']["0_".$st_col->id]) ? 'checked' : '' }}
+                                                                {{ isset($from_to['new'][0]) && isset($from_to['new'][0][$st_col->id] ) ? 'checked' : '' }}
                                                             >
                                                             <a href="#" class="ml-2 replicate-btn" title="Replicate Settings Right"><i class="fa fa-angle-double-right"></i></a>
                                                             <a href="#" class="ml-2 replicate-btn" title="Replicate Settings Down"><i class="fa fa-angle-double-down"></i></a>
@@ -149,7 +149,7 @@
                                                             <td class="checkbox-cell">
                                                                 <div class="row m-0 pl-0 pr-0">
                                                                     <input type="checkbox" id="transition_{{ $st_row->id }}_{{ $st_col->id }}" name="wf_statuses[][]" data-transition-type="creator" data-rv="{{ $st_row->id }}" data-cv = "{{ $st_col->id }}" value="{{ $st_row->id }}_{{ $st_col->id }}"
-                                                                        {{ isset($saved_transitions['creator'][$st_row->id . "_" . $st_col->id]) ? 'checked' : '' }}
+                                                                        {{ isset($from_to['creator'][$st_row->id]) && isset($from_to['creator'][$st_row->id][$st_col->id] ) ? 'checked' : '' }}
                                                                     >
                                                                     <a href="#" class="ml-2 replicate-btn" title="Replicate Settings Right"><i class="fa fa-angle-double-right"></i></a>
                                                                     <a href="#" class="ml-2 replicate-btn" title="Replicate Settings Down"><i class="fa fa-angle-double-down"></i></a>
@@ -210,7 +210,7 @@
                                                             <td class="checkbox-cell">
                                                                 <div class="row m-0 pl-0 pr-0">
                                                                     <input type="checkbox" id="transition_{{ $st_row->id }}_{{ $st_col->id }}" name="wf_statuses[][]" data-transition-type="creators_group_members" data-rv="{{ $st_row->id }}" data-cv = "{{ $st_col->id }}" value="{{ $st_row->id }}_{{ $st_col->id }}"
-                                                                        {{ isset($saved_transitions['creators_group_members'][$st_row->id . "_" . $st_col->id]) ? 'checked' : '' }}
+                                                                        {{ isset($from_to['creators_group_members'][$st_row->id]) && isset($from_to['creators_group_members'][$st_row->id][$st_col->id] ) ? 'checked' : '' }}
                                                                     >
                                                                     <a href="#" class="ml-2 replicate-btn" title="Replicate Settings Right"><i class="fa fa-angle-double-right"></i></a>
                                                                     <a href="#" class="ml-2 replicate-btn" title="Replicate Settings Down"><i class="fa fa-angle-double-down"></i></a>
@@ -260,7 +260,7 @@
                                                             <td class="checkbox-cell">
                                                                 <div class="row m-0 pl-0 pr-0">
                                                                     <input type="checkbox" id="transition_{{ $st_row->id }}_{{ $st_col->id }}" name="wf_statuses[][]" data-transition-type="executor" data-rv="{{ $st_row->id }}" data-cv = "{{ $st_col->id }}" value="{{ $st_row->id }}_{{ $st_col->id }}"
-                                                                        {{ isset($saved_transitions['executor'][$st_row->id . "_" . $st_col->id]) ? 'checked' : '' }}
+                                                                        {{ isset($from_to['executor'][$st_row->id]) && isset($from_to['executor'][$st_row->id][$st_col->id] ) ? 'checked' : '' }}
                                                                     >
                                                                     <a href="#" class="ml-2 replicate-btn" title="Replicate Settings Right"><i class="fa fa-angle-double-right"></i></a>
                                                                     <a href="#" class="ml-2 replicate-btn" title="Replicate Settings Down"><i class="fa fa-angle-double-down"></i></a>
@@ -322,7 +322,7 @@
                                                             <td class="checkbox-cell">
                                                                 <div class="row m-0 pl-0 pr-0">
                                                                     <input type="checkbox" id="transition_{{ $st_row->id }}_{{ $st_col->id }}" name="wf_statuses[][]" data-transition-type="executors_group_members" data-rv="{{ $st_row->id }}" data-cv = "{{ $st_col->id }}" value="{{ $st_row->id }}_{{ $st_col->id }}"
-                                                                        {{ isset($saved_transitions['executors_group_members'][$st_row->id . "_" . $st_col->id]) ? 'checked' : '' }}
+                                                                        {{ isset($from_to['executors_group_members'][$st_row->id]) && isset($from_to['executors_group_members'][$st_row->id][$st_col->id] ) ? 'checked' : '' }}
                                                                     >
                                                                     <a href="#" class="ml-2 replicate-btn" title="Replicate Settings Right"><i class="fa fa-angle-double-right"></i></a>
                                                                     <a href="#" class="ml-2 replicate-btn" title="Replicate Settings Down"><i class="fa fa-angle-double-down"></i></a>
@@ -383,7 +383,7 @@
                                                             <td class="checkbox-cell">
                                                                 <div class="row m-0 pl-0 pr-0">
                                                                     <input type="checkbox" id="transition_{{ $st_row->id }}_{{ $st_col->id }}" name="wf_statuses[][]" data-transition-type="general_by_role" data-rv="{{ $st_row->id }}" data-cv = "{{ $st_col->id }}" value="{{ $st_row->id }}_{{ $st_col->id }}"
-                                                                        {{ isset($saved_transitions['general_by_role'][$st_row->id . "_" . $st_col->id]) ? 'checked' : '' }}
+                                                                        {{ isset($from_to['general_by_role'][$st_row->id]) && isset($from_to['general_by_role'][$st_row->id][$st_col->id] ) ? 'checked' : '' }}
                                                                     >
                                                                     <a href="#" class="ml-2 replicate-btn" title="Replicate Settings Right"><i class="fa fa-angle-double-right"></i></a>
                                                                     <a href="#" class="ml-2 replicate-btn" title="Replicate Settings Down"><i class="fa fa-angle-double-down"></i></a>
@@ -444,7 +444,7 @@
                                                             <td class="checkbox-cell">
                                                                 <div class="row m-0 pl-0 pr-0">
                                                                     <input type="checkbox" id="transition_{{ $st_row->id }}_{{ $st_col->id }}" name="wf_statuses[][]" data-transition-type="general_by_group" data-rv="{{ $st_row->id }}" data-cv = "{{ $st_col->id }}" value="{{ $st_row->id }}_{{ $st_col->id }}"
-                                                                        {{ isset($saved_transitions['general_by_group'][$st_row->id . "_" . $st_col->id]) ? 'checked' : '' }}
+                                                                        {{ isset($from_to['general_by_group'][$st_row->id]) && isset($from_to['general_by_group'][$st_row->id][$st_col->id] ) ? 'checked' : '' }}
                                                                     >
                                                                     <a href="#" class="ml-2 replicate-btn" title="Replicate Settings Right"><i class="fa fa-angle-double-right"></i></a>
                                                                     <a href="#" class="ml-2 replicate-btn" title="Replicate Settings Down"><i class="fa fa-angle-double-down"></i></a>

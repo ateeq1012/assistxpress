@@ -98,9 +98,13 @@ class WorkflowController extends Controller
         $general_users_by_role = [];
         $general_users_by_group = [];
 
-        if(isset($pwt['transitions'])) {
-            $saved_transitions = $pwt['transitions'];
+        if(isset($pwt['from_to'])) {
+            $from_to = $pwt['from_to'];
         }
+        // if(isset($pwt['transitions'])) {
+        //     $saved_transitions = $pwt['transitions'];
+        // }
+
         if(isset($pwt['creator_member_roles'])) {
             $creator_member_roles = $pwt['creator_member_roles'];
         }
@@ -117,7 +121,7 @@ class WorkflowController extends Controller
         $roles = DB::table('roles')->where('enabled', true)->get();
         $groups = DB::table('groups')->get();
         $statuses = DB::table('statuses')->select('id', 'name', 'color')->orderBy('order')->get();
-        return view('workflows.edit', compact('workflow', 'roles', 'groups', 'statuses', 'saved_transitions', 'creator_member_roles', 'executors_member_roles', 'general_users_by_role', 'general_users_by_group'));
+        return view('workflows.edit', compact('workflow', 'roles', 'groups', 'statuses', 'from_to', /*'saved_transitions',*/ 'creator_member_roles', 'executors_member_roles', 'general_users_by_role', 'general_users_by_group'));
     }
 
     public function update(Request $request, $id)

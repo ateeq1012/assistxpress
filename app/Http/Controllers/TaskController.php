@@ -21,12 +21,19 @@ use App\Models\TaskCustomField;
 use App\Models\TaskComment;
 use App\Models\Workflow;
 use App\Models\WorkflowStatusTransition;
-use App\Helpers\GeneralHelper;
 use App\Models\Sla;
 use App\Models\TaskAttachment;
 use App\Models\Project;
 use App\Models\ProjectGroup;
 use App\Models\TaskAuditLog;
+
+use App\Notifications\EmailNotification;
+use Illuminate\Support\Facades\Notification;
+
+use App\Helpers\GeneralHelper;
+use App\Helpers\SlaHelper;
+
+
 use ZipArchive;
 
 use App\Exports\TasksExport;
@@ -36,6 +43,17 @@ class TaskController extends Controller
 {
 	public function index(Request $request)
 	{
+		// TEST Notification
+		// $message = "Test Message.";
+		// $to = "kullah@innexiv.com";
+		// $cc = "kullah@innexiv.com";  // You can add more CCs as a string or array
+
+		// // Send the notification to custom email addresses
+		// Notification::route('mail', $to)  // Send to a custom email address
+		//             ->route('mail', $cc)  // Add CC (can add multiple recipients here)
+		//             ->notify(new EmailNotification($message, $cc));
+		// exit();
+
 		$projects = Project::select('id', 'name', 'color', 'enabled')->get()->toArray();
 		$task_types = TaskType::select('id', 'name', 'color', 'enabled')->get()->toArray();
 		$statuses = Status::get()->toArray();
@@ -669,7 +687,7 @@ class TaskController extends Controller
 
 		// For History
 		$task_info = Task::with('status', 'priority', 'tasktype', 'creator', 'executor', 'creatorGroup', 'executorGroup', 'taskCustomField', 'updater', 'sla')->findOrFail($id);
-		
+
 		$task_logs = TaskAuditLog::with('creator')->where('task_id', $id)->orderBy('created_at', 'desc')->get()->toArray();
 		$task_comments = TaskComment::with('creator')->where('task_id', $id)->orderBy('created_at', 'desc')->get()->toArray();
 
@@ -695,11 +713,25 @@ class TaskController extends Controller
 
 		$custom_field_id_lkp = array_column($custom_fields_lkp, 'name', 'field_id');
 
+        $slaInfo = [];
+        if(isset($task->sla_rule_id) ) {
+			$task_status = $task_info->status;
+			$sla_rule = $task_info->sla;
+            
+            $slaInfo = SlaHelper::getSlaInfo($task_status, $task, $sla_rule);
+        }
+
 		return view('tasks.edit', compact(
+			// edit
 			'task', 'projects', 'task_types', 'statuses', 'priorities', 'creator_groups', 'all_groups', 'assignee_group', 'assignee',
 
 			// for history
-			'task_info', 'custom_fields_lkp', 'fileds_to_make_history', 'task_logs', 'custom_field_id_lkp', 'project_lkp', 'task_type_lkp', 'priority_lkp', 'status_lkp', 'task_comments'
+			'task_info', 'custom_fields_lkp', 'fileds_to_make_history', 'task_logs', 'custom_field_id_lkp', 'project_lkp', 'task_type_lkp', 'priority_lkp', 'status_lkp',
+
+			// Comments
+			'task_comments',
+			// show sla
+			'slaInfo'
 		));
 	}
 
@@ -1254,7 +1286,15 @@ class TaskController extends Controller
 
 		$custom_field_id_lkp = array_column($custom_fields_lkp, 'name', 'field_id');
 
-		return view('tasks.show', compact('task_info', 'custom_fields_lkp', 'fileds_to_make_history', 'task_logs', 'custom_field_id_lkp', 'project_lkp', 'task_type_lkp', 'priority_lkp', 'status_lkp', 'task_comments'));
+        $slaInfo = [];
+        if(isset($task_info->sla_rule_id) ) {
+			$task_status = $task_info->status;
+			$sla_rule = $task_info->sla;
+            
+            $slaInfo = SlaHelper::getSlaInfo($task_status, $task_info, $sla_rule);
+        }
+
+		return view('tasks.show', compact('task_info', 'custom_fields_lkp', 'fileds_to_make_history', 'task_logs', 'custom_field_id_lkp', 'project_lkp', 'task_type_lkp', 'priority_lkp', 'status_lkp', 'task_comments', 'slaInfo'));
 	}
 
 	/**
@@ -1524,7 +1564,7 @@ class TaskController extends Controller
 			return response()->download($filePath, $file->name);
 		}
 
-		if ($fileSize > 1 * 1024 * 1024) {
+		if ($fileSize > 10 * 1024 * 1024) {
 			$zipFileName = 'files_' . time() . '.zip';
 			$zipFilePath = storage_path('app/public/' . $zipFileName);
 
