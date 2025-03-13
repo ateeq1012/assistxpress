@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 use App\Models\Group;
 use App\Models\User;
-use App\Models\ProjectGroup;
+use App\Models\ServiceDomainGroup;
 use App\Helpers\GeneralHelper;
 
 class GroupController extends Controller
@@ -306,11 +306,11 @@ class GroupController extends Controller
     {
         $search = $request->input('q');
         $enabled_only = $request->input('enabled_only', false);
-        $project_id = $request->input('project_id', null);
+        $service_domain_id = $request->input('service_domain_id', null);
 
         $already_added_groups = [];
-        if($project_id) {
-            $already_added_groups = ProjectGroup::where('id', $project_id)->pluck('group_id')->toArray();
+        if($service_domain_id) {
+            $already_added_groups = ServiceDomainGroup::where('id', $service_domain_id)->pluck('group_id')->toArray();
         }
 
         if (!$search) {

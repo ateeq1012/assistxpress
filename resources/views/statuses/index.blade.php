@@ -16,7 +16,7 @@
 </style>
 <div class="ibox pt-2 container">
     <div class="ibox-title">
-        <h5>Task Statuses</h5>
+        <h5>Statuses</h5>
         <div class="ibox-tools">
             <a href="{{ route('statuses.create') }}" class="btn btn-primary btn-xs">Create Status</a>
         </div>
@@ -59,7 +59,7 @@
                     <th><a href="{{ route('statuses.index', array_merge(request()->all(), ['sort' => 'name', 'direction' => $sortDirection === 'asc' ? 'desc' : 'asc'])) }}">Name</a></th>
                     <th><a href="{{ route('statuses.index', array_merge(request()->all(), ['sort' => 'description', 'direction' => $sortDirection === 'asc' ? 'desc' : 'asc'])) }}">Description</a></th>
                     <th><a href="{{ route('statuses.index', array_merge(request()->all(), ['sort' => 'order', 'direction' => $sortDirection === 'asc' ? 'desc' : 'asc'])) }}">Precedence</a></th>
-                    <th><a href="{{ route('statuses.index', array_merge(request()->all(), ['sort' => 'type', 'direction' => $sortDirection === 'asc' ? 'desc' : 'asc'])) }}">Task Type</a></th>
+                    <th><a href="{{ route('statuses.index', array_merge(request()->all(), ['sort' => 'type', 'direction' => $sortDirection === 'asc' ? 'desc' : 'asc'])) }}">Type</a></th>
                     <th><a href="{{ route('statuses.index', array_merge(request()->all(), ['sort' => 'created_by', 'direction' => $sortDirection === 'asc' ? 'desc' : 'asc'])) }}">Created by</a></th>
                     <th><a href="{{ route('statuses.index', array_merge(request()->all(), ['sort' => 'created_at', 'direction' => $sortDirection === 'asc' ? 'desc' : 'asc'])) }}">Created on</a></th>
                     <th><a href="{{ route('statuses.index', array_merge(request()->all(), ['sort' => 'updated_by', 'direction' => $sortDirection === 'asc' ? 'desc' : 'asc'])) }}">Updated by</a></th>

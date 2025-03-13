@@ -138,7 +138,7 @@ class CustomField extends Model
 
     public function customFieldData()
     {
-        return $this->hasMany(TaskCustomField::class, 'field_id');
+        return $this->hasMany(ServiceRequestCustomField::class, 'field_id');
     }
 
     // public function setUniqueOptions()
@@ -156,7 +156,7 @@ class CustomField extends Model
     //     $this->attributes['settings'] = json_encode($value);
     // }
 
-    public static function regenerateTaskView()
+    public static function regenerateServiceRequestView()
     {
         $customFields = DB::table('custom_fields')->whereNot('field_type', 'File Upload')->get();
 
@@ -166,7 +166,7 @@ class CustomField extends Model
 
             $fieldType = $customField->field_type;
             
-            $caseStatement = "MAX(CASE WHEN task_custom_fields.field_id = {$escapedFieldId} THEN task_custom_fields.value";
+            $caseStatement = "MAX(CASE WHEN service_request_custom_fields.field_id = {$escapedFieldId} THEN service_request_custom_fields.value";
             
             if ($fieldType === 'Date') {
                 $caseStatement .= "::date";
@@ -183,62 +183,62 @@ class CustomField extends Model
             return $caseStatement;
         })->join(",\n    ");
 
-        DB::statement('DROP VIEW IF EXISTS task_view_temp');
+        DB::statement('DROP VIEW IF EXISTS service_request_view_temp');
 
         // Create the new temporary view
         $viewQuery = "
-            CREATE VIEW task_view_temp AS
+            CREATE VIEW service_request_view_temp AS
             SELECT
-                tasks.id,
-                tasks.project_id,
-                tasks.task_type_id,
-                tasks.subject,
-                tasks.description,
-                tasks.status_id,
-                tasks.priority_id,
-                tasks.creator_group_id,
-                tasks.created_by,
-                tasks.updated_by,
-                tasks.executor_id,
-                tasks.executor_group_id,
-                tasks.sla_rule_id,
-                tasks.response_time,
-                tasks.tto,
-                tasks.ttr,
-                tasks.planned_start,
-                tasks.planned_end,
-                tasks.actual_execution_start,
-                tasks.actual_execution_end,
-                tasks.created_at,
-                tasks.updated_at,
+                service_requests.id,
+                service_requests.service_domain_id,
+                service_requests.service_id,
+                service_requests.subject,
+                service_requests.description,
+                service_requests.status_id,
+                service_requests.priority_id,
+                service_requests.creator_group_id,
+                service_requests.created_by,
+                service_requests.updated_by,
+                service_requests.executor_id,
+                service_requests.executor_group_id,
+                service_requests.sla_rule_id,
+                service_requests.response_time,
+                service_requests.tto,
+                service_requests.ttr,
+                service_requests.planned_start,
+                service_requests.planned_end,
+                service_requests.actual_execution_start,
+                service_requests.actual_execution_end,
+                service_requests.created_at,
+                service_requests.updated_at,
                 {$customFieldColumns}
             FROM
-                tasks
+                service_requests
             LEFT JOIN
-                task_custom_fields ON tasks.id = task_custom_fields.task_id
+                service_request_custom_fields ON service_requests.id = service_request_custom_fields.service_request_id
             GROUP BY
-                tasks.id,
-                tasks.project_id,
-                tasks.task_type_id,
-                tasks.subject,
-                tasks.description,
-                tasks.status_id,
-                tasks.priority_id,
-                tasks.creator_group_id,
-                tasks.created_by,
-                tasks.updated_by,
-                tasks.executor_id,
-                tasks.executor_group_id,
-                tasks.sla_rule_id,
-                tasks.response_time,
-                tasks.tto,
-                tasks.ttr,
-                tasks.planned_start,
-                tasks.planned_end,
-                tasks.actual_execution_start,
-                tasks.actual_execution_end,
-                tasks.created_at,
-                tasks.updated_at
+                service_requests.id,
+                service_requests.service_domain_id,
+                service_requests.service_id,
+                service_requests.subject,
+                service_requests.description,
+                service_requests.status_id,
+                service_requests.priority_id,
+                service_requests.creator_group_id,
+                service_requests.created_by,
+                service_requests.updated_by,
+                service_requests.executor_id,
+                service_requests.executor_group_id,
+                service_requests.sla_rule_id,
+                service_requests.response_time,
+                service_requests.tto,
+                service_requests.ttr,
+                service_requests.planned_start,
+                service_requests.planned_end,
+                service_requests.actual_execution_start,
+                service_requests.actual_execution_end,
+                service_requests.created_at,
+                service_requests.updated_at
             ";
 
 
@@ -246,8 +246,8 @@ class CustomField extends Model
         DB::statement($viewQuery);
 
         // Rename the current view and drop the backup
-        DB::statement('ALTER VIEW IF EXISTS task_view RENAME TO task_view_backup');
-        DB::statement('ALTER VIEW task_view_temp RENAME TO task_view');
-        DB::statement('DROP VIEW IF EXISTS task_view_backup');
+        DB::statement('ALTER VIEW IF EXISTS service_request_view RENAME TO service_request_view_backup');
+        DB::statement('ALTER VIEW service_request_view_temp RENAME TO service_request_view');
+        DB::statement('DROP VIEW IF EXISTS service_request_view_backup');
     }
 }

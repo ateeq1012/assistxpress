@@ -16,9 +16,9 @@
 </style>
 <div class="ibox pt-2">
     <div class="ibox-title">
-        <h5>Workflows</h5>
+        <h5>Status Transitions</h5>
         <div class="ibox-tools">
-            <a href="{{ route('workflows.create') }}" class="btn btn-primary btn-xs">Create Workflow</a>
+            <a href="{{ route('workflows.create') }}" class="btn btn-primary btn-xs">Create Status Transition</a>
         </div>
     </div>
     <div class="ibox-content">
@@ -66,31 +66,31 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach ($workflows as $task_type)
+                @foreach ($workflows as $workflow)
                     <tr>
-                        <td>{{ $task_type->id }}</td>
-                        <td>{{ $task_type->name }}</td>
-                        <td>{{ $task_type->description }}</td>
-                        <td>{{ $task_type->creator->name }}</td>
-                        <td><small>{{ $task_type->created_at }}</small></td>
-                        <td>{{ $task_type->updater->name ?? ''}}</td>
-                        <td><small>{{ $task_type->updated_at }}</small></td>
+                        <td>{{ $workflow->id }}</td>
+                        <td>{{ $workflow->name }}</td>
+                        <td>{{ $workflow->description }}</td>
+                        <td>{{ $workflow->creator->name }}</td>
+                        <td><small>{{ $workflow->created_at }}</small></td>
+                        <td>{{ $workflow->updater->name ?? ''}}</td>
+                        <td><small>{{ $workflow->updated_at }}</small></td>
                         <td>
                             @if(session('user_routes')['workflows.show'] ?? false)
-                                <a href="{{ route('workflows.show', $task_type->id) }}" class="btn btn-info btn-xs">View</a>
+                                <a href="{{ route('workflows.show', $workflow->id) }}" class="btn btn-info btn-xs">View</a>
                             @else
                                 <a href="#" class="btn btn-info btn-xs disabled">View</a>
                             @endif
                             @if(session('user_routes')['workflows.edit'] ?? false)
-                                <a href="{{ route('workflows.edit', $task_type->id) }}" class="btn btn-primary btn-xs">Edit</a>
+                                <a href="{{ route('workflows.edit', $workflow->id) }}" class="btn btn-primary btn-xs">Edit</a>
                             @else
                                 <a href="#" class="btn btn-primary btn-xs disabled">Edit</a>
                             @endif
                             @if(session('user_routes')['workflows.destroy'] ?? false)
-                                <form action="{{ route('workflows.destroy', $task_type->id) }}" method="POST" style="display: inline-block;">
+                                <form action="{{ route('workflows.destroy', $workflow->id) }}" method="POST" style="display: inline-block;">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="button" class="btn btn-danger btn-xs delete-button" data-id="{{ $task_type->id }}">Delete</button>
+                                    <button type="button" class="btn btn-danger btn-xs delete-button" data-id="{{ $workflow->id }}">Delete</button>
                                 </form>
                             @else
                                 <a href="#" class="btn btn-danger btn-xs disabled">Delete</a>

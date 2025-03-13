@@ -11,27 +11,39 @@ Entities:
 	- Tasks ------------------------------------------------- WIP
 		- Task Priorities ------ DONE
 		- Task Attachements ---- TBD (might not be required)
-		- Task Comments -------- TBD
+		- Task Comments -------- DONE
 		- Task Checklist ------- TBD
 		- Task Custom Fields --- DONE
-		- Task Audit Logs ------ TBD
+		- Task Audit Logs ------ DONE
 Workflow Engine:--------------------------------------------- DONE (MIN)
 	- Status_transitions ------- DONE
 	- field settings ----------- TBD
 SLA:
 	FE ------------------------- DONE
-	BE ------------------------- TBD
+	BE ------------------------- DONE
 Notifications:
-	EMAIL ---------------------- TBD
-	SMS   ---------------------- TBD
+	EMAIL ---------------------- WIP
+	SMS   ---------------------- DNI
 	WHATSAPP ------------------- TBD
 Reporting:
-	 Custom -------------------- TBD
+	 Custom -------------------- DONE
 	 Dynamic ------------------- TBD
 Dashboarding:
 	 Custom -------------------- TBD
 	 Dynamic ------------------- TBD
+
 Approvals: --------------------------------------------------- TBD
 Handle Deletion for all entities ----------------------------- TBD
 Handle History for all entities  ----------------------------- TBD
 Data Import -------------------------------------------------- TBD
+
+Terminology Change: ------------------------------------------ DONE
+	Task Types => Service Catelogue
+	Task Priorities => Request Priorities
+	Projects => Service Domains
+	Tasks => Service Requests
+
+	Task Type => Service
+	Task Priorities => Request Priorities
+	Projects => Service Domains
+	Tasks => Service Requests

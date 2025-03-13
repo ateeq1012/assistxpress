@@ -10,14 +10,16 @@ class EmailNotification extends Notification
 {
     use Queueable;
 
+    protected $subject;
     protected $message;
     protected $cc;
 
     /**
      * Create a new notification instance.
      */
-    public function __construct($message, $cc)
+    public function __construct($subject, $message, $cc)
     {
+        $this->subject = $subject;
         $this->message = $message;
         $this->cc = $cc;
     }
@@ -37,13 +39,21 @@ class EmailNotification extends Notification
      */
     public function toMail(object $notifiable): MailMessage
     {
-        return (new MailMessage)
+        $mail = (new MailMessage)
                     ->from(env('MAIL_FROM_ADDRESS'), env('MAIL_FROM_NAME'))
-                    ->cc($this->cc)  // Dynamically set the CC
+                    ->subject($this->subject)
                     ->line($this->message)
                     ->action('Notification Action', url('/'))
                     ->line('Thank you for using our application!');
+
+        // Add CC if available and ensure it's an array
+        if (!empty($this->cc)) {
+            $mail->cc(is_array($this->cc) ? $this->cc : [$this->cc]);
+        }
+
+        return $mail;
     }
+
 
     /**
      * Get the array representation of the notification.

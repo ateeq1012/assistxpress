@@ -8,7 +8,7 @@ use Illuminate\View\View;
 use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\UserRoleRoute;
-use App\Models\ProjectUser;
+use App\Models\ServiceDomainUser;
 use App\Models\Route as RouteModel;
 
 use App\Helpers\GeneralHelper;
@@ -360,11 +360,11 @@ class UserController extends Controller
     {
         $search = $request->input('q');
         $enabled_only = $request->input('enabled_only') ?? false;
-        $project_id = $request->input('project_id', null);
+        $service_domain_id = $request->input('service_domain_id', null);
 
         $already_added_users = [];
-        if($project_id) {
-            $already_added_users = ProjectUser::where('id', $project_id)->pluck('user_id')->toArray();
+        if($service_domain_id) {
+            $already_added_users = ServiceDomainUser::where('id', $service_domain_id)->pluck('user_id')->toArray();
         }
         if (!$search) {
             return response()->json([]);

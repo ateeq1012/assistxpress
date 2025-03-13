@@ -69,8 +69,8 @@ class DefaultsSeeder extends Seeder
 
         // Check if there are any statuses in the table
         $statuses = DB::table('statuses')->first();
-        // Check if there are any task priorities in the correct table
-        $task_priorities = DB::table('task_priorities')->first();
+        // Check if there are any service priorities in the correct table
+        $service_priorities = DB::table('service_priorities')->first();
 
         // Insert default statuses if the table is empty
         if (!$statuses) {
@@ -84,15 +84,15 @@ class DefaultsSeeder extends Seeder
             DB::table('statuses')->insert($statusData);
         }
 
-        // Insert default task priorities if the table is empty
-        if (!$task_priorities) {
+        // Insert default service priorities if the table is empty
+        if (!$service_priorities) {
             $priorityData = [
                 [ 'name' => 'Normal',          'color' => '#65c97b', 'order' => 1, 'created_by' => 1, 'created_at' => now() ],
                 [ 'name' => 'Minor',           'color' => '#00acff', 'order' => 2, 'created_by' => 1, 'created_at' => now() ],
                 [ 'name' => 'Major',           'color' => '#ff8d1c', 'order' => 3, 'created_by' => 1, 'created_at' => now() ],
                 [ 'name' => 'Critical',        'color' => '#ff6a6a', 'order' => 4, 'created_by' => 1, 'created_at' => now() ],
             ];
-            DB::table('task_priorities')->insert($priorityData);
+            DB::table('service_priorities')->insert($priorityData);
         }
 
         Schema::enableForeignKeyConstraints();

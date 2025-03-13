@@ -135,56 +135,56 @@ return [
             'description' => 'Delete Statuses',
             'public' => true,
         ],
-    #TASK PRIORITIES
-        'task_priorities-list' => [
-            'routes' => ['task_priorities.index-web-GET'],
-            'description' => 'Task Priorities Table View',
+    #SERVICE PRIORITIES
+        'service_priorities-list' => [
+            'routes' => ['service_priorities.index-web-GET'],
+            'description' => 'Service Priorities Table View',
             'public' => true,
         ],
-        'task_priorities-create' => [
-            'routes' => ['task_priorities.create-web-GET', 'task_priorities.store-web-POST'],
-            'description' => 'Create Task Priorities',
+        'service_priorities-create' => [
+            'routes' => ['service_priorities.create-web-GET', 'service_priorities.store-web-POST'],
+            'description' => 'Create Service Priorities',
             'public' => true,
         ],
-        'task_priorities-edit' => [
-            'routes' => ['task_priorities.edit-web-GET','task_priorities.update-web-PUT'],
-            'description' => 'Edit Task Priorities',
+        'service_priorities-edit' => [
+            'routes' => ['service_priorities.edit-web-GET','service_priorities.update-web-PUT'],
+            'description' => 'Edit Service Priorities',
             'public' => true,
         ],
-        'task_priorities-view' => [
-            'routes' => ['task_priorities.show-web-GET'],
-            'description' => 'View Task Priorities',
+        'service_priorities-view' => [
+            'routes' => ['service_priorities.show-web-GET'],
+            'description' => 'View Service Priorities',
             'public' => false,
         ],
-        'task_priorities-delete' => [
-            'routes' => ['task_priorities.destroy-web-DELETE'],
-            'description' => 'Delete Task Priorities',
+        'service_priorities-delete' => [
+            'routes' => ['service_priorities.destroy-web-DELETE'],
+            'description' => 'Delete Service Priorities',
             'public' => true,
         ],
-    #TASK TYPES
-        'task-type-list' => [
-            'routes' => ['task_types.index-web-GET'],
-            'description' => 'Task Type Table View',
+    #SERVICES
+        'service-list' => [
+            'routes' => ['service.index-web-GET'],
+            'description' => 'Service Catelog Table View',
             'public' => true,
         ],
-        'task-type-create' => [
-            'routes' => ['task_types.create-web-GET', 'task_types.store-web-POST'],
-            'description' => 'Create Task Types',
+        'service-create' => [
+            'routes' => ['service.create-web-GET', 'service.store-web-POST'],
+            'description' => 'Create Services',
             'public' => true,
         ],
-        'task-type-edit' => [
-            'routes' => ['task_types.edit-web-GET','task_types.update-web-PUT','task_types.save_task_type_custom_fields-web-POST'],
-            'description' => 'Edit Task Types',
+        'service-edit' => [
+            'routes' => ['service.edit-web-GET','service.update-web-PUT','service.save_service_custom_fields-web-POST'],
+            'description' => 'Edit Services',
             'public' => true,
         ],
-        'task-type-view' => [
-            'routes' => ['task_types.show-web-GET'],
-            'description' => 'View Task Types',
+        'service-view' => [
+            'routes' => ['service.show-web-GET'],
+            'description' => 'View Services',
             'public' => true,
         ],
-        'task-type-delete' => [
-            'routes' => ['task_types.destroy-web-DELETE'],
-            'description' => 'Delete Task Types',
+        'service-delete' => [
+            'routes' => ['service.destroy-web-DELETE'],
+            'description' => 'Delete Services',
             'public' => true,
         ],
     #WORKFLOWS
@@ -213,50 +213,50 @@ return [
             'description' => 'Delete Workflows',
             'public' => true,
         ],
-    #PROJECTS
-        'project-list' => [
-            'routes' => ['projects.index-web-GET'],
-            'description' => 'Projects Table View',
+    #SERVICE DOMAIN
+        'service_domain-list' => [
+            'routes' => ['service_domains.index-web-GET'],
+            'description' => 'Service Domains Table View',
             'public' => true,
         ],
-        'project-create' => [
-            'routes' => ['projects.create-web-GET', 'projects.store-web-POST'],
-            'description' => 'Create Projects',
+        'service_domain-create' => [
+            'routes' => ['service_domains.create-web-GET', 'service_domains.store-web-POST'],
+            'description' => 'Create Service Domains',
             'public' => true,
         ],
-        'project-edit' => [
-            'routes' => ['projects.edit-web-GET','projects.update-web-PUT'],
-            'description' => 'Edit Projects',
+        'service_domain-edit' => [
+            'routes' => ['service_domains.edit-web-GET','service_domains.update-web-PUT'],
+            'description' => 'Edit Service Domains',
             'public' => true,
         ],
-        'project-add-groups' => [
-            'routes' => ['projects.add_groups-web-POST', 'groups.search-web-POST'],
-            'description' => 'Add Groups to Projects',
+        'service_domain-add-groups' => [
+            'routes' => ['service_domains.add_groups-web-POST', 'groups.search-web-POST'],
+            'description' => 'Add Groups to Service Domains',
             'public' => true,
         ],
-        'project-remove-groups' => [
-            'routes' => ['projects.remove_group-web-DELETE'],
-            'description' => 'Remove Groups from Projects',
+        'service_domain-remove-groups' => [
+            'routes' => ['service_domains.remove_group-web-DELETE'],
+            'description' => 'Remove Groups from Service Domains',
             'public' => true,
         ],
-        'project-add-users' => [
-            'routes' => ['projects.add_users-web-POST', 'projects.add_users_bulk-web-POST', 'users.search-web-POST'],
-            'description' => 'Add Users to Projects',
+        'service_domain-add-users' => [
+            'routes' => ['service_domains.add_users-web-POST', 'service_domains.add_users_bulk-web-POST', 'users.search-web-POST'],
+            'description' => 'Add Users to Service Domains',
             'public' => true,
         ],
-        'project-remove-users' => [
-            'routes' => ['projects.remove_user-web-DELETE'],
-            'description' => 'Remove Users from Projects',
+        'service_domain-remove-users' => [
+            'routes' => ['service_domains.remove_user-web-DELETE'],
+            'description' => 'Remove Users from Service Domains',
             'public' => true,
         ],
-        'project-view' => [
-            'routes' => ['projects.show-web-GET'],
-            'description' => 'View Projects',
+        'service_domain-view' => [
+            'routes' => ['service_domains.show-web-GET'],
+            'description' => 'View Service Domains',
             'public' => true,
         ],
-        'project-delete' => [
-            'routes' => ['projects.destroy-web-DELETE'],
-            'description' => 'Delete Projects',
+        'service_domain-delete' => [
+            'routes' => ['service_domains.destroy-web-DELETE'],
+            'description' => 'Delete Service Domains',
             'public' => true,
         ],
     #CUSTOM FIELDS
@@ -285,50 +285,50 @@ return [
             'description' => 'Delete Custom Fields',
             'public' => true,
         ],
-    #TASKS
-        'task-list' => [
-            'routes' => ['tasks.index-web-GET', 'tasks.get_task_data-web-POST'],
-            'description' => 'Tasks Table View',
+    #SERVICE REQUESTS
+        'service_request-list' => [
+            'routes' => ['service_request.index-web-GET', 'service_request.get_service_request_data-web-POST'],
+            'description' => 'Service Requests Table View',
             'public' => true,
         ],
-        'task-create' => [
-            'routes' => ['tasks.create-web-GET', 'tasks.store-web-POST', /*'task_types.get_fields-web-POST',*/ 'tasks.get_fields-web-POST','tasks.search_project_groups-web-POST','tasks.search_group_users-web-POST',],
-            'description' => 'Create Tasks',
+        'service_request-create' => [
+            'routes' => ['service_request.create-web-GET', 'service_request.store-web-POST', /*'service.get_fields-web-POST',*/ 'service_request.get_fields-web-POST','service_request.search_service_domain_groups-web-POST','service_request.search_group_users-web-POST',],
+            'description' => 'Create Service Requests',
             'public' => true,
         ],
-        'task-edit' => [
-            'routes' => ['tasks.edit-web-GET','tasks.update-web-PUT', /*'task_types.get_fields-web-POST', */'task_types.get_fields-web-POST','tasks.search_project_groups-web-POST','tasks.search_group_users-web-POST',],
-            'description' => 'Edit Tasks',
+        'service_request-edit' => [
+            'routes' => ['service_request.edit-web-GET','service_request.update-web-PUT', /*'service.get_fields-web-POST', */'service.get_fields-web-POST','service_request.search_service_domain_groups-web-POST','service_request.search_group_users-web-POST',],
+            'description' => 'Edit Service Requests',
             'public' => true,
         ],
-        'task-comment' => [
-            'routes' => ['tasks.add_comment-web-POST'],
-            'description' => 'Comment on Tasks',
+        'service_request-comment' => [
+            'routes' => ['service_request.add_comment-web-POST'],
+            'description' => 'Comment on Service Requests',
             'public' => true,
         ],
-        'task-view' => [
-            'routes' => ['tasks.show-web-GET'],
-            'description' => 'View Tasks',
+        'service_request-view' => [
+            'routes' => ['service_request.show-web-GET'],
+            'description' => 'View Service Requests',
             'public' => true,
         ],
-        'task-download' => [
-            'routes' => ['tasks.download-web-POST'],
-            'description' => 'Download Tasks',
+        'service_request-download' => [
+            'routes' => ['service_request.download-web-POST'],
+            'description' => 'Download Service Requests',
             'public' => true,
         ],
-        'task-download-file' => [
-            'routes' => ['tasks.download_file-web-GET'],
-            'description' => 'Download Task Files',
+        'service_request-download-file' => [
+            'routes' => ['service_request.download_file-web-GET'],
+            'description' => 'Download Service Request Files',
             'public' => true,
         ],
-        'task-delete' => [
-            'routes' => ['tasks.destroy-web-DELETE'],
-            'description' => 'Delete Tasks',
+        'service_request-delete' => [
+            'routes' => ['service_request.destroy-web-DELETE'],
+            'description' => 'Delete Service Requests',
             'public' => true,
         ],
-        'task-rm-file' => [
-            'routes' => ['tasks.rm_file-web-DELETE'],
-            'description' => 'Delete Task Files',
+        'service_request-rm-file' => [
+            'routes' => ['service_request.rm_file-web-DELETE'],
+            'description' => 'Delete Service Request Files',
             'public' => true,
         ],
     #SLA

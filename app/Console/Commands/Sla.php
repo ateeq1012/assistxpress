@@ -7,7 +7,7 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
 use App\Models\Sla as SlaModel;
-use App\Models\Task;
+use App\Models\ServiceRequest;
 
 class Sla extends Command
 {
@@ -33,15 +33,15 @@ class Sla extends Command
 		echo 'Scheduled task is running...'. PHP_EOL;
 		$now_ts = date('Y-m-d H:i:s');
 		$sla_rules = SlaModel::orderBy('order', 'asc')->get();
-		$this->claim_tasks($sla_rules);
+		$this->claim_service_requests($sla_rules);
 
 		foreach ($sla_rules as $key => $sla_rule) {
-			// Get Tasks
+			// Get Service Requests
 			$sla_settings = json_decode($sla_rule->settings);
 			$sla_status_ids = $sla_settings->sla_statuses ?? [];
 			$updated_at = $sla_rule->last_run_ts;
 
-			$tasks = Task::with('taskStatusLogs')
+			$service_requests = ServiceRequest::with('serviceRequestStatusLogs')
 				->where('sla_rule_id', $sla_rule->id)
 				->where(function ($query) use ($sla_status_ids, $updated_at) {
 					if (count($sla_status_ids) > 0) {
@@ -57,16 +57,16 @@ class Sla extends Command
 				->get();
 
 			$notifications = [];
-			foreach ($tasks as $task) {
-				$task_created_at = date('Y-m-d H:i:s', strtotime($task->created_at));
+			foreach ($service_requests as $service_request) {
+				$service_request_created_at = date('Y-m-d H:i:s', strtotime($service_request->created_at));
 
-				$total_win = [[$task_created_at, $now_ts]];
+				$total_win = [[$service_request_created_at, $now_ts]];
 
 				$status_wins = [];
-				if(count($task->taskStatusLogs) > 0) {
-					$prev_status_time = $task_created_at;
+				if(count($service_request->serviceRequestStatusLogs) > 0) {
+					$prev_status_time = $service_request_created_at;
 					$current_log_index = 1;
-					foreach ($task->taskStatusLogs as $status_log) {
+					foreach ($service_request->serviceRequestStatusLogs as $status_log) {
 						$log_created_at = date('Y-m-d H:i:s', strtotime($status_log->created_at));
 						if(
 							in_array($status_log->old_value, $sla_status_ids) || // SLA statuses defined in the Rule and this is one of these statuses
@@ -75,7 +75,7 @@ class Sla extends Command
 							$status_wins[$status_log->old_value] = [$prev_status_time, $log_created_at];
 						}
 						$prev_status_time = $log_created_at;
-						if($current_log_index === count($task->taskStatusLogs)) {
+						if($current_log_index === count($service_request->serviceRequestStatusLogs)) {
 							if(
 								in_array($status_log->new_value, $sla_status_ids) || // SLA statuses defined in the Rule and this is one of these statuses
 								count($sla_status_ids) < 1 // No status defined in Rule which means all statuses
@@ -88,10 +88,10 @@ class Sla extends Command
 				} else {
 					// status never changed
 					if(
-						in_array($task->status_id, $sla_status_ids) || // SLA statuses defined in the Rule and this is one of these statuses
+						in_array($service_request->status_id, $sla_status_ids) || // SLA statuses defined in the Rule and this is one of these statuses
 						count($sla_status_ids) < 1 // No status defined in Rule which means all statuses
 					) {
-						$status_wins[$task->status_id] = [$task_created_at, $now_ts];
+						$status_wins[$service_request->status_id] = [$service_request_created_at, $now_ts];
 					}
 				}
 
@@ -112,13 +112,13 @@ class Sla extends Command
 					$sla_wins[] = $service_wins;
 				}
 
-				$tto = $task->tto ?? 0;
-				$ttr = $task->ttr ?? 0;
+				$tto = $service_request->tto ?? 0;
+				$ttr = $service_request->ttr ?? 0;
 				$resp_sla_wins = $sla_wins;
-				if(!isset($task->response_time) || strtotime($task->response_time) > strtotime($last_run_ts)) {
-					if(isset($task->response_time)) {
+				if(!isset($service_request->response_time) || strtotime($service_request->response_time) > strtotime($last_run_ts)) {
+					if(isset($service_request->response_time)) {
 						// Clip time windows after response time
-						$resp_sla_wins[] = [[$task_created_at, date('Y-m-d H:i:s', strtotime($task->response_time))]];
+						$resp_sla_wins[] = [[$service_request_created_at, date('Y-m-d H:i:s', strtotime($service_request->response_time))]];
 					}
 				}
 
@@ -150,8 +150,8 @@ class Sla extends Command
 				}
 
 				if($new_tto != $tto || $new_ttr != $ttr) {
-					DB::table('tasks')
-		                ->where('id', $task->id)
+					DB::table('service_requests')
+		                ->where('id', $service_request->id)
 		                ->update([
 		                    'tto' => $new_tto,
 		                    'ttr' => $new_ttr,
@@ -159,17 +159,17 @@ class Sla extends Command
 				}
 
 				// Calculate timespent
-				// update task
+				// update service_request
 				// Set notifications
 			}
 		}
 
 		echo 'Scheduled task has completed.';
 	}
-	private function claim_tasks($sla_rules)
+	private function claim_service_requests($sla_rules)
 	{
 		foreach ($sla_rules as $key => $sla_rule) {
-			DB::table('tasks as t')
+			DB::table('service_requests as t')
 				->where('created_at', '>', $sla_rule->created_at)
 				->whereNull('sla_rule_id')
 				->whereRaw($sla_rule->query)

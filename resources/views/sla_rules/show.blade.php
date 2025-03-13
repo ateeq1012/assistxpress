@@ -340,8 +340,8 @@
         var input_name = $(input).attr("name");
         var attr_lookup = [];
 
-        if(rule.__.filter.id == "t.project_id") attr_lookup = <?php echo json_encode($projects); ?>;
-        else if(rule.__.filter.id == "t.task_type_id") attr_lookup = <?php echo json_encode($task_types); ?>;
+        if(rule.__.filter.id == "t.service_domain_id") attr_lookup = <?php echo json_encode($service_domains); ?>;
+        else if(rule.__.filter.id == "t.service_id") attr_lookup = <?php echo json_encode($services); ?>;
         else if(rule.__.filter.id == "t.status_id") attr_lookup = <?php echo json_encode($statuses); ?>;
         else if(rule.__.filter.id == "t.priority_id") attr_lookup = <?php echo json_encode($priorities); ?>;
 
@@ -445,9 +445,9 @@
                     operators:['equal', 'is_one_of','is_contains','is_not_contains']
                 },
                 {
-                    id:'t.project_id',
-                    label:'Project',
-                    values:<?php echo json_encode($projects); ?>,
+                    id:'t.service_domain_id',
+                    label:'Service Domain',
+                    values:<?php echo json_encode($service_domains); ?>,
                     valueSetter: value_sla_setter,
                     operators:['equal','is_one_of'],
                     validation: {
@@ -455,9 +455,9 @@
                     },
                 },
                 {
-                    id:'t.task_type_id',
-                    label:'Task Type',
-                    values:<?php echo json_encode($task_types); ?>,
+                    id:'t.service_id',
+                    label:'Service',
+                    values:<?php echo json_encode($services); ?>,
                     valueSetter: value_sla_setter,
                     operators:['equal','is_one_of'],
                     validation: {
