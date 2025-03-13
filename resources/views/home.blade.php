@@ -10,7 +10,7 @@
             </div>
         @endif
         <h3>Welcome to {{env('APP_NAME')}}</h3>
-        <div class="row">
+<!--         <div class="row">
             <div class="widget style1 lazur-bg" style="width: 150px;">
                 <div class="row">
                     <div class="col-4">
@@ -44,7 +44,7 @@
                     </div>
                 </div>
             </div>
-        </div>
+        </div> -->
     </div>
 </div>
 @endsection
