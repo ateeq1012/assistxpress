@@ -23,6 +23,7 @@ Route::POST('/logout', [AuthController::class, 'logout'])->name('logout');
 Route::middleware(['auth', CheckUserRoleRoute::class])->group(function () {
 
     Route::GET('/', function () {
+        return redirect('service_requests');
         return view('home');
     })->name('home');
 
