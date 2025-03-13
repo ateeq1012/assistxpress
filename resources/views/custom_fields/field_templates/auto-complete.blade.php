@@ -16,9 +16,9 @@
     <select name="settings[option_source]" class="form-control" id="options" required >
         <option value="">Select Option Source</option>
         <option value="users" {{ old('settings.option_source', $custom_field->settings['option_source'] ?? '') === 'users' ? 'selected' : '' }} > All System Users </option>
-        <option value="creator-group-users" {{ old('settings.option_source', $custom_field->settings['option_source'] ?? '') === 'creator-group-users' ? 'selected' : '' }} > Users from Task Creator's Group </option>
-        <option value="executor-group-users" {{ old('settings.option_source', $custom_field->settings['option_source'] ?? '') === 'executor-group-users' ? 'selected' : '' }} > Users from Task Executor's Group </option>
-        <option value="projects" {{ old('settings.option_source', $custom_field->settings['option_source'] ?? '') === 'projects' ? 'selected' : '' }} > Projects </option>
+        <option value="creator-group-users" {{ old('settings.option_source', $custom_field->settings['option_source'] ?? '') === 'creator-group-users' ? 'selected' : '' }} > Users from Request Creator's Group </option>
+        <option value="executor-group-users" {{ old('settings.option_source', $custom_field->settings['option_source'] ?? '') === 'executor-group-users' ? 'selected' : '' }} > Users from Request Executor's Group </option>
+        <option value="service_domains" {{ old('settings.option_source', $custom_field->settings['option_source'] ?? '') === 'service_domains' ? 'selected' : '' }} > Service Domains </option>
     </select>
 </div>
 
@@ -39,14 +39,14 @@
 </div>
 
 <!-- <div class="form-group">
-    <label for="for_all_task_types">
-        Use in all Projects 
-        <input type="hidden" name="for_all_task_types" value="0">
+    <label for="for_all_services">
+        Use in all Service Domains 
+        <input type="hidden" name="for_all_services" value="0">
         <input 
             type="checkbox" 
-            name="for_all_task_types" 
+            name="for_all_services" 
             value="1" 
-            {{ old('for_all_task_types', $custom_field->for_all_task_types) ? 'checked' : '' }}
+            {{ old('for_all_services', $custom_field->for_all_services) ? 'checked' : '' }}
         >
     </label>
 </div> -->

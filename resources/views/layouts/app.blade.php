@@ -60,37 +60,40 @@ use Illuminate\Http\Request;
 						</div>
 					</li>
 
-					@if(session('user_routes')['tasks.index'] ?? false)
-						<li @if(request()->route()->getName() == 'tasks.index') class="active" @endif>
-							<a href="{{ route('tasks.index') }}"><i class="fa fa-list"></i> Tasks</a>
+					@if(session('user_routes')['service_requests.index'] ?? false)
+						<li @if(request()->route()->getName() == 'service_requests.index') class="active" @endif>
+							<a href="{{ route('service_requests.index') }}"><i class="fa fa-list"></i> Service Requests</a>
 						</li>
 					@endif
 
-					@if(session('user_routes')['projects.index'] ?? false)
-						<li @if(request()->route()->getName() == 'projects.index') class="active" @endif>
-							<a href="{{ route('projects.index') }}"><i class="fa fa-cubes"></i> Projects</a>
+					@if(session('user_routes')['service_domains.index'] ?? false)
+						<li @if(request()->route()->getName() == 'service_domains.index') class="active" @endif>
+							<a href="{{ route('service_domains.index') }}"><i class="fa fa-cubes"></i> Service Domains</a>
 						</li>
 					@endif
 					
+					@if(session('user_routes')['services.index'] ?? false)
+						<li @if(request()->route()->getName() == 'services.index') class="active" @endif>
+							<a href="{{ route('services.index') }}"><i class="fa fa-book"></i>Service Catelog</a>
+						</li>
+					@endif
+
 					@if(session('user_routes')['sla_rules.index'] ?? false)
 						<li @if(request()->route()->getName() == 'sla_rules.index') class="active" @endif>
 							<a href="{{ route('sla_rules.index') }}"><i class="fa fa-clock-o"></i> SLAs</a>
 						</li>
 					@endif
 
-					<li @if(in_array(request()->route()->getName(), ['workflows.index', 'task_types.index', 'statuses.index', 'task_priorities.index'])) class="active" @endif>
+
+					<li @if(in_array(request()->route()->getName(), ['workflows.index', 'statuses.index', 'service_priorities.index'])) class="active" @endif>
 						<a href=""><i class="fa fa-gears"></i> Workflow Engine</span> <span class="fa arrow"></a>
 						<ul class="nav nav-second-level collapse">
-							@if(session('user_routes')['workflows.index'] ?? false)
-								<li @if(request()->route()->getName() == 'workflows.index') class="active" @endif>
-									<a href="{{ route('workflows.index') }}">Status Transitions</a>
+							@if(session('user_routes')['statuses.index'] ?? false)
+								<li @if(request()->route()->getName() == 'statuses.index') class="active" @endif>
+									<a href="{{ route('statuses.index') }}">Statuses</a>
 								</li>
 							@endif
-							@if(session('user_routes')['task_types.index'] ?? false)
-								<li @if(request()->route()->getName() == 'task_types.index') class="active" @endif>
-									<a href="{{ route('task_types.index') }}">Task Types</a>
-								</li>
-							@endif
+
 
 							@if(session('user_routes')['custom_fields.index'] ?? false)
 								<li @if(request()->route()->getName() == 'custom_fields.index') class="active" @endif>
@@ -98,19 +101,22 @@ use Illuminate\Http\Request;
 								</li>
 							@endif
 
-							@if(session('user_routes')['statuses.index'] ?? false)
-								<li @if(request()->route()->getName() == 'statuses.index') class="active" @endif>
-									<a href="{{ route('statuses.index') }}">Statuses</a>
+							@if(session('user_routes')['workflows.index'] ?? false)
+								<li @if(request()->route()->getName() == 'workflows.index') class="active" @endif>
+									<a href="{{ route('workflows.index') }}">Status Transitions</a>
 								</li>
 							@endif
 
-							@if(session('user_routes')['task_priorities.index'] ?? false)
-								<li @if(request()->route()->getName() == 'task_priorities.index') class="active" @endif>
-									<a href="{{ route('task_priorities.index') }}">Task Priorities</a>
+							@if(session('user_routes')['service_priorities.index'] ?? false)
+								<li @if(request()->route()->getName() == 'service_priorities.index') class="active" @endif>
+									<a href="{{ route('service_priorities.index') }}">Service Priorities</a>
 								</li>
 							@endif
+
+
 						</ul>
 					</li>
+
 					<li @if(in_array(request()->route()->getName(), ['roles.index', 'users.index', 'groups.index'])) class="active" @endif>
 						<a href=""><i class="fa fa-gear"></i> User Management</span> <span class="fa arrow"></a>
 						<ul class="nav nav-second-level collapse">

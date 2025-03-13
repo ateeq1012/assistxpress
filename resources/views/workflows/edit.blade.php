@@ -82,10 +82,10 @@
                         <div class="col-12 p-0 m-0">
                             <div class="panel panel-default">
                                 <div class="panel-heading">
-                                    Allowed Statuses for new tasks
+                                    Allowed Statuses for new service requests
                                 </div>
                                 <div class="panel-body p-1">
-                                    <table id="new_task_transitions" class="table table-striped table-bordered mb-0">
+                                    <table id="new_service_request_transitions" class="table table-striped table-bordered mb-0">
                                         <thead>
                                             <tr>
                                                 <th class="checkbox-cell"></th>
@@ -97,7 +97,7 @@
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            <tr><td><i>New Task</i></td>
+                                            <tr><td><i>New Service Request</i></td>
                                                 @foreach($statuses as $st_col)
                                                     <td class="checkbox-cell">
                                                         <div class="row m-0 pl-0 pr-0">

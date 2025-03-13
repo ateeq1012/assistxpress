@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\CustomField;
-use App\Models\TaskCustomField;
+use App\Models\ServiceRequestCustomField;
 use App\Helpers\GeneralHelper;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -79,7 +79,7 @@ class CustomFieldController extends Controller
 			$custom_field->save();
 		});
 
-		CustomField::regenerateTaskView();
+		CustomField::regenerateServiceRequestView();
 
 		return redirect()->route('custom_fields.index')->with('success', 'Custom Field created successfully.');
 	}
@@ -139,7 +139,7 @@ class CustomFieldController extends Controller
 		}
 
 		if (count($deleted_options) > 0 || count($modified_options) > 0) {
-			$task_data = TaskCustomField::where('field_id', $id)
+			$service_request_data = ServiceRequestCustomField::where('field_id', $id)
 				->where(function ($query) use ($deleted_options, $modified_options) {
 					foreach ($deleted_options as $dok => $dov) {
 						$query->orWhereRaw("jsonval->>'{$dok}' = ?", [$dov]);
@@ -149,8 +149,8 @@ class CustomFieldController extends Controller
 					}
 				})
 				->get();
-			foreach ($task_data as $task) {
-				$opts = json_decode($task->jsonval, true);
+			foreach ($service_request_data as $service_request) {
+				$opts = json_decode($service_request->jsonval, true);
 				$opts = array_diff_key($opts, $deleted_options);
 				foreach ($opts as $key => $value) {
 				    if (isset($new_options[$key])) {
@@ -158,18 +158,18 @@ class CustomFieldController extends Controller
 				    }
 				}
 				if(count($opts) > 0) {
-					$task->jsonval = json_encode($opts);
-					$task->value = implode(', ', $opts);
-					$task->save();
+					$service_request->jsonval = json_encode($opts);
+					$service_request->value = implode(', ', $opts);
+					$service_request->save();
 				} else {
-					$task->delete();
+					$service_request->delete();
 				}
 			}
 		}
 
 		$custom_field->save();
 
-		CustomField::regenerateTaskView();
+		CustomField::regenerateServiceRequestView();
 
 		return redirect()->route('custom_fields.index')->with('success', 'Custom Field created successfully.');
 	}
@@ -177,10 +177,10 @@ class CustomFieldController extends Controller
 	public function destroy($id)
 	{
 		$custom_field = CustomField::findOrFail($id);
-		TaskCustomField::where('field_id', $id)->delete();
+		ServiceRequestCustomField::where('field_id', $id)->delete();
 		$custom_field->delete();
 
-		CustomField::regenerateTaskView();
+		CustomField::regenerateServiceRequestView();
 
 		return redirect()->route('custom_fields.index')->with('success', 'Custom field deleted successfully.');
 	}

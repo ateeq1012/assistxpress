@@ -11,10 +11,10 @@ use Exception;
 
 use App\Models\Sla;
 use App\Models\User;
-use App\Models\Project;
-use App\Models\TaskType;
+use App\Models\ServiceDomain;
+use App\Models\Service;
 use App\Models\Status;
-use App\Models\TaskPriority;
+use App\Models\ServicePriority;
 use App\Helpers\GeneralHelper;
 
 class SlaController extends Controller
@@ -48,16 +48,16 @@ class SlaController extends Controller
     }
     public function create()
     {
-        $projects = Project::pluck('name', 'id')->toArray();
-        $task_types = TaskType::pluck('name', 'id')->toArray();
-        $priorities = TaskPriority::pluck('name', 'id')->toArray();
+        $service_domains = ServiceDomain::pluck('name', 'id')->toArray();
+        $services = Service::pluck('name', 'id')->toArray();
+        $priorities = ServicePriority::pluck('name', 'id')->toArray();
         $statuses = Status::whereNotIn('type', [3,4])->pluck('name', 'id')->toArray();
         $users_resp = User::select('id', 'name', 'email')->get();
 
         $sla_reminders_setup = config('lookup')['sla_reminders'];
         $sla_escalations_setup = config('lookup')['sla_escalations'];
 
-        return view('sla_rules.create', compact('projects', 'task_types', 'statuses', 'priorities', 'sla_reminders_setup' , 'sla_escalations_setup' ));
+        return view('sla_rules.create', compact('service_domains', 'services', 'statuses', 'priorities', 'sla_reminders_setup' , 'sla_escalations_setup' ));
     }
     public function store(Request $request)
     {
@@ -401,9 +401,9 @@ class SlaController extends Controller
         $sla_rule = Sla::findOrFail($id);
         $sla_settings = json_decode($sla_rule->settings, true);
         // echo "<pre><strong>" . __FILE__ . " Line: [". __LINE__ ."]</strong> @ " .date("Y-m-d H:i:s"). "<br>"; print_r( $sla_settings ); echo "</pre><br>"; exit;
-        $projects = Project::pluck('name', 'id')->toArray();
-        $task_types = TaskType::pluck('name', 'id')->toArray();
-        $priorities = TaskPriority::pluck('name', 'id')->toArray();
+        $service_domains = ServiceDomain::pluck('name', 'id')->toArray();
+        $services = Service::pluck('name', 'id')->toArray();
+        $priorities = ServicePriority::pluck('name', 'id')->toArray();
         $statuses = Status::whereNotIn('type', [3,4])->pluck('name', 'id')->toArray();
 
         $escalation_user_ids = [];
@@ -437,7 +437,7 @@ class SlaController extends Controller
         $sla_reminders_setup = config('lookup')['sla_reminders'];
         $sla_escalations_setup = config('lookup')['sla_escalations'];
 
-        return view('sla_rules.edit', compact('sla_rule', 'sla_settings', 'projects', 'task_types', 'statuses', 'priorities', 'sla_reminders_setup', 'sla_escalations_setup', 'users'));
+        return view('sla_rules.edit', compact('sla_rule', 'sla_settings', 'service_domains', 'services', 'statuses', 'priorities', 'sla_reminders_setup', 'sla_escalations_setup', 'users'));
     }
 
     public function update(Request $request, $id)
@@ -778,9 +778,9 @@ class SlaController extends Controller
     {
         $sla_rule = Sla::with('creator', 'updater')->findOrFail($id);
         $sla_settings = json_decode($sla_rule->settings, true);
-        $projects = Project::pluck('name', 'id')->toArray();
-        $task_types = TaskType::pluck('name', 'id')->toArray();
-        $priorities = TaskPriority::pluck('name', 'id')->toArray();
+        $service_domains = ServiceDomain::pluck('name', 'id')->toArray();
+        $services = Service::pluck('name', 'id')->toArray();
+        $priorities = ServicePriority::pluck('name', 'id')->toArray();
         $statuses = Status::select('id', 'name', 'color')->get()->toArray();
         $status_lkp = [];
         if(isset($sla_settings['sla_statuses']) && count($sla_settings['sla_statuses']) != count($statuses)) {            
@@ -797,7 +797,7 @@ class SlaController extends Controller
         $sla_reminders_setup = config('lookup')['sla_reminders'];
         $sla_escalations_setup = config('lookup')['sla_escalations'];
 
-        return view('sla_rules.show', compact('sla_rule', 'sla_settings', 'projects', 'task_types', 'statuses', 'status_lkp', 'priorities', 'sla_reminders_setup', 'sla_escalations_setup' ));
+        return view('sla_rules.show', compact('sla_rule', 'sla_settings', 'service_domains', 'services', 'statuses', 'status_lkp', 'priorities', 'sla_reminders_setup', 'sla_escalations_setup' ));
     }
     
     public function destroy($id) {
@@ -808,7 +808,7 @@ class SlaController extends Controller
             
             $status = Sla::findOrFail($id);
 
-            DB::table('tasks')
+            DB::table('service_requests')
                 ->where('sla_rule_id', $id)
                 ->update([
                     'sla_rule_id' => null,
@@ -872,7 +872,7 @@ class SlaController extends Controller
         // Strings
         $str_fields = ['t.subject' => 'Subject'];
         // integers
-        $int_fields = ['t.project_id' => 'Project', 't.task_type_id' => 'Task Type', 't.status_id' => 'Status', 't.priority_id' => 'Priority'];
+        $int_fields = ['t.service_domain_id' => 'Service Domain', 't.service_id' => 'Service', 't.status_id' => 'Status', 't.priority_id' => 'Priority'];
 
         $filter_str = "";
         if( isset($rule->id) && isset($rule->operator) ) {

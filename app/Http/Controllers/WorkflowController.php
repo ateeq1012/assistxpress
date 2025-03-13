@@ -11,7 +11,7 @@ use App\Models\Workflow;
 use App\Models\Role;
 use App\Models\Group;
 use App\Models\CustomField;
-use App\Models\TaskType;
+use App\Models\Service;
 use App\Models\WorkflowStatusTransition;
 use App\Helpers\GeneralHelper;
 
@@ -317,7 +317,7 @@ class WorkflowController extends Controller
             }
             if(!isset($selected_transitions['new']) || !is_array($selected_transitions['new']) || count($selected_transitions['new']) < 1)
             {
-                $errors[] = 'New Task';
+                $errors[] = 'New Service Request';
             }
             if(!isset($selected_transitions['creator']) || !is_array($selected_transitions['creator']) || count($selected_transitions['creator']) < 1)
             {
@@ -332,15 +332,15 @@ class WorkflowController extends Controller
     }
 
     /**
-     * Remove the specified task_type from the database.
+     * Remove the specified service from the database.
      */
     public function destroy($id)
     {
-        $task_types = TaskType::where('id', $id)->count();
-        if($task_types > 0) {
-            $msg = "There is a task type against this Workflow.";
-            if($task_types > 1) {
-                $msg = "There are {$task_types} task types against this Workflow.";
+        $services = Service::where('workflow_id', $id)->count();
+        if($services > 0) {
+            $msg = "There is a service against this Workflow.";
+            if($services > 1) {
+                $msg = "There are {$services} services against this Workflow.";
             }
             return redirect()->route('workflows.index')->with('error', "This Workflow cannot be deleted, {$msg}");
         }
