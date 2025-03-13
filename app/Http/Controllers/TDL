@@ -1,0 +1,37 @@
+TDL:
+ACL:
+	Rolebased ACL ------------------------------------------- DONE
+	UserSpecific ACL ---------------------------------------- DONE
+	Conditional Data Access --------------------------------- TBD
+Entities:
+	- Projects (aka projects) ------------------------------- DONE (MIN) 
+	- Task Types -------------------------------------------- DONE (MIN) 
+	- Status Management ------------------------------------- DONE
+	- Workflow ---------------------------------------------- DONE (MIN)
+	- Tasks ------------------------------------------------- WIP
+		- Task Priorities ------ DONE
+		- Task Attachements ---- TBD (might not be required)
+		- Task Comments -------- TBD
+		- Task Checklist ------- TBD
+		- Task Custom Fields --- DONE
+		- Task Audit Logs ------ TBD
+Workflow Engine:--------------------------------------------- DONE (MIN)
+	- Status_transitions ------- DONE
+	- field settings ----------- TBD
+SLA:
+	FE ------------------------- DONE
+	BE ------------------------- TBD
+Notifications:
+	EMAIL ---------------------- TBD
+	SMS   ---------------------- TBD
+	WHATSAPP ------------------- TBD
+Reporting:
+	 Custom -------------------- TBD
+	 Dynamic ------------------- TBD
+Dashboarding:
+	 Custom -------------------- TBD
+	 Dynamic ------------------- TBD
+Approvals: --------------------------------------------------- TBD
+Handle Deletion for all entities ----------------------------- TBD
+Handle History for all entities  ----------------------------- TBD
+Data Import -------------------------------------------------- TBD
