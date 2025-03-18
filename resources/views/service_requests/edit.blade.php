@@ -92,11 +92,11 @@
 						</select>
 					</div>
 					<div class="form-group">
-						<label for="service">Service</label>
-						<select name="service" class="form-control select2-field" id="service" required >
+						<label for="service_id">Service</label>
+						<select name="service_id" class="form-control select2-field" id="service_id" required >
 							<!-- <option value="">Select Service</option> -->
 							@foreach($services as $service)
-								<option value="{{ $service->id }}" {{ ((old('service') == $service->id) || (isset($service_request) && $service_request->service_id == $service->id)) ? 'selected' : '' }}>
+								<option value="{{ $service->id }}" {{ ((old('service_id') == $service->id) || (isset($service_request) && $service_request->service_id == $service->id)) ? 'selected' : '' }}>
 									{{ $service->name }}
 								</option>
 							@endforeach
@@ -151,7 +151,7 @@
 					@endif
 					<div class="form-group">
 						<label for="executor_group_id">Assignee Group</label>
-						<select name="executor_group_id" class="form-control select2-field" id="executor_group_id">
+						<select name="executor_group_id" class="form-control" id="executor_group_id">
 							<option value="">Select an option</option>
 							@foreach($assignee_group as $gid => $gname)
 								<option value="{{$gid}}" {{ old('executor_group_id') == $gid ? 'selected' : '' }}>{{$gname}}</option>
@@ -292,17 +292,14 @@
 							icon: 'warning',
 						});
 
-					} else {
-						Swal.fire({
-							title: 'Error Saving Service Request.',
-							icon: 'warning',
-						});
-
+						return null;
 					}
-
 					return response.json();
 				})
 				.then(data => {
+
+					if (!data) return;
+					
 					if (data.success) {
 						Swal.fire({
 							title: 'Success!',
@@ -338,6 +335,7 @@
 
 	let old_vals = {};
 	let old_val_are = 'stored_vals';
+
 	@foreach ($service_request->toArray() as $key => $value)
 		old_vals['{{ $key }}'] = @json($value);
 	@endforeach
@@ -357,59 +355,59 @@
 		if (selectedServiceDomain) {
 			$('#service_domain_id').val(selectedServiceDomain).trigger('change');
 		}
-		let selectedService = '{{ old('service', $service_request->service_id ?? '') }}';
+		let selectedService = '{{ old('service_id', $service_request->service_id ?? '') }}';
 		// if (selectedService) {
-		//     $('#service').val(selectedService).trigger('change');
+		//     $('#service_id').val(selectedService).trigger('change');
 		// }
 
-		$('#executor_group_id').select2({
-			width: '100%',
-			allowClear: true,
-			placeholder: 'Search for groups',
-			delay: 1000, // Delay before starting search
-			minimumInputLength: 2,
-			ajax: {
-				url: '{{ route("service_requests.search_service_domain_groups") }}',
-				dataType: 'json',
-				type: 'POST',
-				delay: 250, // Delay to prevent flooding requests
-				data: function(params) {
-					return {
-						q: params.term,
-						enabled_only: true,
-						service_domain_id: $('#service_domain_id').val()
-					};
-				},
-				processResults: function(data) {
-					return {
-						results: $.map(data.data, function(item) {
-							return {
-								id: item.id,
-								text: item.name
-							};
-						})
-					};
-				},
-				cache: true,
-				headers: {
-					'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') // CSRF token
-				},
-				error: function(xhr, status, error) {
-					if(xhr.status == 422) {
-						Swal.fire({
-							title: 'Invalid Request',
-							icon: 'warning',
-						});
-					} else {
-						Swal.fire({
-							title: 'Error',
-							text: 'Unable to search user group',
-							icon: 'error',
-						});
-					}
-				}
-			}
-		});
+		// $('#executor_group_id').select2({
+		// 	width: '100%',
+		// 	allowClear: true,
+		// 	placeholder: 'Search for groups',
+		// 	delay: 1000, // Delay before starting search
+		// 	minimumInputLength: 2,
+		// 	ajax: {
+		// 		url: '{{ route("service_requests.search_service_domain_groups") }}',
+		// 		dataType: 'json',
+		// 		type: 'POST',
+		// 		delay: 250, // Delay to prevent flooding requests
+		// 		data: function(params) {
+		// 			return {
+		// 				q: params.term,
+		// 				enabled_only: true,
+		// 				service_domain_id: $('#service_domain_id').val()
+		// 			};
+		// 		},
+		// 		processResults: function(data) {
+		// 			return {
+		// 				results: $.map(data.data, function(item) {
+		// 					return {
+		// 						id: item.id,
+		// 						text: item.name
+		// 					};
+		// 				})
+		// 			};
+		// 		},
+		// 		cache: true,
+		// 		headers: {
+		// 			'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') // CSRF token
+		// 		},
+		// 		error: function(xhr, status, error) {
+		// 			if(xhr.status == 422) {
+		// 				Swal.fire({
+		// 					title: 'Invalid Request',
+		// 					icon: 'warning',
+		// 				});
+		// 			} else {
+		// 				Swal.fire({
+		// 					title: 'Error',
+		// 					text: 'Unable to search user group',
+		// 					icon: 'error',
+		// 				});
+		// 			}
+		// 		}
+		// 	}
+		// });
 		$('#executor_id').select2({
 			width: '100%',
 			allowClear: true,
@@ -549,14 +547,14 @@
 	$('#service_domain_id').change(function() {
 		let selectedStatus = $('#status_id').val();
 		get_fields('service_domain_id', function () {
-			$('#service').trigger('change');
+			$('#service_id').trigger('change');
 		});
 	});
 
-	$('#service').change(function() {
+	$('#service_id').change(function() {
 		// setFormTempData();
-		if($('#service').val() != '' && $('#service').val() != null) {
-			get_fields('service');
+		if($('#service_id').val() != '' && $('#service_id').val() != null) {
+			get_fields('service_id');
 		}
 	});
 
@@ -566,8 +564,8 @@
 	
 	function get_fields (changed_field, callback) {
 
-		let selected_service = $('#'+changed_field).val();
-		if (selected_service !== 'undefined' && selected_service != '') {
+		let selected_field_val = $('#'+changed_field).val();
+		if (selected_field_val !== 'undefined' && selected_field_val != '') {
 			let swal_exists = $('.swal2-container').length > 0;
 			if (!swal_exists) {
 				Swal.fire({
@@ -588,21 +586,20 @@
 					_token: '{{ csrf_token() }}',
 					changed_field: changed_field,
 					mode: 'edit',
-					id: selected_service,
+					id: selected_field_val,
+					service_domain_id: $('#service_domain_id').val(),
 					service_request_id : {{$service_request->id}},
 				},
 				success: function(response) {
 					if(response.success) {
 						if(changed_field == 'service_domain_id') {
 							updateServiceDropdown(response.data.services);
-						} else if (changed_field == 'service') {	
+						} else if (changed_field == 'service_id') {	
 							updateSystemSelect2Fields();
 
 							if(typeof response.data.allowed_statuses !== 'undefined' && Object.keys(response.data.allowed_statuses).length > 0) {
 								updateStatusDropdown(response.data.allowed_statuses);
-							}
-							else
-							{
+							} else {
 								let statusDropdown = $('#status_id');
 								statusDropdown.empty();
 								Swal.fire({title: "No statuses were allowed", text: "Please check workflow engine", icon: "error" });
@@ -610,12 +607,12 @@
 
 							if (typeof response.data.custom_fields !== 'undefined' && Object.keys(response.data.custom_fields).length > 0) {
 								updateCustomFields(response.data.custom_fields, response.data.service_request_files);
-							}
-							else
-							{
+							} else {
 								let fieldsContainer = $('#custom-fields-container');
 								fieldsContainer.empty();
 							}
+
+							updatedExecutorGroupDropdown(response);
 						}
 
 					} else {
@@ -632,26 +629,33 @@
 					Swal.fire({title: "Error loading data", text: errorMessage, icon: "warning" });
 				},
 				complete: function(xhr) {
-					
+					// $('.swal2-container').hide();
 					let closeSwal = true;
 					let callCallback = true;
 					let response = xhr.responseJSON;
+
+
 					if(changed_field == 'service_domain_id' && (!response || typeof response.data.services === 'undefined' || Object.keys(response.data.services).length === 0)) {
-						let closeSwal = false;
-						let callCallback = false;
+						closeSwal = false;
+						callCallback = false;
 						Swal.fire({title: "", text: "No active Services found under selected Service Domain", icon: "warning" });
-						$('#service').prop('disabled', true).select2();
+						$('#service_id').prop('disabled', true).select2();
 					}
-					if(changed_field == 'service' && (!response || typeof response.data.allowed_statuses === 'undefined' || Object.keys(response.data.allowed_statuses).length === 0)) {
-						let closeSwal = false;
-						let callCallback = false;
+					if(changed_field == 'service_domain_id' && old_vals.service_domain_id != $('#service_domain_id').val()) {
+						closeSwal = true;
+						callCallback = false;
+					}
+					if(changed_field == 'service_id' && (!response || typeof response.data.allowed_statuses === 'undefined' || Object.keys(response.data.allowed_statuses).length === 0)) {
+						closeSwal = false;
+						callCallback = false;
+
 						Swal.fire({title: "", text: "No statuses wer allowed, Please check the Workflow against the selected Service", icon: "warning" });
 						$('#status_id').prop('disabled', true).select2();
 					}
+
 					if (typeof callback === 'function' && callCallback) {
 						callback();
 					} else if (closeSwal) {
-						// $('.swal2-container').hide();
 						Swal.close();
 					}
 				}
@@ -687,24 +691,23 @@
 	}
 
 	function updateServiceDropdown(serviceOptions) {
-		let serviceDropdown = $('#service');
+		let serviceDropdown = $('#service_id');
 		serviceDropdown.empty();
 
-		if (serviceOptions.length === 1) {
-			let singleStatus = serviceOptions[0];
+		// if (serviceOptions.length === 1) {
+		// 	let singleStatus = serviceOptions[0];
 
-			let backgroundColor = singleStatus.color || '#ffffff';
-			let textColor = singleStatus.text_color || '#000000';
+		// 	let backgroundColor = singleStatus.color || '#ffffff';
+		// 	let textColor = singleStatus.text_color || '#000000';
 
-			let optionHtml = 
-				'<option value="' + singleStatus.id + '" selected style="font-size:unset; background-color:' +
-				backgroundColor + '; color:' + textColor + ';">' + singleStatus.name + '</option>';
+		// 	let optionHtml = 
+		// 		'<option value="' + singleStatus.id + '" selected style="font-size:unset; background-color:' +
+		// 		backgroundColor + '; color:' + textColor + ';">' + singleStatus.name + '</option>';
 
-			serviceDropdown.append(optionHtml);
-			serviceDropdown.prop('disabled', false).select2();
-			// $('#service').trigger('change');
-			return;
-		}
+		// 	serviceDropdown.append(optionHtml);
+		// 	serviceDropdown.prop('disabled', false).select2();
+		// 	return;
+		// }
 
 		serviceDropdown.append('<option value="" disabled selected>Select an option</option>' );
 
@@ -755,6 +758,34 @@
 		});
 
 		statusDropdown.prop('disabled', false).select2();
+	}
+
+	function updatedExecutorGroupDropdown(response) {
+
+		let exeGrpDropdown = $('#executor_group_id');
+		let selectedexeGrp = exeGrpDropdown.val();
+		
+		if (typeof response.data.service_domain_groups_lkp !== 'undefined' && Object.keys(response.data.service_domain_groups_lkp).length > 0) {
+
+			let exeGrpOptions = response.data.service_domain_groups_lkp;
+
+			exeGrpDropdown.empty();
+
+		    exeGrpDropdown.append(
+		        '<option value="" disabled selected>Select an option</option>'
+		    );
+
+			exeGrpOptions.forEach(function (exeGrp) {
+				let isSelected = (selectedexeGrp == exeGrp.id) ? 'selected' : '';
+				exeGrpDropdown.append(
+					'<option value="' + exeGrp.id + '" ' + isSelected + '>' + exeGrp.name + '</option>'
+				);
+			});
+		} else {
+		    exeGrpDropdown.append(
+		        '<option value="" disabled selected>Select an option</option>'
+		    );
+		}
 	}
 
 	function updateCustomFields(customFields, service_request_files) {
@@ -933,7 +964,6 @@
 	}
 	const downloadFileRouteBase = "{{ route('service_requests.download_file', ['id' => '__SERVICE_REQUEST_ID__']) }}";
 	function displayServiceRequestFiles(field, service_request_files) {
-		console.log(service_request_files);
 		let html = '';
 
 		if (service_request_files && service_request_files.hasOwnProperty(field.field_id)) {

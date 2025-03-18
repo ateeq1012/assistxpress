@@ -38,7 +38,22 @@ class DefaultsSeeder extends Seeder
             Schema::disableForeignKeyConstraints();
 
             DB::table('users')->updateOrInsert(
-                ['email' => 'admin@example.com'], // Check for this email
+                ['email' => 'admin@assistExpress.com'], // Check for this email
+                [
+                    'name' => 'System',
+                    'email_verified_at' => Carbon::now(),
+                    'password' => Hash::make('1|*LQLZr79w('), // Hash the password
+                    'remember_token' => Str::random(10),
+                    'created_at' => Carbon::now(),
+                    'updated_at' => Carbon::now(),
+                    'token' => Str::random(60),
+                    'role_id' => 1,
+                    'created_by' => 1, // Assuming the first user is the creator
+                    'enabled' => true,
+                ]
+            );
+            DB::table('users')->updateOrInsert(
+                ['email' => 'admin@assistExpress.com'], // Check for this email
                 [
                     'name' => 'Admin',
                     'email_verified_at' => Carbon::now(),

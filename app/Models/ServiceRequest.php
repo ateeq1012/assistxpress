@@ -58,7 +58,6 @@ class ServiceRequest extends Model
 		'actual_execution_end' => 'Actual Exec. End',
 		'executor_id' => 'Assignee',
 		'executor_group_id' => 'Assignee Group',
-		'sla_rule_id' => 'SLA Rule',
 	];
 
 	public function getServiceRequestFields()

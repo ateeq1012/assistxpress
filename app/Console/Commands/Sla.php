@@ -151,11 +151,11 @@ class Sla extends Command
 
 				if($new_tto != $tto || $new_ttr != $ttr) {
 					DB::table('service_requests')
-		                ->where('id', $service_request->id)
-		                ->update([
-		                    'tto' => $new_tto,
-		                    'ttr' => $new_ttr,
-		                ]);
+						->where('id', $service_request->id)
+						->update([
+							'tto' => $new_tto,
+							'ttr' => $new_ttr,
+						]);
 				}
 
 				// Calculate timespent
@@ -166,9 +166,12 @@ class Sla extends Command
 
 		echo 'Scheduled task has completed.';
 	}
-	private function claim_service_requests($sla_rules)
+	/*private function claim_service_requests($sla_rules)
 	{
 		foreach ($sla_rules as $key => $sla_rule) {
+			// get ids of rows to be affected
+			// updated rows
+
 			DB::table('service_requests as t')
 				->where('created_at', '>', $sla_rule->created_at)
 				->whereNull('sla_rule_id')
@@ -179,9 +182,60 @@ class Sla extends Command
 					'tto' => 0,
 					'ttr' => 0,
 				]);
+
+		// Insert history for the affected rows in service_request table that sla rule was attached to service request
  
 		}
+	}*/
+
+	private function claim_service_requests($sla_rules)
+	{
+	    foreach ($sla_rules as $key => $sla_rule) {
+	        DB::transaction(function () use ($sla_rule) {
+	            $service_request_ids = DB::table('service_requests as t')
+	                ->where('created_at', '>', $sla_rule->created_at)
+	                ->whereNull('sla_rule_id')
+	                ->whereRaw($sla_rule->query)
+	                ->pluck('id')
+	                ->toArray();
+
+	            if (!empty($service_request_ids)) {
+	                $affected_rows = DB::table('service_requests as t')
+	                    ->whereIn('id', $service_request_ids)
+	                    ->update([
+	                        'sla_rule_id' => $sla_rule->id,
+	                        'response_time' => null,
+	                        'tto' => 0,
+	                        'ttr' => 0,
+	                    ]);
+
+	                $history_records = array_map(function ($service_request_id) use ($sla_rule) {
+	                    return [
+	                        'service_request_id' => $service_request_id,
+	                        'field_name' => 'sla_rule_id',
+	                        'field_type' => 1,
+	                        'old_value' => null,
+	                        'new_value' => $sla_rule->id,
+	                        'created_by' => 1,
+	                        'created_at' => date('Y-m-d H:i:s'),
+	                    ];
+	                }, $service_request_ids);
+
+	                DB::table('service_request_audit_logs')->insert($history_records);
+	            } else {
+	                \Log::info("No service requests claimed for SLA rule", [
+	                    'sla_rule_id' => $sla_rule->id,
+	                ]);
+	            }
+	        });
+
+	        $sla_rule->update(['last_run_ts' => now()]);
+	    }
 	}
+
+
+
+
 	public static function gen_working_slots( $holidays, $service_days, $service_window_start, $service_window_end, $last_run_time, $now_ts )
 	{
 		if (isset($last_run_time) && isset($now_ts) ) {
