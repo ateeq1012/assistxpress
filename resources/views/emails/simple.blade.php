@@ -1,96 +1,44 @@
 <!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html lang="en">
 <head>
-    <meta name="viewport" content="width=device-width" />
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-    <title>{{ $subject ?? 'Notification Email' }}</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f6f6f6;
-            margin: 0;
-            padding: 20px;
-        }
-        .container {
-            max-width: 600px;
-            margin: 0 auto;
-            background: #ffffff;
-            padding: 20px;
-            border-radius: 5px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }
-        .content {
-            font-size: 16px;
-            color: #333;
-            line-height: 1.6;
-        }
-        .btn-primary {
-            display: inline-block;
-            padding: 10px 15px;
-            margin-top: 20px;
-            color: #ffffff;
-            background-color: #007bff;
-            text-decoration: none;
-            border-radius: 5px;
-        }
-        .footer {
-            text-align: center;
-            font-size: 12px;
-            color: #777;
-            margin-top: 20px;
-        }
-    </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ $subject ?? 'INX Helpdesk Notification' }}</title>
 </head>
+<body style="margin: 0; padding: 0; background-color: #f3f3f4; font-family: Arial, Helvetica, sans-serif; color: #676a6c; line-height: 1.6;">
 
-<body>
-
-<table class="body-wrap">
-    <tr>
-        <td></td>
-        <td class="container">
-            <div class="content">
-                <table class="main" width="100%" cellpadding="0" cellspacing="0">
+    <table cellpadding="0" cellspacing="0" width="100%" style="background-color: #f3f3f4; padding: 20px;">
+        <tr>
+            <td align="center">
+                <table cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px; background-color: #ffffff; border-radius: 4px; border: 1px solid #e7eaec;">
+                    <!-- Modal Header -->
                     <tr>
-                        <td class="content-wrap">
-                            <table cellpadding="0" cellspacing="0">
-                                <tr>
-                                    <td>
-                                        <img class="img-fluid" src="{{ asset('img/header.jpg') }}" alt="Header Image" width="100%" />
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td class="content-block">
-                                        <h3>{{ $subject ?? 'Welcome!' }}</h3>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td class="content-block">
-                                        {!! nl2br(e($body ?? 'No message provided.')) !!}
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td class="content-block aligncenter">
-                                        <a href="{{ $actionUrl ?? '#' }}" class="btn-primary">Confirm Email Address</a>
-                                    </td>
-                                </tr>
-                              </table>
+                        <td style="background-color: #f8f9fa; padding: 15px 20px; border-bottom: 1px solid #e7eaec;">
+                            <h4 style="font-size: 18px; margin: 0; color: #1ab394;">{{ $emailTitle ?? 'Notification' }}</h4>
                         </td>
                     </tr>
-                </table>
-                <div class="footer">
-                    <table width="100%">
+                    <!-- Modal Body -->
+                    <tr>
+                        <td style="padding: 20px; font-size: 14px;">
+                            <p>{!! nl2br(e($body ?? 'No message provided.')) !!}</p>
+                        </td>
+                    </tr>
+                    <!-- Modal Footer -->
+                    @if(isset($actionUrl) && isset($actionText))
                         <tr>
-                            <td class="aligncenter content-block">
-                                Follow <a href="https://twitter.com/Company">@Company</a> on Twitter.
+                            <td style="padding: 10px 20px; background-color: #f8f9fa; border-top: 1px solid #e7eaec; text-align: right;">
+                                    <a href="{{ $actionUrl }}" style="display: inline-block; padding: 5px 10px; background-color: #1ab394; color: #ffffff; text-decoration: none; border-radius: 3px; font-size: 14px; margin-left: 10px;">{{ $actionText }}</a>
                             </td>
                         </tr>
-                    </table>
-                </div>
-            </div>
-        </td>
-        <td></td>
-    </tr>
-</table>
-
+                    @endif
+                </table>
+            </td>
+        </tr>
+        <tr>
+            <td align="center" style="padding-top: 10px; font-size: 12px; color: #676a6c;">
+                <p>Sent by INX Helpdesk | {{ date('Y') }} © All rights reserved.</p>
+            </td>
+        </tr>
+    </table>
 </body>
 </html>

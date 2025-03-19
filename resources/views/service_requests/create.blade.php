@@ -87,8 +87,8 @@
 				</select>
 			</div>
 			<div class="form-group">
-				<label for="service">Service</label>
-				<select name="service" class="form-control select2-field" id="service" required >
+				<label for="service_id">Service</label>
+				<select name="service_id" class="form-control select2-field" id="service_id" required >
 					@foreach($services as $service)
 						<option value="{{ $service->id }}">
 							{{ $service->name }}
@@ -145,9 +145,6 @@
 				<label for="executor_group_id">Assignee Group</label>
 				<select name="executor_group_id" class="form-control" id="executor_group_id">
 					<option value="">Select an option</option>
-					@foreach($all_groups as $gid => $gname)
-						<option value="{{$gid}}">{{$gname}}</option>
-					@endforeach
 				</select>
 			</div>
 			<div class="form-group">
@@ -186,69 +183,65 @@
 				},
 				body: formData,
 			})
-				.then(async (response) => {
-					Swal.close();
+			.then(async (response) => {
+				Swal.close();
 
-					if (response.status === 422) {
-						// Validation error handling
-						const errorData = await response.json();
-						const errorMessages = Object.values(errorData.errors)
-							.map(errorArray => errorArray.join(' '))
-							.join('</li>\n<li>');
+				if (response.status === 422) {
+					// Validation error handling
+					const errorData = await response.json();
+					const errorMessages = Object.values(errorData.errors)
+						.map(errorArray => errorArray.join(' '))
+						.join('</li>\n<li>');
 
-						$('#ajax-errors').html(`
-							<div class="alert alert-danger alert-dismissable">
-								<button aria-hidden="true" data-dismiss="alert" class="close" type="button">×</button>
-								<ul><li>${errorMessages}</li></ul>
-							</div>
-						`);
+					$('#ajax-errors').html(`
+						<div class="alert alert-danger alert-dismissable">
+							<button aria-hidden="true" data-dismiss="alert" class="close" type="button">×</button>
+							<ul><li>${errorMessages}</li></ul>
+						</div>
+					`);
 
-						$('#form-wrapper').animate({ scrollTop: 0 }, 'fast');
+					$('#form-wrapper').animate({ scrollTop: 0 }, 'fast');
 
-						Swal.fire({
-							title: 'Errors were found, in submitted data.',
-							icon: 'warning',
-						});
+					Swal.fire({
+						text: 'Errors were found, in submitted data.',
+						icon: 'warning',
+					});
+					return null;
+				}
+				return response.json();
+			})
+			.then(data => {
 
-					} else {
-						Swal.fire({
-							title: 'Error Saving Service Request.',
-							icon: 'warning',
-						});
+				if (!data) return;
+				
+				if (data.success) {
+					Swal.fire({
+						title: 'Success!',
+						text: data.message || 'Service Request Created Successfully.',
+						icon: 'success',
+						showConfirmButton: false,
+						timer: 1000,
+						timerProgressBar: true
+					}).then(() => {
+						window.location.href = '{{ route("service_requests.index") }}';
+					});
 
-					}
-
-					return response.json();
-				})
-				.then(data => {
-					if (data.success) {
-						Swal.fire({
-							title: 'Success!',
-							text: data.message || 'Service Request Created Successfully.',
-							icon: 'success',
-							showConfirmButton: false,
-							timer: 1000,
-							timerProgressBar: true
-						}).then(() => {
-							window.location.href = '{{ route('service_requests.index') }}';
-						});
-
-					} else {
-						Swal.fire({
-							title: 'Error',
-							text: data.message || 'Something went wrong.',
-							icon: 'error',
-						});
-					}
-				})
-				.catch(error => {
-					console.error('Error:', error);
+				} else {
 					Swal.fire({
 						title: 'Error',
-						text: 'An error occurred while submitting the form. Please try again.',
+						text: data.message || 'Something went wrong.',
 						icon: 'error',
 					});
+				}
+			})
+			.catch(error => {
+				console.error('Error:', error);
+				Swal.fire({
+					title: 'Error',
+					text: 'An error occurred while submitting the form. Please try again.',
+					icon: 'error',
 				});
+			});
 		} else {
 			form.reportValidity();
 		}
@@ -266,54 +259,54 @@
 			}
 		});
 
-		$('#executor_group_id').select2({
-		    width: '100%',
-		    allowClear: true,
-		    placeholder: 'Search for groups',
-		    delay: 1000, // Delay before starting search
-		    minimumInputLength: 2,
-		    ajax: {
-		        url: '{{ route("service_requests.search_service_domain_groups") }}',
-		        dataType: 'json',
-		        type: 'POST',
-		        delay: 250, // Delay to prevent flooding requests
-		        data: function(params) {
-		            return {
-		                q: params.term,
-		                enabled_only: true,
-		                service_domain_id: $('#service_domain_id').val()
-		            };
-		        },
-		        processResults: function(data) {
-		            return {
-		                results: $.map(data.data, function(item) {
-		                    return {
-		                        id: item.id,
-		                        text: item.name
-		                    };
-		                })
-		            };
-		        },
-		        cache: true,
-		        headers: {
-		            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') // CSRF token
-		        },
-		        error: function(xhr, status, error) {
-		        	if(xhr.status == 422) {
-		        		Swal.fire({
-							title: 'Invalid Request',
-							icon: 'warning',
-						});
-		        	} else {
-		        		Swal.fire({
-							title: 'Error',
-							text: 'Unable to search user group',
-							icon: 'error',
-						});
-		        	}
-		        }
-		    }
-		});
+		// $('#executor_group_id').select2({
+		//     width: '100%',
+		//     allowClear: true,
+		//     placeholder: 'Search for groups',
+		//     delay: 1000, // Delay before starting search
+		//     minimumInputLength: 2,
+		//     ajax: {
+		//         url: '{{ route("service_requests.search_service_domain_groups") }}',
+		//         dataType: 'json',
+		//         type: 'POST',
+		//         delay: 250, // Delay to prevent flooding requests
+		//         data: function(params) {
+		//             return {
+		//                 q: params.term,
+		//                 enabled_only: true,
+		//                 service_domain_id: $('#service_domain_id').val()
+		//             };
+		//         },
+		//         processResults: function(data) {
+		//             return {
+		//                 results: $.map(data.data, function(item) {
+		//                     return {
+		//                         id: item.id,
+		//                         text: item.name
+		//                     };
+		//                 })
+		//             };
+		//         },
+		//         cache: true,
+		//         headers: {
+		//             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') // CSRF token
+		//         },
+		//         error: function(xhr, status, error) {
+		//         	if(xhr.status == 422) {
+		//         		Swal.fire({
+		// 					title: 'Invalid Request',
+		// 					icon: 'warning',
+		// 				});
+		//         	} else {
+		//         		Swal.fire({
+		// 					title: 'Error',
+		// 					text: 'Unable to search user group',
+		// 					icon: 'error',
+		// 				});
+		//         	}
+		//         }
+		//     }
+		// });
 		$('#executor_id').select2({
 		    width: '100%',
 		    allowClear: true,
@@ -363,8 +356,8 @@
 		});
 	});
 
-	$('#service').change(function() {
-		get_fields('service');
+	$('#service_id').change(function() {
+		get_fields('service_id');
 	});
 
 	$('#service_domain_id').change(function() {
@@ -377,8 +370,8 @@
 
 	function get_fields (changed_field) {
 
-		let selected_service = $('#'+changed_field).val();
-		if (selected_service !== 'undefined' && selected_service != '') {
+		let selected_field_val = $('#'+changed_field).val();
+		if (selected_field_val !== 'undefined' && selected_field_val != '') {
 			
 			Swal.fire({
 				text: "Loading...",
@@ -397,18 +390,18 @@
 					_token: '{{ csrf_token() }}',
 					changed_field: changed_field,
 					mode: 'create',
-					id: selected_service,
+					id: selected_field_val,
+					service_domain_id: $('#service_domain_id').val(),
 				},
 				success: function(response) {
-					if(response.success) {
+					if(response.success == true) {
 						if(changed_field == 'service_domain_id') {
 							updateServiceDropdown(response.data.services);
-						} else if (changed_field == 'service') {							
+						} else if (changed_field == 'service_id') {							
+							
 							if(typeof response.data.allowed_statuses !== 'undefined' && Object.keys(response.data.allowed_statuses).length > 0) {
 								updateStatusDropdown(response.data.allowed_statuses);
-							}
-							else
-							{
+							} else {
 								let statusDropdown = $('#status_id');
 								statusDropdown.empty();
 								Swal.fire({title: "No statuses were allowed", text: "Please check workflow engine", icon: "error" });
@@ -416,16 +409,14 @@
 
 							if (typeof response.data.custom_fields !== 'undefined' && Object.keys(response.data.custom_fields).length > 0) {
 								updateCustomFields(response.data.custom_fields);
-							}
-							else
-							{
+							} else {
 								let fieldsContainer = $('#custom-fields-container');
 								fieldsContainer.empty();
 							}
+
+							updatedExecutorGroupDropdown(response);
 						}
 
-					} else {
-						Swal.fire({title: "Something went wrong", text: "Please try again", icon: "error" });
 					}
 				},
 				error: function(xhr, status, error) {
@@ -435,23 +426,33 @@
 					if (xhr.responseJSON && xhr.responseJSON.message) {
 						errorMessage = xhr.responseJSON.message;
 					}
+						
 					Swal.fire({title: "Error loading data", text: errorMessage, icon: "warning" });
 				},
 				complete: function(xhr) {
 					$('.swal2-container').hide();
 					let response = xhr.responseJSON;
-					console.log(response);
+
 					if(changed_field == 'service_domain_id' && (!response || typeof response.data.services === 'undefined' || Object.keys(response.data.services).length === 0)) {
-						console.log(response);
-						console.log(response.data);
 						Swal.fire({title: "", text: "No active Services found under selected Service Domain", icon: "warning" });
-						$('#service').prop('disabled', true).select2();
+						$('#service_id').prop('disabled', true).select2();
 					}
-					if(changed_field == 'service' && (!response || typeof response.data.allowed_statuses === 'undefined' || Object.keys(response.data.allowed_statuses).length === 0)) {
-						console.log(response);
-						console.log(response.data);
-						Swal.fire({title: "", text: "No statuses are allowed, Please check the Workflow against the selected Service", icon: "warning" });
+					
+					let msg = '';
+
+					if(changed_field == 'service_id' && (!response || typeof response.data.allowed_statuses === 'undefined' || Object.keys(response.data.allowed_statuses).length === 0)) {
+						msg = 'No statuses are allowed, Please check the Workflow against the selected Service';
 						$('#status_id').prop('disabled', true).select2();
+					}
+					if(changed_field == 'service_id' && (!response || typeof response.data.service_domain_groups_lkp === 'undefined' || Object.keys(response.data.service_domain_groups_lkp).length === 0)) {
+						if(msg == '') {
+							msg = 'No assignee office under selected service Domain';
+						} else {
+							msg = msg + ', No assignee office under selected service Domain';
+						}
+					}
+					if(changed_field == 'service_id' && msg != '') {
+						Swal.fire({title: "", text: msg, icon: "warning" });
 					}
 				}
 			});
@@ -462,7 +463,7 @@
 	}
 
 	function updateServiceDropdown(serviceOptions) {
-		let serviceDropdown = $('#service');
+		let serviceDropdown = $('#service_id');
 		let selectedService = serviceDropdown.val();
 		serviceDropdown.empty();
 
@@ -530,6 +531,33 @@
 		});
 
 		statusDropdown.prop('disabled', false).select2();
+	}
+
+	function updatedExecutorGroupDropdown(response) {
+
+		if (typeof response.data.service_domain_groups_lkp !== 'undefined' && Object.keys(response.data.service_domain_groups_lkp).length > 0) {
+
+			let exeGrpOptions = response.data.service_domain_groups_lkp;
+
+			let exeGrpDropdown = $('#executor_group_id');
+			let selectedexeGrp = exeGrpDropdown.val();
+			exeGrpDropdown.empty();
+
+		    exeGrpDropdown.append(
+		        '<option value="" disabled selected>Select an option</option>'
+		    );
+
+			exeGrpOptions.forEach(function (exeGrp) {
+				let isSelected = (selectedexeGrp == exeGrp.id) ? 'selected' : '';
+				exeGrpDropdown.append(
+					'<option value="' + exeGrp.id + '" ' + isSelected + '>' + exeGrp.name + '</option>'
+				);
+			});
+		} else {
+		    exeGrpDropdown.append(
+		        '<option value="" disabled selected>Select an option</option>'
+		    );
+		}
 	}
 
 	function updateCustomFields(customFields) {

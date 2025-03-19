@@ -39,26 +39,22 @@ class SlaHelper
 
             $response_sla_percentage = ($response_time_sla_sec > 0) ? round(($service_request->tto / $response_time_sla_sec) * 100 , 2) : 0;
             
-            $response_sla_status = null;
+            $response_sla_status = 'Ongoing';
             if($response_sla_percentage > 100) {
                 $response_sla_status = 'SLA Breach';
             } else if(isset($service_request->response_time) ) {
                 $response_sla_status = 'SLA Met';
-            } else if(!isset($service_request->response_time) ) {
-                $response_sla_status = 'Ongoing';
             }
 
             $resolution_time_sla = $resolution_time;
             $resolution_time_spent = isset($service_request->ttr) ? GeneralHelper::sec_to_hh_mm($service_request->ttr) : '';
             $resolution_sla_percentage = ($resolution_time_sla_sec > 0) ? round(($service_request->ttr / $resolution_time_sla_sec) * 100 , 2) : 0;
             
-            $resolution_sla_status = null;
+            $resolution_sla_status = 'Ongoing';
             if($resolution_sla_percentage > 100) {
                 $resolution_sla_status = 'SLA Breach';
             } else if(in_array($service_request_status['type'], [3,4]) ) {
                 $resolution_sla_status = 'SLA Met';
-            } else if(!isset($service_request->response_time) ) {
-                $resolution_sla_status = 'Ongoing';
             }
         }
 

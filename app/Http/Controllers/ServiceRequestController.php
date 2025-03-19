@@ -35,23 +35,145 @@ use Illuminate\Support\Facades\Mail;
 use App\Helpers\GeneralHelper;
 use App\Helpers\SlaHelper;
 
+use Illuminate\Support\Facades\Http;
 
 use ZipArchive;
 
 use App\Exports\ServiceRequestExport;
 use Maatwebsite\Excel\Facades\Excel;
+use Carbon\Carbon;
+
+use App\Services\NotificationService;
 
 class ServiceRequestController extends Controller
 {
 	public function index(Request $request)
 	{
+	
+		// $subject = "New Service Request";
+	    // $recipients = ["kullah@innexiv.com", "user2@innexiv.com"];
+	    // $cc = ["fzafar@innexiv.com"];
+	    // $template = 'emails.sr_notification';
+
+	    // $sr = ServiceRequest::with('status', 'priority', 'serviceDomain', 'service', 'creator', 'executor', 'creatorGroup', 'executorGroup', 'serviceRequestCustomField', 'updater', 'sla')
+	    //     ->findOrFail(3);
+	    // $slaInfo = null;
+	    // if (isset($sr->sla)) {
+	    //     $slaInfo = SlaHelper::getSlaInfo($sr->status, $sr, $sr->sla);
+	    // }
+	    // $srArray = $sr->toArray();
+	    // $srArray['sla_calculations'] = $slaInfo;
+
+	    // $data = [
+	    //     'emailTitle' => 'New Service Request',
+	    //     'salutation' => "Dear Concerned, \n\n A new Service Request is assigned to your user group.",
+	    //     'ending' => "Regards,\n INX Helpdesk",
+	    //     'sr' => $srArray,
+	    //     'actionText' => 'Go to Service Request',
+	    //     'actionUrl' => route('service_requests.edit', ['service_request' => $srArray['id']]),
+	    // ];
+
+	    // $notificationService = new NotificationService();
+	    // // $notification = $notificationService->sendNotification($recipients, $cc, $subject, $template, $data, $srArray['id'], true);
+	    // $notification = $notificationService->newServiceRequestNotification($recipients, $cc, $subject, $template, $data, $srArray['id'], true);
+
+	    // echo "Email sent for notification ID: {$notification->id}";
+	    // exit;
+
+
+		// $serviceRequest = [
+		//     'id' => 4,
+		//     'subject' => 'test SLA',
+		//     'description' => 'test',
+		//     'status_id' => 'In Progress',
+		//     'priority_id' => 'Critical',
+		//     'created_by' => 'Admin',
+		//     'created_at' => '2025-03-18T16:26:30.000000Z',
+		// ];
+
+		// $recipients = [
+		//     'email' => ['kullah@innexiv.com', 'user2@innexiv.com'],
+		//     'email_cc' => ['cc1@innexiv.com'],
+		// ];
+
+		// $notificationService = new NotificationService();
+		// $notificationService->notifyServiceRequest($serviceRequest, $recipients);
+		// exit;
+
+		// $serviceRequest = [
+		//     'id' => 4,
+		//     'service_domain' => 'Operational Support', // Added for clarity
+		//     'service' => 'Service Affecting Bug',      // Added for clarity
+		//     'subject' => 'test SLA',
+		//     'description' => 'test',
+		//     'status_id' => 'In Progress',              // Assuming mapped from ID
+		//     'priority_id' => 'Critical',               // Assuming mapped from ID
+		//     'created_by' => 'Admin',                   // Assuming mapped from ID
+		//     'response_time' => '2025-03-18 16:30:25',
+		//     'tto' => 15122,                            // Seconds
+		//     'ttr' => 15122,                            // Seconds
+		//     'created_at' => '2025-03-18T16:26:30.000000Z',
+		//     'updated_at' => '2025-03-18T17:27:57.000000Z',
+		//     'sla_rule_name' => 'Critical SLA',         // Added SLA info
+		//     'response_time_sla' => '00:15',            // Assuming HH:MM
+		//     'resolution_time_sla' => '01:00',          // Assuming HH:MM
+		// ];
+
+
+		// $whatsappMessage = "*New Service Request*\n";
+		// $whatsappMessage .= "Dear Concerned,\n\n";
+		// $whatsappMessage .= "A new Service Request is assigned to your user group.\n";
+		// $whatsappMessage .= "*Service Domain:* {$serviceRequest['service_domain']}\n";
+		// $whatsappMessage .= "*Service:* {$serviceRequest['service']}\n";
+		// $whatsappMessage .= "*Subject:* {$serviceRequest['subject']}\n";
+		// $whatsappMessage .= "*Description:* {$serviceRequest['description']}\n";
+		// $whatsappMessage .= "*Status:* {$serviceRequest['status_id']}\n"; // Renamed for clarity
+		// $whatsappMessage .= "*Priority:* {$serviceRequest['priority_id']}\n"; // Renamed for clarity
+		// $whatsappMessage .= "*Created By:* {$serviceRequest['created_by']}\n";
+		// $whatsappMessage .= "*Response Time: *" . ($serviceRequest['response_time'] ? Carbon::parse($serviceRequest['response_time'])->format('d-M-Y H:i') : 'Not responded') . "\n";
+		// $whatsappMessage .= "*Time to Ownership (TTO): *" . ($serviceRequest['tto'] ? number_format($serviceRequest['tto'] / 3600, 2) . ' hours' : 'Not assigned') . "\n";
+		// $whatsappMessage .= "*Time to Resolution (TTR): *" . ($serviceRequest['tto'] ? number_format($serviceRequest['ttr'] / 3600, 2) . ' hours' : 'Not resolved') . "\n";
+		// $whatsappMessage .= "*Created At: *" . Carbon::parse($serviceRequest['created_at'])->format('d-M-Y H:i') . "\n";
+		// $whatsappMessage .= "*Updated At: *" . Carbon::parse($serviceRequest['updated_at'])->format('d-M-Y H:i') . "\n";
+		// $whatsappMessage .= "\n*SLA Information:*\n";
+		// $whatsappMessage .= "SLA Rule Name:* "." {$serviceRequest['sla_rule_name']}\n";
+		// $whatsappMessage .= "Response Time SLA:* "." {$serviceRequest['response_time_sla']} (HH:MM)\n";
+		// $whatsappMessage .= "Resolution Time SLA:* "." {$serviceRequest['resolution_time_sla']} (HH:MM)\n\n";
+		// $whatsappMessage .= "Go to Service Request:\n"; // Separate line for clarity
+		// $whatsappMessage .= route('service_requests.edit', ['service_request' => $serviceRequest['id']]); // URL on its own line
+		// echo "<pre><strong>" . __FILE__ . " Line: [". __LINE__ ."]</strong> @ " .date("Y-m-d H:i:s"). "<br>"; print_r( $whatsappMessage ); echo "</pre><br>"; 
+
+
+
+
 		// // TEST Notification
-		// $subject = "Test Message";
-		// $message = "Test Message.";
+		// $subject = "New Service Request";
+		// $emailTitle = "Test Message Email Title";
+		// $message = "Test Message.\ndetails/";
 		// $recipients = ["kullah@innexiv.com", "user2@innexiv.com"];
-		// $cc = ["cc1@innexiv.com"];
-		// Mail::to($recipients)->cc($cc)->send(new CustomMail($subject, $message));
-		// Notification::route('mail', $recipients)->notify(new EmailNotification($subject, $message, $cc));
+		// $cc = ["fzafar@innexiv.com"];
+		// $sr = ServiceRequest::with('status', 'priority', 'serviceDomain', 'service', 'creator', 'executor', 'creatorGroup', 'executorGroup', 'serviceRequestCustomField', 'updater', 'sla')->findOrFail(3);
+		// $slaInfo = null;
+		// if(isset($sr->sla)) {
+		// 	$slaInfo = SlaHelper::getSlaInfo($sr->status, $sr, $sr->sla);
+		// }
+		// $sr = $sr->toArray();
+		// $sr['sla_calculations'] = $slaInfo;
+		// // echo "<pre><strong>" . __FILE__ . " Line: [". __LINE__ ."]</strong> @ " .date("Y-m-d H:i:s"). "<br>"; print_r( $sr ); echo "</pre><br>"; exit;
+		// $data = [
+		// 	'emailTitle' => 'New Service Request',
+		// 	'salutation' => "Dear Concerned, \n\n A new Service Request is assigned to your user group.",
+		// 	'ending' => "Regards,\n INX Helpdesk",
+		// 	'sr' => $sr,
+		// 	'actionText' => 'Go to Service Request',
+		// 	'actionUrl' => route('service_requests.edit', ['service_request' => $sr['id']]),
+		// ];
+
+		// $template = 'emails.sr_notification';
+		// // echo "<pre><strong>" . __FILE__ . " Line: [". __LINE__ ."]</strong> @ " .date("Y-m-d H:i:s"). "<br>"; print_r( $sr ); echo "</pre><br>"; exit;
+		// // return view('emails.sr_notification',['template' =>$template, 'subject' =>$subject, 'data'=>$data]);
+		// Mail::to($recipients)->cc($cc)->send(new CustomMail($subject, $template, $data));
+		// // Notification::route('mail', $recipients)->notify(new EmailNotification($subject, $message, $cc));
 		// exit();
 
 		$service_domains = ServiceDomain::select('id', 'name', 'color', 'enabled')->get()->toArray();
@@ -95,6 +217,9 @@ class ServiceRequestController extends Controller
 		ini_set("memory_limit", '8192M');
 		set_time_limit(300);
 
+		$user_group_ids = Auth::user()->load('groups')->groups->pluck('id')->toArray();
+		$user_service_domain_ids = ServiceDomainGroup::whereIn('group_id', $user_group_ids)->pluck('service_domain_id')->toArray();
+
 		$service_request = new \App\Models\ServiceRequest();
 		$system_fields = $service_request->getAllServiceRequestFields();
 		$_EXCLUDED_FIELDS = ['File Upload'];
@@ -126,8 +251,7 @@ class ServiceRequestController extends Controller
 		$order = $request->input('order');
 
 		// Initialize the query builder
-		$query = DB::table('service_request_view')->select(array_keys($final_fields));
-
+		$query = DB::table('service_request_view')->select(array_keys($final_fields))->whereIn('service_domain_id', $user_service_domain_ids);
 		// Handle search functionality (filter service_requests based on the search value)
 		if (!empty($searchValue)) {
 			$searchValue = strtolower(trim($searchValue));
@@ -136,7 +260,6 @@ class ServiceRequestController extends Controller
 				  ->orWhereRaw('LOWER(description) LIKE ?', ['%' . $searchValue . '%']);
 			});
 		}
-
 		if (count($filters) > 0) {
 			$custom_fields_lkp = array_column($custom_fields, null, 'field_id');
 			$_LIKE = ['subject', 'description'];
@@ -262,7 +385,11 @@ class ServiceRequestController extends Controller
 	public function create()
 	{
 		$services = []; // Service::where('enabled', true)->get();
-		$service_domains = ServiceDomain::select('id', 'name')->where('enabled', true)->get();
+
+		$user_group_ids = Auth::user()->load('groups')->groups->pluck('id')->toArray();
+		$user_service_domain_ids = ServiceDomainGroup::whereIn('group_id', $user_group_ids)->pluck('service_domain_id')->toArray();
+
+		$service_domains = ServiceDomain::select('id', 'name')->whereIn('id', $user_service_domain_ids)->where('enabled', true)->get();
 		$statuses = Status::orderBy('order')->get();
 		$priorities = ServicePriority::orderBy('order')->get();
 		$creator = Auth::user();
@@ -278,23 +405,23 @@ class ServiceRequestController extends Controller
 
 		$validator = Validator::make($request->all(), [
 			'service_domain_id' => 'required|numeric',
-			'service' => 'required|numeric',
+			'service_id' => 'required|numeric',
 		], [
 			//msgs
 		], [
 			'service_domain_id' => 'Service Domain',
-			'service' => 'ServiceRequest Type',
+			'service_id' => 'ServiceRequest Type',
 		]);
 		if ($validator->fails()) {
 			return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
 		}
 
-		$service_id = $request->input('service', null);
+		$service_id = $request->input('service_id', null);
 
 		$service = Service::where('id', $service_id)->first();
 
 		if (empty($service)) {
-			return response()->json(['success' => false, 'errors' => ['service' => ['ServiceRequest Type not found']]], 422);
+			return response()->json(['success' => false, 'errors' => ['service_id' => ['ServiceRequest Type not found']]], 422);
 		}
 
 		$service_settings = $service->settings ? json_decode($service->settings, true) : [];
@@ -307,7 +434,7 @@ class ServiceRequestController extends Controller
 		$field_settings = [];
 		$attribute_names = [
 			'service_domain_id' => 'Service Domain Name',
-			'service' => 'ServiceRequest Type',
+			'service_id' => 'ServiceRequest Type',
 			'subject' => 'Subject',
 			'description' => 'Description',
 			'status_id' => 'Status',
@@ -322,7 +449,7 @@ class ServiceRequestController extends Controller
 
 		$validation_array = [
 			'service_domain_id' => 'required|numeric',
-			'service' => 'required|numeric',
+			'service_id' => 'required|numeric',
 			'subject' => ['required','string','max:1000', 'regex:/^[\p{L}0-9_.()\[\] -]+$/u'],
 			'description' => ['nullable','string','max:10000', 'regex:/^[\P{C}\n\r]+$/u'],
 			'status_id' => 'required|numeric|min:1',
@@ -540,7 +667,7 @@ class ServiceRequestController extends Controller
 			$service_request->service_domain_id = trim($validatedData['service_domain_id']);
 			$service_request->subject = trim($validatedData['subject']);
 			$service_request->description = isset($validatedData['description']) ? trim($validatedData['description']) : null;
-			$service_request->service_id = trim($validatedData['service']);
+			$service_request->service_id = trim($validatedData['service_id']);
 			$service_request->status_id = trim($validatedData['status_id']);
 			$service_request->priority_id = isset($validatedData['priority_id']) ? trim($validatedData['priority_id']) : null;
 			$service_request->creator_group_id = isset($validatedData['creator_group_id']) ? trim($validatedData['creator_group_id']) : null;
@@ -634,6 +761,9 @@ class ServiceRequestController extends Controller
 			}
 
 			DB::commit();
+
+			$notificationService = new NotificationService();
+			$notification = $notificationService->serviceRequestCreated($service_request->id, true);
 			return response()->json(['success' => true, 'message' => 'ServiceRequest Created Successfully'], 201);
 		
 		} catch (\Exception $e) {
@@ -646,8 +776,14 @@ class ServiceRequestController extends Controller
 	public function edit($id)
 	{
 		$service_request = ServiceRequestView::findOrFail($id);
+		$user_group_ids = Auth::user()->load('groups')->groups->pluck('id')->toArray();
+		$user_service_domain_ids = ServiceDomainGroup::whereIn('group_id', $user_group_ids)->pluck('service_domain_id')->toArray();
 
-		$service_domains = ServiceDomain::select('id', 'name')->where('enabled', true)->get();
+		if(isset($service_request->service_domain_id) && !in_array($service_request->service_domain_id, $user_service_domain_ids)) {
+			return redirect()->route('service_requests.index')->with('error', 'You are not allowed to Modify this Service Request!');
+		}
+
+		$service_domains = ServiceDomain::select('id', 'name')->whereIn('id', $user_service_domain_ids)->where('enabled', true)->get();
 		$services = Service::where('enabled', true)->orWhere('id', $service_request->service_id)->get();
 		$this_service = array_column($services->toArray(), null, 'id');
 
@@ -697,7 +833,13 @@ class ServiceRequestController extends Controller
 		// For History
 		$service_request_info = ServiceRequest::with('status', 'priority', 'service', 'creator', 'executor', 'creatorGroup', 'executorGroup', 'serviceRequestCustomField', 'updater', 'sla')->findOrFail($id);
 
-		$service_request_logs = ServiceRequestAuditLog::with('creator')->where('service_request_id', $id)->orderBy('created_at', 'desc')->get()->toArray();
+		$service_request_logs = ServiceRequestAuditLog::with(['creator' => function ($query) {
+			    $query->select('id', 'email', 'phone', 'name');
+			}])
+			->where('service_request_id', $id)
+			->orderBy('created_at', 'desc')
+			->get()
+			->toArray();
 		$service_request_comments = ServiceRequestComment::with('creator')->where('service_request_id', $id)->orderBy('created_at', 'desc')->get()->toArray();
 
 		$log_field_ids = [];
@@ -718,6 +860,15 @@ class ServiceRequestController extends Controller
 				}
 			}
 		}
+
+		$service_request_agg = [];
+		foreach ($service_request_logs as $service_request_log) {
+			$service_request_agg[$service_request_log['created_at'] .'_'. $service_request_log['created_by']]['ts'] = $service_request_log['created_at'];
+			$service_request_agg[$service_request_log['created_at'] .'_'. $service_request_log['created_by']]['creator'] = $service_request_log['creator'] ?? [];
+			unset($service_request_log['creator']);
+			$service_request_agg[$service_request_log['created_at'] .'_'. $service_request_log['created_by']]['data'][] = $service_request_log;
+		}
+		$service_request_logs = $service_request_agg;
 
 		$fileds_to_make_history = ServiceRequest::$fileds_to_make_history;
 
@@ -786,23 +937,23 @@ class ServiceRequestController extends Controller
 
 		$validator = Validator::make($request->all(), [
 			'service_domain_id' => 'required|numeric',
-			'service' => 'required|numeric',
+			'service_id' => 'required|numeric',
 		], [
 			//msgs
 		], [
 			'service_domain_id' => 'Service Domain',
-			'service' => 'ServiceRequest Type',
+			'service_id' => 'ServiceRequest Type',
 		]);
 		if ($validator->fails()) {
 			return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
 		}
 
-		$service_id = $request->input('service', null);
+		$service_id = $request->input('service_id', null);
 
 		$service = Service::where('id', $service_id)->first();
 
 		if (empty($service)) {
-			return response()->json(['success' => false, 'errors' => ['service' => ['ServiceRequest Type not found']]], 422);
+			return response()->json(['success' => false, 'errors' => ['service_id' => ['ServiceRequest Type not found']]], 422);
 		}
 
 		$service_settings = $service->settings ? json_decode($service->settings, true) : [];
@@ -815,7 +966,7 @@ class ServiceRequestController extends Controller
 		$field_settings = [];
 		$attribute_names = [
 			'service_domain_id' => 'Service Domain Name',
-			'service' => 'ServiceRequest Type',
+			'service_id' => 'ServiceRequest Type',
 			'subject' => 'Subject',
 			'description' => 'Description',
 			'status_id' => 'Status',
@@ -830,7 +981,7 @@ class ServiceRequestController extends Controller
 
 		$validation_array = [
 			'service_domain_id' => 'required|numeric',
-			'service' => 'required|numeric',
+			'service_id' => 'required|numeric',
 			'subject' => ['required','string','max:1000', 'regex:/^[\p{L}0-9_.()\[\] -]+$/u'],
 			'description' => ['nullable','string','max:10000', 'regex:/^[\P{C}\n\r]+$/u'],
 			'status_id' => 'required|numeric|min:1',
@@ -1051,13 +1202,18 @@ class ServiceRequestController extends Controller
 
 
 		$originalServiceRequest = $service_request->getAttributes();
+		
+		$original_status = $originalServiceRequest['status_id']; 
+		$new_status = $validatedData['status_id'] ?? null;
+
 
 		DB::beginTransaction();
 
 		try {
+			$service_request->service_domain_id = trim($validatedData['service_domain_id']);
 			$service_request->subject = trim($validatedData['subject']);
 			$service_request->description = isset($validatedData['description']) ? trim($validatedData['description']) : null;
-			$service_request->service_id = trim($validatedData['service']);
+			$service_request->service_id = trim($validatedData['service_id']);
 			$service_request->status_id = trim($validatedData['status_id']);
 			$service_request->priority_id = isset($validatedData['priority_id']) ? trim($validatedData['priority_id']) : null;
 			$service_request->creator_group_id = isset($validatedData['creator_group_id']) ? trim($validatedData['creator_group_id']) : $service_request->creator_group_id;
@@ -1067,13 +1223,28 @@ class ServiceRequestController extends Controller
 			$service_request->planned_start = isset($validatedData['planned_start']) ? trim($validatedData['planned_start']) : null;
 			$service_request->planned_end = isset($validatedData['planned_end']) ? trim($validatedData['planned_end']) : null;
 			$service_request->updated_at = $now_ts;
+			$service_request->sla_rule_id = $service_request->sla_rule_id; // avoide making false history
+			$service_request->response_time = $service_request->response_time; // avoide making false history
 
+			// set TTO and auto assign user if not already assigned.
+			if(isset($service_request->executor_group_id) && isset($creator_groups[$service_request->executor_group_id]) ) {
+				if(
+					$service_request->response_time == null &&
+					isset($new_status) && $original_status != $new_status
+				) {
+					$service_request->response_time = $now_ts; // set response time if null
+				}
+				
+				if(!isset($service_request->executor_id)) {
+					$service_request->executor_id = Auth::user()->id; // set assignee
+				}
+			}
 
 			if (!$service_request->save()) {
 				throw new \Exception("Failed to save the service_request.");
 			}
 
-        	$this->logServiceRequestChanges($service_request->id, $originalServiceRequest, $service_request->getAttributes(), $creator->id, $now_ts);
+        	$this->logServiceRequestChanges($service_request->id, $originalServiceRequest, $validatedData, $creator->id, $now_ts);
 
 			ServiceRequestCustomField::where('service_request_id', $service_request->id)->delete();
 
@@ -1234,6 +1405,10 @@ class ServiceRequestController extends Controller
 			}
 
 			DB::commit();
+			
+			$notificationService = new NotificationService();
+			$notification = $notificationService->serviceRequestUpdated($service_request->id, true);
+
 			return response()->json(['success' => true, 'message' => 'ServiceRequest Updated Successfully'], 201);
 		
 		} catch (\Exception $e) {		
@@ -1252,7 +1427,23 @@ class ServiceRequestController extends Controller
 	{
 		$fileds_to_make_history = ServiceRequest::$fileds_to_make_history;
 		$history = [];
-	    foreach ($newData as $field => $newValue) {
+	    foreach ($fileds_to_make_history as $field_key => $field_label) {
+	    	$original_value = $originalData[$field_key] ?? null;
+	    	$new_value = $newData[$field_key] ?? null;
+
+	        if ((isset($original_value) || isset($new_value)) && $original_value != $new_value) {
+	            $history[] = [
+	                'service_request_id' => $service_requestId,
+	                'field_name' => $field_key,
+					'field_type' => 1,
+	                'old_value' => $original_value,
+	                'new_value' => $new_value,
+	                'created_by' => $userId,
+	                'created_at' => $now_ts,
+	            ];
+	        }
+	    }
+	    /*foreach ($newData as $field => $newValue) {
 	        if (isset($fileds_to_make_history[$field]) && isset($originalData[$field]) && trim($originalData[$field]) != trim($newValue)) {
 	            $history[] = [
 	                'service_request_id' => $service_requestId,
@@ -1264,7 +1455,7 @@ class ServiceRequestController extends Controller
 	                'created_at' => $now_ts,
 	            ];
 	        }
-	    }
+	    }*/
 	    if(count($history) > 0) {
 			ServiceRequestAuditLog::insert($history);
 	    }
@@ -1300,7 +1491,13 @@ class ServiceRequestController extends Controller
 	{
 		$service_request_info = ServiceRequest::with('status', 'priority', 'service', 'creator', 'executor', 'creatorGroup', 'executorGroup', 'serviceRequestCustomField', 'updater', 'sla')->findOrFail($id);
 		
-		$service_request_logs = ServiceRequestAuditLog::with('creator')->where('service_request_id', $id)->orderBy('created_at', 'desc')->get()->toArray();
+		$service_request_logs = ServiceRequestAuditLog::with(['creator' => function ($query) {
+		    $query->select('id', 'email', 'phone', 'name');
+		}])
+		->where('service_request_id', $id)
+		->orderBy('created_at', 'desc')
+		->get()
+		->toArray();
 		$service_request_comments = ServiceRequestComment::with('creator')->where('service_request_id', $id)->orderBy('created_at', 'desc')->get()->toArray();
 
 		$log_field_ids = [];
@@ -1322,6 +1519,15 @@ class ServiceRequestController extends Controller
 			}
 		}
 
+		$service_request_agg = [];
+		foreach ($service_request_logs as $service_request_log) {
+			$service_request_agg[$service_request_log['created_at'] .'_'. $service_request_log['created_by']]['ts'] = $service_request_log['created_at'];
+			$service_request_agg[$service_request_log['created_at'] .'_'. $service_request_log['created_by']]['creator'] = $service_request_log['creator'] ?? [];
+			unset($service_request_log['creator']);
+			$service_request_agg[$service_request_log['created_at'] .'_'. $service_request_log['created_by']]['data'][] = $service_request_log;
+		}
+		$service_request_logs = $service_request_agg;
+		
 		$fileds_to_make_history = ServiceRequest::$fileds_to_make_history;
 
 		$service_domain_lkp = $service_lkp = $priority_lkp = $status_lkp = $user_lkp = $executor_group_lkp = $sla_rule_lkp = [];
@@ -1446,7 +1652,33 @@ class ServiceRequestController extends Controller
 			}
 		}
 
-		$service = Service::findOrFail($id);
+		// Else service_id field is changed. 
+
+		$service = Service::where('id', $id)->first();
+		if(empty($service)) {
+			return response()->json(['success' => false, 'data' => [], 'message' => 'Selected Service Not Found. Please refresh the page and try again.'], 200);
+		}
+		$service_domain_id = $request->input('service_domain_id', null);
+		if(empty($service_domain_id)) {
+			return response()->json(['success' => false, 'data' => [], 'message' => 'Invalid Request'], 200);
+		}
+		// $service_domains = ServiceDomain::with('groups')->where('id', $service_domain_id)->first();
+
+		$service_domains = ServiceDomain::with(['groups' => function ($query) {
+			    $query->select('groups.id', 'groups.name');
+			}])
+			->where('id', $service_domain_id)
+			->first();
+
+
+		if(empty($service_domains)) {
+			return response()->json(['success' => false, 'data' => [], 'message' => 'Selected Service Not Found. Please refresh the page and try again.'], 200);
+		}
+
+		$service_domain_groups_lkp = $service_domains->groups->map(function ($group) {
+		    return ['id' => $group->id, 'name' => $group->name];
+		})->all();
+
 		$service_request = new \App\Models\ServiceRequest();
 		$saved_custom_fields = [];
 		$settings = [];
@@ -1545,7 +1777,7 @@ class ServiceRequestController extends Controller
 			$allowed_statuses[$key]['text_color'] = GeneralHelper::invert_color($asts['color']);
 		}
 
-		return response()->json(['success' => true, 'data' => compact('allowed_statuses', 'custom_fields', 'service_request_files')], 200);
+		return response()->json(['success' => true, 'data' => compact('allowed_statuses', 'custom_fields', 'service_request_files', 'service_domain_groups_lkp')], 200);
 	}
 
     public function search_service_domain_groups(Request $request)
@@ -1554,14 +1786,14 @@ class ServiceRequestController extends Controller
 			'q' => 'required|string',
 			'service_domain_id' => 'required|numeric',
 			'enabled_only' => 'required|in:true,false',
-			// 'service' => 'required|numeric',
+			// 'service_id' => 'required|numeric',
 		], [
 			//msgs
 		], [
 			'q' => 'Search String',
 			'service_domain_id' => 'Service Domain',
 			'enabled_only' => 'Group Enabled Status',
-			// 'service' => 'ServiceRequest Type',
+			// 'service_id' => 'ServiceRequest Type',
 		]);
 
 		if ($validator->fails()) {

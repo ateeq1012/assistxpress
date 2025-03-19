@@ -538,17 +538,15 @@
                             icon: 'warning',
                         });
 
-                    } else {
-                        Swal.fire({
-                            title: 'Error Saving SLA Rule.',
-                            icon: 'warning',
-                        });
-
+                        return null;
                     }
 
                     return response.json();
                 })
                 .then(data => {
+
+                    if (!data) return;
+                    
                     if (data.success) {
                         Swal.fire({
                             title: 'Success!',
