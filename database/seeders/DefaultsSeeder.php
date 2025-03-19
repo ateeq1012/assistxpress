@@ -38,7 +38,7 @@ class DefaultsSeeder extends Seeder
             Schema::disableForeignKeyConstraints();
 
             DB::table('users')->updateOrInsert(
-                ['email' => 'admin@assistExpress.com'], // Check for this email
+                ['email' => 'admin@innexiv.com'], // Check for this email
                 [
                     'name' => 'System',
                     'email_verified_at' => Carbon::now(),
@@ -53,7 +53,7 @@ class DefaultsSeeder extends Seeder
                 ]
             );
             DB::table('users')->updateOrInsert(
-                ['email' => 'admin@assistExpress.com'], // Check for this email
+                ['email' => 'admin@innexiv.com'], // Check for this email
                 [
                     'name' => 'Admin',
                     'email_verified_at' => Carbon::now(),
