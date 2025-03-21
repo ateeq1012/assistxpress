@@ -5,7 +5,9 @@
         <div class="ibox-title">
             <h5>Create New Role</h5>
             <div class="ibox-tools">
-                <a href="{{ route('roles.index') }}" class="btn btn-primary btn-xs">Manage Roles</a>
+                @if(session('user_routes')['roles.index'] ?? false)
+                    <a href="{{ route('roles.index') }}" class="btn btn-primary btn-xs">Manage Roles</a>
+                @endif
             </div>
         </div>
         <div class="ibox-content">

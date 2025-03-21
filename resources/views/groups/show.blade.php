@@ -10,8 +10,12 @@
     <div class="ibox-title">
         <h5>Group Details</h5>
         <div class="ibox-tools">
-            <a href="{{ route('groups.index') }}" class="btn btn-primary btn-xs">Manage Groups</a>
-            <a href="{{ route('groups.edit', $group->id) }}" class="btn btn-primary btn-xs">Edit Group</a>
+            @if(session('user_routes')['groups.index'] ?? false)
+                <a href="{{ route('groups.index') }}" class="btn btn-primary btn-xs">Manage Groups</a>
+            @endif
+            @if(session('user_routes')['groups.edit'] ?? false)
+                <a href="{{ route('groups.edit', $group->id) }}" class="btn btn-primary btn-xs">Edit Group</a>
+            @endif
         </div>
     </div>
     <div class="ibox-content">

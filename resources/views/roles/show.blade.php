@@ -10,8 +10,12 @@
     <div class="ibox-title">
         <h5>Role Details</h5>
         <div class="ibox-tools">
-            <a href="{{ route('roles.index') }}" class="btn btn-primary btn-xs">Manage Roles</a>
-            <a href="{{ route('roles.edit', $role->id) }}" class="btn btn-primary btn-xs">Edit Role</a>
+            @if(session('user_routes')['roles.index'] ?? false)
+                <a href="{{ route('roles.index') }}" class="btn btn-primary btn-xs">Manage Roles</a>
+            @endif
+            @if(session('user_routes')['roles.edit'] ?? false)
+                <a href="{{ route('roles.edit', $role->id) }}" class="btn btn-primary btn-xs">Edit Role</a>
+            @endif
         </div>
     </div>
     <div class="ibox-content">
@@ -107,20 +111,39 @@
                 <div class="panel panel-primary">
                     <div class="panel-heading"> Role Access </div>
                     <div class="panel-body" style="max-height: 750px; overflow: auto;">                         
-                        <table class="table table-striped table-bordered">
-                            @foreach($route_cfg_resp as $row)
-                                <tr>
-                                    <th> {{ $row['description'] }} </th>
-                                    <td>
-                                        @if($row['selected'])
-                                            <span class="label label-primary">Allowed</span>
-                                        @else
-                                            <span class="label label-warning">Not Allowed</span>
-                                        @endif
-                                    </td>
-                                </tr>
+                        <div class="panel-group" id="accordion">
+                            @foreach($route_cfg_resp as $entity => $routes)
+                                <div class="panel panel-default">
+                                    <div class="panel-heading p-1 pl-2" data-toggle="collapse" data-target="#collapse-{{ Str::slug($entity) }}">
+                                        <h4 class="panel-title m-1">
+                                            {{ $entity }} <span class="caret"></span>
+                                        </h4>
+                                    </div>
+                                    <div id="collapse-{{ Str::slug($entity) }}" class="panel-collapse in">
+                                        <div class="panel-body p-0">
+                                            <table class="table table-striped table-bordered mb-0">
+                                                @foreach($routes as $row)
+                                                    @if($row['selected'])
+                                                    <tr>
+                                                        <td > {{ $row['description'] }}</td>
+                                                        <td style="width:100px;"> <span class="label label-primary">Allowed</span> </td>
+                                                    </tr>
+                                                    @endif
+                                                @endforeach
+                                                @foreach($routes as $row)
+                                                    @if(!$row['selected'])
+                                                        <tr>
+                                                            <td class="text-muted"> {{ $row['description'] }} </td>
+                                                            <td style="width:100px;"> <span class="label label-warning">Not Allowed</span> </td>
+                                                        </tr>
+                                                    @endif
+                                                @endforeach
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
                             @endforeach
-                        </table>
+                        </div>
                     </div>
                 </div>
             </div>

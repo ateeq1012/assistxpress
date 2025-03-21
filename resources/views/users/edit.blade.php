@@ -35,7 +35,7 @@
             <div class="tabs-container mb-2">
                 <ul class="nav nav-tabs" role="tablist">
                     <li><a class="nav-link active" data-toggle="tab" href="#tab-1"> User Info</a></li>
-                    <li><a class="nav-link" data-toggle="tab" href="#tab-2">Access Control</a></li>
+                    <li><a class="nav-link" data-toggle="tab" href="#tab-2">Permissions</a></li>
                 </ul>
                 <div class="tab-content">
                     <div role="tabpanel" id="tab-1" class="tab-pane active">
@@ -89,7 +89,7 @@
                             <table id="acl-assignment" class="table table-striped table-bordered mb-0">
                                 <thead>
                                     <tr>
-                                        <th>Action</th>
+                                        <th>Feature</th>
                                         <th>User Specific Assignment</th>
                                         <th>Role Based Assignment</th>
                                     </tr>
@@ -123,40 +123,45 @@
                 if (response.success) {
                     $('#acl-assignment tbody').empty();
 
-                    $(response.data).each(function() {
-                        var assigned_to_role_checkbox = this.assigned_to_role ? '<badge class="badge badge-info">Assigned</badge>' : '<badge class="badge">Not Assigned</badge>';
-                        assigned_to_role_checkbox = (this.assigned_to_user === 'forbidden' && this.assigned_to_role) ? '<badge class="badge badge-warning">Assigned to role but forbidden for this User</badge>' : assigned_to_role_checkbox;
+                    $.each(response.data, function(entity, routes) {
+                        
+                        $('#acl-assignment tbody').append(`<tr class="bg-muted"> <td colspan="3"><strong><p class="m-0">${entity}</p></strong></td> </tr>`);
+                        
+                        $(routes).each(function() {
+                            var assigned_to_role_checkbox = this.assigned_to_role ? '<badge class="badge badge-info">Assigned</badge>' : '<badge class="badge">Not Assigned</badge>';
+                            assigned_to_role_checkbox = (this.assigned_to_user === 'forbidden' && this.assigned_to_role) ? '<badge class="badge badge-warning">Assigned to role but forbidden for this User</badge>' : assigned_to_role_checkbox;
 
-                        var assigned_to_user_allowed = this.assigned_to_user === 'allowed' ? 'checked' : '';
-                        var assigned_to_user_forbidden = this.assigned_to_user === 'forbidden' ? 'checked' : '';
-                        var assigned_to_user_not_assigned = this.assigned_to_user === 'not-assigned' ? 'checked' : '';
+                            var assigned_to_user_allowed = this.assigned_to_user === 'allowed' ? 'checked' : '';
+                            var assigned_to_user_forbidden = this.assigned_to_user === 'forbidden' ? 'checked' : '';
+                            var assigned_to_user_not_assigned = this.assigned_to_user === 'not-assigned' ? 'checked' : '';
 
-                        var assigned_to_user_radios = `
-                            <div class="row p-0 m-0">
-                                <div class="radio radio-info badge badge-success pt-1">
-                                    <input type="radio" id="${this.key}-allowed" value="allowed" name="acl[${this.key}]" ${assigned_to_user_allowed}>
-                                    <label for="${this.key}-allowed" class="pl-1 mb-0"> Allowed </label>
-                                </div>
-                                <div class="radio badge badge-warning ml-2 pt-1">
-                                    <input type="radio" id="${this.key}-forbidden" value="forbidden" name="acl[${this.key}]" ${assigned_to_user_forbidden}>
-                                    <label for="${this.key}-forbidden" class="pl-1 mb-0"> Forbidden </label>
-                                </div>
-                                <div class="radio badge ml-2 pt-1">
-                                    <input type="radio" id="${this.key}-not-assigned" value="not-assigned" name="acl[${this.key}]" ${assigned_to_user_not_assigned}>
-                                    <label for="${this.key}-not-assigned" class="pl-1 mb-0"> Not Assigned </label>
-                                </div>
-                                <div class="ml-2 pt-1">
-                                    <a href="#" class="replicate-btn" data-row-key="${this.key}" title="Replicate Settings"><i class="fa fa-angle-double-down"></i></a>
-                                </div>
-                            </div>`;
+                            var assigned_to_user_radios = `
+                                <div class="row p-0 m-0">
+                                    <div class="radio radio-info badge badge-success pt-1">
+                                        <input type="radio" id="${this.key}-allowed" value="allowed" name="acl[${this.key}]" ${assigned_to_user_allowed}>
+                                        <label for="${this.key}-allowed" class="pl-1 mb-0"> Allowed </label>
+                                    </div>
+                                    <div class="radio badge badge-warning ml-2 pt-1">
+                                        <input type="radio" id="${this.key}-forbidden" value="forbidden" name="acl[${this.key}]" ${assigned_to_user_forbidden}>
+                                        <label for="${this.key}-forbidden" class="pl-1 mb-0"> Forbidden </label>
+                                    </div>
+                                    <div class="radio badge ml-2 pt-1">
+                                        <input type="radio" id="${this.key}-not-assigned" value="not-assigned" name="acl[${this.key}]" ${assigned_to_user_not_assigned}>
+                                        <label for="${this.key}-not-assigned" class="pl-1 mb-0"> Not Assigned </label>
+                                    </div>
+                                    <div class="ml-2 pt-1">
+                                        <a href="#" class="replicate-btn" data-row-key="${this.key}" title="Replicate Settings"><i class="fa fa-angle-double-down"></i></a>
+                                    </div>
+                                </div>`;
 
-                        var html = `<tr>
-                            <td>${this.description}</td>
-                            <td>${assigned_to_user_radios}</td>
-                            <td>${assigned_to_role_checkbox}</td>
-                        </tr>`;
+                            var html = `<tr>
+                                <td>${this.description}</td>
+                                <td>${assigned_to_user_radios}</td>
+                                <td>${assigned_to_role_checkbox}</td>
+                            </tr>`;
 
-                        $('#acl-assignment tbody').append(html);
+                            $('#acl-assignment tbody').append(html);
+                        });
                     });
                 } else {
                     alert('Error: ' + response.message);

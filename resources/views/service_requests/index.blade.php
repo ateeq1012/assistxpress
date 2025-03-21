@@ -70,7 +70,9 @@
     <div class="ibox-title">
         <h5>Service Requests</h5>
         <div class="ibox-tools">
-            <a href="{{ route('service_requests.create') }}" class="btn btn-primary btn-xs">Create Service Request</a>
+            @if(session('user_routes')['service_requests.create'] ?? false)
+                <a href="{{ route('service_requests.create') }}" class="btn btn-primary btn-xs">Create Service Request</a>
+            @endif
         </div>
     </div>
     <div class="ibox-content">
@@ -319,23 +321,24 @@
 </div>
 
 <script>
+    const downloadBtn = document.getElementById('download-btn');
+    if (downloadBtn) {
+        downloadBtn.addEventListener('click', function(event) {
+            event.preventDefault();
 
-    document.getElementById('download-btn').addEventListener('click', function(event) {
-        event.preventDefault();
+            var col_search_opts = {};
 
-        var col_search_opts = {};
+            $(".srch_col").each(function() {
+                if ($(this).val().trim() != '') {
+                    col_search_opts[$(this).attr("id")] = $(this).val().trim();
+                }
+            });
 
-        $(".srch_col").each(function() {
-            if ($(this).val().trim() != '') {
-                col_search_opts[$(this).attr("id")] = $(this).val().trim();
-            }
+            $('#dn_filters').val(JSON.stringify(col_search_opts));  // Convert to JSON string
+
+            document.getElementById('download-form').submit();
         });
-
-        $('#dn_filters').val(JSON.stringify(col_search_opts));  // Convert to JSON string
-
-        document.getElementById('download-form').submit();
-    });
-
+    }
 
     $(document).on('click', '.delete-button', function (event) {
         event.preventDefault();
@@ -561,7 +564,7 @@
                                     <button type="button" class="btn btn-danger btn-xs delete-button" data-id="${row.id}">Delete</button>
                                 </form>
                             @else
-                                <a class="btn btn-default btn-xs permission-denied" style="background-color: #edeff1; border-color:#ed5565;">Delete</a>
+                                <a class="btn btn-default btn-xs permission-denied">Delete</a>
                             @endif
                         `;
                     }

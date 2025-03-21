@@ -22,6 +22,9 @@ class CheckUserRoleRoute
         
         $allowed_routes = session('user_routes');
 
+        // echo "<pre><strong>" . __FILE__ . " Line: [". __LINE__ ."]</strong> @ " .date("Y-m-d H:i:s"). "<br>"; print_r( $requested_route ); echo "</pre><br>";
+        // echo "<pre><strong>" . __FILE__ . " Line: [". __LINE__ ."]</strong> @ " .date("Y-m-d H:i:s"). "<br>"; print_r( $allowed_routes ); echo "</pre><br>"; exit;
+        
         if(isset($allowed_routes) && isset($allowed_routes[$requested_route])) {
             return $next($request);
         }

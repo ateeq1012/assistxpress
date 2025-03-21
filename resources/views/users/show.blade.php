@@ -107,8 +107,8 @@
                             <thead>
                                 <tr>
                                     <th>Action</th>
-                                    <th>Role Based Assignment</th>
                                     <th>User Specific Assignment</th>
+                                    <th>Role Based Assignment</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -137,25 +137,27 @@
                 if (response.success) {
 
                     $('#acl-assignment tbody').empty();
+                    $.each(response.data, function(entity, routes) {
+                        $('#acl-assignment tbody').append(`<tr class="bg-muted"> <td colspan="3"><strong><p class="m-0">${entity}</p></strong></td> </tr>`);
+                        $(routes).each(function() {
+                            var assigned_to_role_checkbox = this.assigned_to_role ? '<badge class="badge badge-info">Assigned</badge>' : '<badge class="badge">Not Assigned</badge>';
+                            var assigned_to_role_checkbox = (this.assigned_to_user === 'forbidden' && this.assigned_to_role) ? '<badge class="badge badge-warning">Assigned to role but forbidden for this User</badge>' : assigned_to_role_checkbox;
 
-                    $(response.data).each(function() {
-                        var assigned_to_role_checkbox = this.assigned_to_role ? '<badge class="badge badge-info">Assigned</badge>' : '<badge class="badge">Not Assigned</badge>';
-                        var assigned_to_role_checkbox = (this.assigned_to_user === 'forbidden' && this.assigned_to_role) ? '<badge class="badge badge-warning">Assigned to role but forbidden for this User</badge>' : assigned_to_role_checkbox;
+                            var assigned_to_user_checkbox = this.assigned_to_user === 'allowed' ? 'Allowed' : 'Not Assigned';
+                            var className = this.assigned_to_user === 'allowed' ? 'badge-primary' : 'badge';
 
-                        var assigned_to_user_checkbox = this.assigned_to_user === 'allowed' ? 'Allowed' : 'Not Assigned';
-                        var className = this.assigned_to_user === 'allowed' ? 'badge-primary' : 'badge';
+                            var assigned_to_user_checkbox = this.assigned_to_user === 'forbidden' ? 'Forbidden' : assigned_to_user_checkbox;
+                            var className = this.assigned_to_user === 'forbidden' ? 'badge-warning' : className;
+                            
+                            var assigned_to_user_radios = `<badge class="badge ${className}">${assigned_to_user_checkbox}</badge>`;
+                            var html = `<tr>
+                                <td><p class="m-0">${this.description}</p></td>
+                                <td>${assigned_to_user_radios}</td>
+                                <td>${assigned_to_role_checkbox}</td>
+                            </tr>`;
 
-                        var assigned_to_user_checkbox = this.assigned_to_user === 'forbidden' ? 'Forbidden' : assigned_to_user_checkbox;
-                        var className = this.assigned_to_user === 'forbidden' ? 'badge-warning' : className;
-                        
-                        var assigned_to_user_radios = `<badge class="badge ${className}">${assigned_to_user_checkbox}</badge>`;
-                        var html = `<tr>
-                            <td>${this.description}</td>
-                            <td>${assigned_to_role_checkbox}</td>
-                            <td>${assigned_to_user_radios}</td>
-                        </tr>`;
-
-                        $('#acl-assignment tbody').append(html);
+                            $('#acl-assignment tbody').append(html);
+                        });
                     });
                 } else {
                     alert('Error: ' + response.message);

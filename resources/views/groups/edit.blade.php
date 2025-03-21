@@ -17,7 +17,9 @@
     <div class="ibox-title">
         <h5>Edit Group</h5>
         <div class="ibox-tools">
-            <a href="{{ route('groups.index') }}" class="btn btn-primary btn-xs">Manage Groups</a>
+            @if(session('user_routes')['groups.index'] ?? false)
+                <a href="{{ route('groups.index') }}" class="btn btn-primary btn-xs">Manage Groups</a>
+            @endif
         </div>
     </div>
     <div class="ibox-content">
@@ -76,8 +78,11 @@
                                     @endforeach
                                 </select>
                             </div>
-
-                            <button type="submit" class="btn btn-primary">Update Group</button>
+                            @if(session('user_routes')['groups.update'] ?? false)
+                                <button type="submit" class="btn btn-primary">Update Group</button>
+                            @else
+                                <div class="alert alert-danger"> You do not have permission to save this form </div>
+                            @endif
                         </form>
                     </div>
                 </div>
@@ -88,9 +93,9 @@
                         Group Members
 
                         @if(session('user_routes')['groups.add_users_bulk'] ?? false)
-                        <div class="ibox-tools mr-2" style="top:10px;">
-                            <button type="button" class="btn btn-info btn-xs" data-toggle="modal" data-target="#bulk-upload-users"> Upload file to add users </button>
-                        </div>
+                            <div class="ibox-tools mr-2" style="top:10px;">
+                                <button type="button" class="btn btn-info btn-xs" data-toggle="modal" data-target="#bulk-upload-users"> Upload file to add users </button>
+                            </div>
                         @endif
 
                     </div>
@@ -113,6 +118,8 @@
                                 </div>
                             </div>
                         </form>
+                        @else 
+                            <div class="alert alert-danger"> You do not have permission to add users </div>
                         @endif
 
                         @if(isset($group->members) && count($group->members) > 0)
@@ -160,44 +167,44 @@
     </div>
 </div>
 @if(session('user_routes')['groups.add_users_bulk'] ?? false)
-<div class="modal inmodal fade" id="bulk-upload-users" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-                <h4 class="modal-title">Bulk Add Users to Group</h4>
-            </div>
-            <div class="modal-body">
-                <div class="alert alert-info alert-dismissable">
-                    <button aria-hidden="true" data-dismiss="alert" class="close" type="button">×</button>
-                    Notes:
-                    <ul>
-                        <li>Users emails are used as user unique identifiers.</li>
-                        <li>Paste a list of user emails separated by new line in the text field below to include in bulk.</li>
-                        <li>Email will be <strong>skipped</strong> if it does not exist in the system.</li>
-                        <li>Invalid emails will be <strong>skipped</strong>.</li>
-                        @if(session('user_routes')['users.download'] ?? false)
-                        <li>
-                            <form action="{{ route('users.download') }}" method="POST" target="_blank">
-                                @csrf
-                                <button type="submit" class="btn btn-info btn-xs">Download Users</button>
-                            </form>
-                        </li>
-                        @endif
-                    </ul>
+    <div class="modal inmodal fade" id="bulk-upload-users" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                    <h4 class="modal-title">Bulk Add Users to Group</h4>
                 </div>
-                <form action="{{ route('groups.add_users_bulk', $group->id) }}" method="POST">
-                    @csrf
-                    <textarea name="emails" class="form-control" rows="10" placeholder="email1&#10;email2&#10;.&#10;.&#10;."></textarea>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-white" data-dismiss="modal">Close</button>
-                        <button type="submit" class="btn btn-primary">Add Users to Group</button>
+                <div class="modal-body">
+                    <div class="alert alert-info alert-dismissable">
+                        <button aria-hidden="true" data-dismiss="alert" class="close" type="button">×</button>
+                        Notes:
+                        <ul>
+                            <li>Users emails are used as user unique identifiers.</li>
+                            <li>Paste a list of user emails separated by new line in the text field below to include in bulk.</li>
+                            <li>Email will be <strong>skipped</strong> if it does not exist in the system.</li>
+                            <li>Invalid emails will be <strong>skipped</strong>.</li>
+                            @if(session('user_routes')['users.download'] ?? false)
+                            <li>
+                                <form action="{{ route('users.download') }}" method="POST" target="_blank">
+                                    @csrf
+                                    <button type="submit" class="btn btn-info btn-xs">Download Users</button>
+                                </form>
+                            </li>
+                            @endif
+                        </ul>
                     </div>
-                </form>
+                    <form action="{{ route('groups.add_users_bulk', $group->id) }}" method="POST">
+                        @csrf
+                        <textarea name="emails" class="form-control" rows="10" placeholder="email1&#10;email2&#10;.&#10;.&#10;."></textarea>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-white" data-dismiss="modal">Close</button>
+                            <button type="submit" class="btn btn-primary">Add Users to Group</button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
-</div>
 @endif
 
 <script>

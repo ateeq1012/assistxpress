@@ -13,7 +13,9 @@
     <div class="ibox-title">
         <h5>User Roles</h5>
         <div class="ibox-tools">
-            <a href="{{ route('roles.create') }}" class="btn btn-primary btn-xs">Create Role</a>
+            @if(session('user_routes')['roles.create'] ?? false)
+                <a href="{{ route('roles.create') }}" class="btn btn-primary btn-xs">Create Role</a>
+            @endif
         </div>
     </div>
     <div class="ibox-content">

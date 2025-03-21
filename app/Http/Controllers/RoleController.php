@@ -113,10 +113,13 @@ class RoleController extends Controller
                     'key' => $rk,
                     'description' => $route_group['description'],
                     'selected' => $route_group_assigned,
+                    'entity' => $route_group['entity'],
                 ];
             }
         }
-                
+        
+        $route_cfg_resp = collect($route_cfg_resp)->groupBy('entity')->all();
+
         return view('roles.show', ['role' => $role, 'route_cfg_resp' => $route_cfg_resp]);
     }
 
@@ -156,10 +159,11 @@ class RoleController extends Controller
                     'key' => $rk,
                     'description' => $route_group['description'],
                     'selected' => $route_group_assigned,
+                    'entity' => $route_group['entity'],
                 ];
             }
         }
-
+        $route_cfg_resp = collect($route_cfg_resp)->groupBy('entity')->all();
         return view('roles.edit', ['role' => $role, 'route_cfg_resp' => $route_cfg_resp]);
     }
 
