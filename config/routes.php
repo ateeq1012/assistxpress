@@ -163,27 +163,27 @@ return [
         ],
     #SERVICES
         'service-list' => [
-            'routes' => ['service.index-web-GET'],
+            'routes' => ['services.index-web-GET'],
             'description' => 'Service Catelog Table View',
             'public' => true,
         ],
         'service-create' => [
-            'routes' => ['service.create-web-GET', 'service.store-web-POST'],
+            'routes' => ['services.create-web-GET', 'services.store-web-POST'],
             'description' => 'Create Services',
             'public' => true,
         ],
         'service-edit' => [
-            'routes' => ['service.edit-web-GET','service.update-web-PUT','service.save_service_custom_fields-web-POST'],
+            'routes' => ['services.edit-web-GET','services.update-web-PUT','services.save_service_custom_fields-web-POST'],
             'description' => 'Edit Services',
             'public' => true,
         ],
         'service-view' => [
-            'routes' => ['service.show-web-GET'],
+            'routes' => ['services.show-web-GET'],
             'description' => 'View Services',
             'public' => true,
         ],
         'service-delete' => [
-            'routes' => ['service.destroy-web-DELETE'],
+            'routes' => ['services.destroy-web-DELETE'],
             'description' => 'Delete Services',
             'public' => true,
         ],
@@ -287,47 +287,47 @@ return [
         ],
     #SERVICE REQUESTS
         'service_request-list' => [
-            'routes' => ['service_request.index-web-GET', 'service_request.get_service_request_data-web-POST'],
+            'routes' => ['service_requests.index-web-GET', 'service_requests.get_service_request_data-web-POST'],
             'description' => 'Service Requests Table View',
             'public' => true,
         ],
         'service_request-create' => [
-            'routes' => ['service_request.create-web-GET', 'service_request.store-web-POST', /*'service.get_fields-web-POST',*/ 'service_request.get_fields-web-POST','service_request.search_service_domain_groups-web-POST','service_request.search_group_users-web-POST',],
+            'routes' => ['service_requests.create-web-GET', 'service_requests.store-web-POST', /*'services.get_fields-web-POST',*/ 'service_requests.get_fields-web-POST','service_requests.search_service_domain_groups-web-POST','service_requests.search_group_users-web-POST',],
             'description' => 'Create Service Requests',
             'public' => true,
         ],
         'service_request-edit' => [
-            'routes' => ['service_request.edit-web-GET','service_request.update-web-PUT', /*'service.get_fields-web-POST', */'service.get_fields-web-POST','service_request.search_service_domain_groups-web-POST','service_request.search_group_users-web-POST',],
+            'routes' => ['service_requests.edit-web-GET','service_requests.update-web-PUT', /*'services.get_fields-web-POST', */'services.get_fields-web-POST','service_requests.search_service_domain_groups-web-POST','service_requests.search_group_users-web-POST',],
             'description' => 'Edit Service Requests',
             'public' => true,
         ],
         'service_request-comment' => [
-            'routes' => ['service_request.add_comment-web-POST'],
+            'routes' => ['service_requests.add_comment-web-POST'],
             'description' => 'Comment on Service Requests',
             'public' => true,
         ],
         'service_request-view' => [
-            'routes' => ['service_request.show-web-GET'],
+            'routes' => ['service_requests.show-web-GET'],
             'description' => 'View Service Requests',
             'public' => true,
         ],
         'service_request-download' => [
-            'routes' => ['service_request.download-web-POST'],
+            'routes' => ['service_requests.download-web-POST'],
             'description' => 'Download Service Requests',
             'public' => true,
         ],
         'service_request-download-file' => [
-            'routes' => ['service_request.download_file-web-GET'],
+            'routes' => ['service_requests.download_file-web-GET'],
             'description' => 'Download Service Request Files',
             'public' => true,
         ],
         'service_request-delete' => [
-            'routes' => ['service_request.destroy-web-DELETE'],
+            'routes' => ['service_requests.destroy-web-DELETE'],
             'description' => 'Delete Service Requests',
             'public' => true,
         ],
         'service_request-rm-file' => [
-            'routes' => ['service_request.rm_file-web-DELETE'],
+            'routes' => ['service_requests.rm_file-web-DELETE'],
             'description' => 'Delete Service Request Files',
             'public' => true,
         ],

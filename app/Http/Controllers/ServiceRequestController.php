@@ -1244,7 +1244,7 @@ class ServiceRequestController extends Controller
 				throw new \Exception("Failed to save the service_request.");
 			}
 
-        	$this->logServiceRequestChanges($service_request->id, $originalServiceRequest, $validatedData, $creator->id, $now_ts);
+        	$standrd_fields_logs = $this->logServiceRequestChanges($service_request->id, $originalServiceRequest, $validatedData, $creator->id, $now_ts);
 
 			ServiceRequestCustomField::where('service_request_id', $service_request->id)->delete();
 
@@ -1405,9 +1405,11 @@ class ServiceRequestController extends Controller
 			}
 
 			DB::commit();
-			
-			$notificationService = new NotificationService();
-			$notification = $notificationService->serviceRequestUpdated($service_request->id, true);
+
+			if ($standrd_fields_logs > 0 || count($custom_field_history) > 0 || count($file_attachement_history) > 0) {
+				$notificationService = new NotificationService();
+				$notification = $notificationService->serviceRequestUpdated($service_request->id, true);
+			}
 
 			return response()->json(['success' => true, 'message' => 'ServiceRequest Updated Successfully'], 201);
 		
@@ -1443,22 +1445,10 @@ class ServiceRequestController extends Controller
 	            ];
 	        }
 	    }
-	    /*foreach ($newData as $field => $newValue) {
-	        if (isset($fileds_to_make_history[$field]) && isset($originalData[$field]) && trim($originalData[$field]) != trim($newValue)) {
-	            $history[] = [
-	                'service_request_id' => $service_requestId,
-	                'field_name' => $field,
-					'field_type' => 1,
-	                'old_value' => $originalData[$field] ?? null,
-	                'new_value' => $newValue,
-	                'created_by' => $userId,
-	                'created_at' => $now_ts,
-	            ];
-	        }
-	    }*/
 	    if(count($history) > 0) {
 			ServiceRequestAuditLog::insert($history);
 	    }
+	    return count($history);
 	}
 
 	public function add_comment(Request $request)

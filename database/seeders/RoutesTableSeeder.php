@@ -72,11 +72,34 @@ class RoutesTableSeeder extends Seeder
             }
         }
 
-        $adminUser = DB::table('users')->where('email', 'admin@example.com')->first();
+        $sysUser = DB::table('users')->where('email', 'no-reply-inxhelpdesk@innexiv.com')->first();
 
         $all_routes = DB::table('routes')->get();
         $all_routes_data = [];
+        
+        DB::table('user_role_routes')->where('user_id', $sysUser->id)->delete();
+
+        foreach ($all_routes as $key => $route)
+        {
+            $all_routes_data[] = [
+                'user_id' => $sysUser->id,
+                'role_id' => null,
+                'route_id' => $route->id,
+                'is_allowed' => true,
+                'created_by' => $sysUser->id,
+                'created_at' => now(),
+            ];
+        }
+        DB::table('user_role_routes')->insert($all_routes_data);
+
+
+        $adminUser = DB::table('users')->where('email', 'adm-inx-helpdesk@innexiv.com')->first();
+
+        $all_routes = DB::table('routes')->get();
+        $all_routes_data = [];
+            
         DB::table('user_role_routes')->where('user_id', $adminUser->id)->delete();
+
         foreach ($all_routes as $key => $route)
         {
             $all_routes_data[] = [
@@ -88,6 +111,8 @@ class RoutesTableSeeder extends Seeder
                 'created_at' => now(),
             ];
         }
+
         DB::table('user_role_routes')->insert($all_routes_data);
+
     }
 }

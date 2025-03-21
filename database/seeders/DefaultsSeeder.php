@@ -33,54 +33,52 @@ class DefaultsSeeder extends Seeder
         }
 
 
-        $adminUser = DB::table('users')->where('id', 1)->first();
-        if (!$adminUser) {
-            Schema::disableForeignKeyConstraints();
+        // $adminUser = DB::table('users')->where('id', 1)->first();
+        Schema::disableForeignKeyConstraints();
 
-            DB::table('users')->updateOrInsert(
-                ['email' => 'admin@innexiv.com'], // Check for this email
-                [
-                    'name' => 'System',
-                    'email_verified_at' => Carbon::now(),
-                    'password' => Hash::make('1|*LQLZr79w('), // Hash the password
-                    'remember_token' => Str::random(10),
-                    'created_at' => Carbon::now(),
-                    'updated_at' => Carbon::now(),
-                    'token' => Str::random(60),
-                    'role_id' => 1,
-                    'created_by' => 1, // Assuming the first user is the creator
-                    'enabled' => true,
-                ]
-            );
-            DB::table('users')->updateOrInsert(
-                ['email' => 'admin@innexiv.com'], // Check for this email
-                [
-                    'name' => 'Admin',
-                    'email_verified_at' => Carbon::now(),
-                    'password' => Hash::make('1|*LQQZr79w('), // Hash the password
-                    'remember_token' => Str::random(10),
-                    'created_at' => Carbon::now(),
-                    'updated_at' => Carbon::now(),
-                    'token' => Str::random(60),
-                    'role_id' => 1,
-                    'created_by' => 1, // Assuming the first user is the creator
-                    'enabled' => true,
-                ]
-            );
+        DB::table('users')->updateOrInsert(
+            ['id' => 1], // Check for this email
+            [
+                'name' => 'INX Helpdesk',
+                'email' => 'no-reply-inxhelpdesk@innexiv.com',
+                'email_verified_at' => Carbon::now(),
+                'password' => Hash::make('xK39}k4V7_xT'), // Hash the password
+                'remember_token' => Str::random(10),
+                'created_at' => Carbon::now(),
+                'updated_at' => Carbon::now(),
+                'token' => Str::random(60),
+                'role_id' => 1,
+                'created_by' => 1, // Assuming the first user is the creator
+                'enabled' => true,
+            ]
+        );
 
-            DB::table('roles')->where('id', 1)->update([
-                'created_by' => 1
-            ]);
+        DB::table('users')->updateOrInsert(
+            ['id' => 2], // Check for this email
+            [
+                'name' => 'INX Helpdesk Admin',
+                'email' => 'adm-inx-helpdesk@innexiv.com',
+                'email_verified_at' => Carbon::now(),
+                'password' => Hash::make('42_78r8Z#R278'), // Hash the password
+                'remember_token' => Str::random(10),
+                'created_at' => Carbon::now(),
+                'updated_at' => Carbon::now(),
+                'token' => Str::random(60),
+                'role_id' => 1,
+                'created_by' => 1, // Assuming the first user is the creator
+                'enabled' => true,
+            ]
+        );
 
-            Schema::table('roles', function (Blueprint $table) {
-                $table->integer('created_by')->change();
-            });
+        DB::table('roles')->where('id', 1)->update([
+            'created_by' => 1
+        ]);
 
-            Schema::enableForeignKeyConstraints();
-        }
+        Schema::table('roles', function (Blueprint $table) {
+            $table->integer('created_by')->change();
+        });
 
-
-
+        Schema::enableForeignKeyConstraints();
 
         // Check if there are any statuses in the table
         $statuses = DB::table('statuses')->first();
