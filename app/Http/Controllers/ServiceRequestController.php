@@ -50,6 +50,7 @@ class ServiceRequestController extends Controller
 	public function index(Request $request)
 	{
 	
+	
 		// $subject = "New Service Request";
 	    // $recipients = ["kullah@innexiv.com", "user2@innexiv.com"];
 	    // $cc = ["fzafar@innexiv.com"];
