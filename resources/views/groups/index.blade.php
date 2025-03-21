@@ -18,7 +18,9 @@
     <div class="ibox-title">
         <h5>Groups</h5>
         <div class="ibox-tools">
-            <a href="{{ route('groups.create') }}" class="btn btn-primary btn-xs">Create Group</a>
+            @if(session('user_routes')['groups.create'] ?? false)
+                <a href="{{ route('groups.create') }}" class="btn btn-primary btn-xs">Create Group</a>
+            @endif
         </div>
     </div>
     <div class="ibox-content">

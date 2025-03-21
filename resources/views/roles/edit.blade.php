@@ -5,12 +5,20 @@
     td {
         padding: 3px 8px !important;
     }
+    .panel-group .panel {
+        margin-bottom: 10px;
+    }
+    .panel-heading {
+        cursor: pointer;
+    }
 </style>
 <div class="ibox pt-2">
     <div class="ibox-title">
         <h5>Edit Role</h5>
         <div class="ibox-tools">
-            <a href="{{ route('roles.index') }}" class="btn btn-primary btn-xs">Manage Roles</a>
+            @if(session('user_routes')['roles.index'] ?? false)
+                <a href="{{ route('roles.index') }}" class="btn btn-primary btn-xs">Manage Roles</a>
+            @endif
         </div>
     </div>
     <div class="ibox-content">
@@ -35,7 +43,6 @@
                 </ul>
             </div>
         @endif
-
 
         <form action="{{ route('roles.update', $role->id) }}" method="POST">
             @csrf
@@ -63,35 +70,48 @@
                     </div>
                     
                     <button type="submit" class="btn btn-primary">Update Role</button>
-
                 </div>
 
                 <div class="col-6">
                     <div class="panel panel-success">
                         <div class="panel-heading">
-                            Allowed Actions
+                            Permissions
                             <div class="ibox-tools mr-2" style="top:7px">
                                 <button type="button" class="btn btn-xs btn-primary" onclick="selectAll()">Select All</button>
                                 <button type="button" class="btn btn-xs btn-warning" onclick="unselectAll()">Unselect All</button>
                             </div>
                         </div>
-                        <div class="panel-body" style="max-height: 750px;overflow: auto;">
-                            <table class="table table-striped table-bordered">
-                                @foreach($route_cfg_resp as $row)
-                                    <tr>
-                                        <td style="width:50px;">
-                                            <div class="row m-0 pl-0 pr-0">
-                                                <input type="checkbox" id="{{ $row['key'] }}" name="allowed_actions[]" value="{{ $row['key'] }}" {{ $row['selected'] ? 'checked' : '' }}>
-                                                <a href="#" class="ml-2 replicate-btn" data-row-key="{{ $row['key'] }}" title="Replicate Settings"><i class="fa fa-angle-double-down"></i></a>
+                        <div class="panel-body" style="max-height: 750px; overflow: auto;">
+                            <div class="panel-group" id="accordion">
+                                @foreach($route_cfg_resp as $entity => $routes)
+                                    <div class="panel panel-default">
+                                        <div class="panel-heading p-1 pl-2" data-toggle="collapse" data-target="#collapse-{{ Str::slug($entity) }}">
+                                            <h4 class="panel-title m-1">
+                                                {{ $entity }} <span class="caret"></span>
+                                            </h4>
+                                        </div>
+                                        <div id="collapse-{{ Str::slug($entity) }}" class="panel-collapse in">
+                                            <div class="panel-body p-0">
+                                                <table class="table table-striped table-bordered mb-0">
+                                                    @foreach($routes as $row)
+                                                        <tr>
+                                                            <td style="width:50px;">
+                                                                <div class="row m-0 pl-0 pr-0">
+                                                                    <input type="checkbox" id="{{ $row['key'] }}" name="allowed_actions[]" value="{{ $row['key'] }}" {{ $row['selected'] ? 'checked' : '' }}>
+                                                                    <a href="#" class="ml-2 replicate-btn" data-row-key="{{ $row['key'] }}" title="Replicate Settings"><i class="fa fa-angle-double-down"></i></a>
+                                                                </div>
+                                                            </td>
+                                                            <td>
+                                                                <p class="mb-0" for="{{ $row['key'] }}"> {{ $row['description'] }} </p>
+                                                            </td>
+                                                        </tr>
+                                                    @endforeach
+                                                </table>
                                             </div>
-                                        </td>
-                                        <td>
-                                            <label class="mb-0" for="{{ $row['key'] }}"> <small>{{ $row['description'] }}</small> </label>
-                                        </td>
-                                    </tr>
+                                        </div>
+                                    </div>
                                 @endforeach
-                                
-                            </table>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -99,55 +119,44 @@
         </form>
     </div>
 </div>
+
 <script>
     function selectAll() {
-        // Get all checkboxes within the panel body
-        var checkboxes = document.querySelectorAll('.panel-body input[type="checkbox"]');
-        checkboxes.forEach(function(checkbox) {
-            checkbox.checked = true; // Check all checkboxes
+        document.querySelectorAll('.panel-body input[type="checkbox"]').forEach(function(checkbox) {
+            checkbox.checked = true;
         });
     }
 
     function unselectAll() {
-        // Get all checkboxes within the panel body
-        var checkboxes = document.querySelectorAll('.panel-body input[type="checkbox"]');
-        checkboxes.forEach(function(checkbox) {
-            checkbox.checked = false; // Uncheck all checkboxes
+        document.querySelectorAll('.panel-body input[type="checkbox"]').forEach(function(checkbox) {
+            checkbox.checked = false;
         });
     }
+
     document.querySelectorAll('.replicate-btn').forEach(function(button) {
         button.addEventListener('click', function(e) {
             e.preventDefault();
             const rowKey = this.dataset.rowKey;
-            const startReplicating = false;
-
-            // Find the checkbox that was clicked
             const clickedCheckbox = document.querySelector(`#${rowKey}`);
+            if (!clickedCheckbox) return;
 
-            if (!clickedCheckbox) return; // If no checkbox is found, stop
-
-            // Get its checked state
             const isChecked = clickedCheckbox.checked;
-
-            // Get all checkboxes
             const allCheckboxes = document.querySelectorAll('.panel-body input[type="checkbox"]');
-
-            // Start replicating from the clicked checkbox onwards
             let replicate = false;
+
             allCheckboxes.forEach(function(checkbox) {
                 if (checkbox.id === rowKey) {
-                    replicate = true; // Start replicating after we find the clicked checkbox
+                    replicate = true;
                 }
-
                 if (replicate) {
-                    checkbox.checked = isChecked; // Replicate the checked state to rows below
+                    checkbox.checked = isChecked;
                 }
             });
         });
     });
+
     window.onload = function() {
         document.querySelectorAll('input[type="checkbox"]').forEach(function(checkbox) {
-            // Reset the checkbox based on server-side rendered state
             checkbox.checked = checkbox.defaultChecked;
         });
     };

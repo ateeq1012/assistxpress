@@ -585,7 +585,17 @@
                 },
                 success: function(response) {
                     if(response.success) {
-                        Swal.fire({title: "Workflow saved successfully", icon: "success" });
+                        Swal.fire({
+                            title: 'Success!',
+                            text: 'Workflow Updated.',
+                            icon: 'success',
+                            showConfirmButton: false,
+                            timer: 1000,
+                            timerProgressBar: true
+                        }).then(() => {
+                            window.location.href = '{{ route("workflows.index") }}';
+                        });
+
                     } else {
                         Swal.fire({title: "Unable to save Workflow", text: "Please try again", icon: "error" });
                     }

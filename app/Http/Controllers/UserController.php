@@ -172,7 +172,7 @@ class UserController extends Controller
                         }
                     }
                    
-                    $route_cfg_resp[] = [
+                    $route_cfg_resp[$route_group['entity']][] = [
                         'key' => $rk,
                         'description' => $route_group['description'],
                         'assigned_to_user' => $route_group_assigned_to_user,
@@ -206,8 +206,7 @@ class UserController extends Controller
 
     public function update(Request $request, $id)
     {
-        try
-        {
+        try {
             $now_ts = date('Y-m-d H:i:s');
 
             $request->validate([
@@ -227,37 +226,26 @@ class UserController extends Controller
 
             $add_route_data = [];
             
-            if ($request->has('acl'))
-            {
-                
+            if ($request->has('acl')) {
                 $aclData = $request->input('acl');
 
                 $routes = RouteModel::select('id', 'type', 'name', 'url', 'method')->get();
                 $routes_lkp = $routes->keyBy(fn($route) => $route->name . "-" . $route->type . "-" . $route->method);
 
                 $route_cfg = config('routes');
-                foreach ($route_cfg as $rk => $route_group)
-                {
-                    if(isset($aclData[$rk]) && $route_group['public'])
-                    {
-                        $is_allowed = NULL;
-                        if($aclData[$rk] == 'allowed')
-                        {
+                foreach ($route_cfg as $rk => $route_group) {
+                    if (isset($aclData[$rk]) && $route_group['public']) {
+                        $is_allowed = null;
+                        if ($aclData[$rk] == 'allowed') {
                             $is_allowed = true;
-                        }
-                        else if($aclData[$rk] == 'forbidden')
-                        {
+                        } elseif ($aclData[$rk] == 'forbidden') {
                             $is_allowed = false;
-                        }
-                        else
-                        {
+                        } else {
                             continue;
                         }
 
-                        foreach ($route_group['routes'] as $route)
-                        {
-                            if(isset($routes_lkp[$route]))
-                            {
+                        foreach ($route_group['routes'] as $route) {
+                            if (isset($routes_lkp[$route])) {
                                 $add_route_data[$routes_lkp[$route]->id] = [
                                     'user_id' => $id,
                                     'route_id' => $routes_lkp[$route]->id,
@@ -272,26 +260,18 @@ class UserController extends Controller
                 $assigned_routes = UserRoleRoute::select('id', 'user_id', 'route_id', 'is_allowed')->where('user_id', $id)->get();                
                 $delete_routes = [];
                 $update_routes = [];
-                foreach ($assigned_routes as $asr)
-                {
-                    if( isset($add_route_data[$asr->route_id]) )
-                    {
+                foreach ($assigned_routes as $asr) {
+                    if (isset($add_route_data[$asr->route_id])) {
                         $ard = $add_route_data[$asr->route_id];
-                        
-                        if($ard['is_allowed'] === $asr->is_allowed)
-                        {
+                        if ($ard['is_allowed'] === $asr->is_allowed) {
                             unset($add_route_data[$asr->route_id]);
-                        }
-                        else
-                        {
+                        } else {
                             $route_to_update = $asr;
                             $route_to_update->is_allowed = $ard['is_allowed'];
                             $update_routes[] = $route_to_update;
                             unset($add_route_data[$asr->route_id]);
                         }
-                    }
-                    else
-                    {
+                    } else {
                         $delete_routes[] = $asr['id'];
                     }
                 }
@@ -299,51 +279,44 @@ class UserController extends Controller
             
             DB::beginTransaction();
             
+            $user = User::findOrFail($id); // Fetch user before update to get old values
+            $old_role_id = $user->role_id; // Store old role_id
+            $old_is_enabled = $user->enabled;
+
             DB::table('users')->where('id', $id)->update($data);
-            if(count($add_route_data))
-            {
+            if (count($add_route_data)) {
                 DB::table('user_role_routes')->insert(array_values($add_route_data));
             }
-            if(count($update_routes))
-            {
-                foreach ($update_routes as $urv)
-                {
+            if (count($update_routes)) {
+                foreach ($update_routes as $urv) {
                     DB::table('user_role_routes')->where('user_id', $id)->where('id', $urv['id'])->update(['is_allowed' => $urv['is_allowed']]);
                 }
             }
-            
-            if(count($delete_routes))
-            {
+            if (count($delete_routes)) {
                 DB::table('user_role_routes')->where('user_id', $id)->whereIn('id', $delete_routes)->delete();
             }
 
             DB::commit();
 
-            $user = User::findOrFail($id);
-            $old_id_enabled = $user->enabled;
+            $new_role_id = $request->input('role_id');
             $new_is_enabled = $request->input('enabled', false);
 
-            if ($old_id_enabled != $new_is_enabled || !empty($delete_routes) || !empty($add_route_data) || !empty($update_routes))
-            {
-                $users_to_logout = User::where('role_id', $id)->pluck('id')->toArray();
-                DB::table('sessions')->whereIn('user_id', $users_to_logout)->delete();
+            // Check if role_id, enabled, or routes changed for the edited user
+            if ($old_role_id != $new_role_id || $old_is_enabled != $new_is_enabled || !empty($delete_routes) || !empty($add_route_data) || !empty($update_routes)) {
+                // Log out only the edited user
+                DB::table('sessions')->where('user_id', $id)->delete();
 
-                if (Auth::user()->id == $id)
-                {
+                // If the edited user is the current logged-in user, log them out fully
+                if (Auth::user()->id == $id) {
                     Auth::logout();
                     $request->session()->invalidate();
                     $request->session()->regenerateToken();
-
-                    return redirect('login')->with('info', 'You have updated your own user information!. Please log in again.');
+                    return redirect('login')->with('info', 'You have updated your own user information or role! Please log in again.');
                 }
-
             }
 
-
             return redirect()->route('users.index')->with('success', 'User updated successfully');
-        }
-        catch (\Exception $e)
-        {
+        } catch (\Exception $e) {
             DB::rollBack();
             return back()->withErrors(['error' => 'Error updating User: ' . $e->getMessage()]);
         }

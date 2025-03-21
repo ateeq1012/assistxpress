@@ -30,6 +30,9 @@
 		    </div>
 		@endforeach
 	</div>
+@else
+	<p>No comments yet</p>
 @endif
+
 
 
