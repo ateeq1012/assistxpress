@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\UserRoleRoute;
 use App\Models\ServiceDomainUser;
+use App\Models\UserGroup;
 use App\Models\Route as RouteModel;
 
 use App\Helpers\GeneralHelper;
@@ -23,7 +24,7 @@ class UserController extends Controller
         $search = $request->input('search');
         $sortColumn = $request->input('sort', 'id');
         $sortDirection = $request->input('direction', 'asc');
-        $query = User::with('creator', 'updater', 'role', 'groups');
+        $query = User::with('creator', 'updater', 'role', 'groups')->where('is_sys_user', false);
         
         if ($search)
         {
@@ -324,8 +325,10 @@ class UserController extends Controller
 
     public function destroy($id)
     {
-        $user = User::findOrFail($id);
-        $user->delete();
+        if($id != 1) {
+            $user = User::findOrFail($id);
+            $user->delete();
+        }
         return redirect()->route('users.index');
     }
 
@@ -334,22 +337,29 @@ class UserController extends Controller
         $search = $request->input('q');
         $enabled_only = $request->input('enabled_only') ?? false;
         $service_domain_id = $request->input('service_domain_id', null);
+        $group_id = $request->input('group_id', null);
 
         $already_added_users = [];
         if($service_domain_id) {
             $already_added_users = ServiceDomainUser::where('id', $service_domain_id)->pluck('user_id')->toArray();
+        }
+        if($group_id) {
+            $already_added_users = UserGroup::where('id', $group_id)->pluck('user_id')->toArray();
         }
         if (!$search) {
             return response()->json([]);
         }
 
         $query = User::query()
-            ->where('name', 'ILIKE', "%{$search}%")
-            ->orWhere('email', 'ILIKE', "%{$search}%");
+            ->where(function ($q) use ($search) {
+                $q->where('name', 'ILIKE', "%{$search}%")
+                  ->orWhere('email', 'ILIKE', "%{$search}%");
+            });
 
-        if ( count($already_added_users) > 0 ) {
+        if (count($already_added_users) > 0) {
             $query->whereNotIn('id', $already_added_users);
         }
+        $query->whereNot('id', 1);
 
         if ($enabled_only) {
             $query->where('enabled', true);

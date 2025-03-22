@@ -18,6 +18,7 @@ return new class extends Migration
             $table->string('phone')->nullable();
             $table->unsignedBigInteger('role_id');
             $table->boolean('enabled')->default(true);
+            $table->boolean('is_sys_user')->default(false)->comment("cannot delete");
             $table->text('profile_picture')->nullable();
             $table->json('user_settings')->nullable();
             $table->timestamp('email_verified_at')->nullable();

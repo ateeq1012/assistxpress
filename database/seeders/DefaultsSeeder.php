@@ -48,6 +48,7 @@ class DefaultsSeeder extends Seeder
                 'updated_at' => Carbon::now(),
                 'token' => Str::random(60),
                 'role_id' => 1,
+                'is_sys_user' => true,
                 'created_by' => 1,
                 'enabled' => true,
             ]);

@@ -230,7 +230,8 @@
                 delay: 250, // Delay in ms to prevent flooding requests
                 data: function(params) {
                     return {
-                        q: params.term // The search term
+                        q: params.term, // The search term
+                        group_id: {{ $group->id }} // The search term
                     };
                 },
                 processResults: function(data) {
