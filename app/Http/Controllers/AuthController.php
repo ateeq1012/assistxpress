@@ -52,7 +52,10 @@ class AuthController extends Controller
 				})
 				->get();
 
-			$allowed_routes = array_column($user_role_routes->toArray(), 'name');
+			$allowed_routes = [];
+			foreach ($user_role_routes as $route) {
+				$allowed_routes[$route->name] = true;
+			}
 
 			session([
 				'user_routes' => $allowed_routes,
