@@ -121,6 +121,12 @@ use Illuminate\Http\Request;
 						<a href=""><i class="fa fa-gear"></i> User Management</span> <span class="fa arrow"></a>
 						<ul class="nav nav-second-level collapse">
 							
+							@if(session('user_routes')['groups.index'] ?? false)
+								<li @if(request()->route()->getName() == 'groups.index') class="active" @endif>
+									<a href="{{ route('groups.index') }}"><i class="fa fa-users"></i> Groups</a>
+								</li>
+							@endif
+							
 							@if(session('user_routes')['roles.index'] ?? false)
 								<li @if(request()->route()->getName() == 'roles.index') class="active" @endif>
 									<a href="{{ route('roles.index') }}"><i class="fa fa-address-card-o"></i> Roles</a>
@@ -133,11 +139,6 @@ use Illuminate\Http\Request;
 								</li>
 							@endif
 
-							@if(session('user_routes')['groups.index'] ?? false)
-								<li @if(request()->route()->getName() == 'groups.index') class="active" @endif>
-									<a href="{{ route('groups.index') }}"><i class="fa fa-users"></i> Groups</a>
-								</li>
-							@endif
 						</ul>
 					</li>
 				</ul>
