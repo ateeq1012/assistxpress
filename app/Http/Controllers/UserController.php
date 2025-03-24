@@ -24,23 +24,24 @@ class UserController extends Controller
         $search = $request->input('search');
         $sortColumn = $request->input('sort', 'id');
         $sortDirection = $request->input('direction', 'asc');
-        $query = User::with('creator', 'updater', 'role', 'groups')->where('is_sys_user', false);
-        
-        if ($search)
-        {
-            $query->where(function ($q) use ($search)
-            {
-                $q->where('LOWER(users.name)', 'like', '%' . strtolower($search) . '%')
-                  ->orWhere('LOWER(users.email)', 'like', '%' . strtolower($search) . '%')
+
+        $query = User::with('creator', 'updater', 'role', 'groups')
+            ->where('is_sys_user', false);
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where(DB::raw('LOWER(users.name)'), 'like', '%' . strtolower($search) . '%')
+                  ->orWhere(DB::raw('LOWER(users.email)'), 'like', '%' . strtolower($search) . '%')
                   ->orWhere('users.phone', 'like', '%' . strtolower($search) . '%')
-                  ->orWhere('LOWER(roles.name)', 'like', '%' . strtolower($search) . '%')
-                  ->orWhere('LOWER(roles.description)', 'like', '%' . strtolower($search) . '%');
+                  ->orWhereHas('role', function ($roleQuery) use ($search) {
+                      $roleQuery->where(DB::raw('LOWER(name)'), 'like', '%' . strtolower($search) . '%')
+                                ->orWhere(DB::raw('LOWER(description)'), 'like', '%' . strtolower($search) . '%');
+                  });
             });
-            $query->where(function ($q) use ($search)
-            {
-                $q->whereRaw('LOWER(name) LIKE ?', ['%' . strtolower($search) . '%'])
-                  ->orWhereRaw('LOWER(description) LIKE ?', ['%' . strtolower($search) . '%']);
-            });
+        }
+
+        if (!in_array($sortColumn, ['id', 'name', 'email', 'phone', 'created_at'])) {
+            $sortColumn = 'id';
         }
 
         $users = $query->orderBy($sortColumn, $sortDirection)->paginate($pageSize);

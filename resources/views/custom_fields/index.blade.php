@@ -60,7 +60,7 @@
                     <th><a href="{{ route('custom_fields.index', array_merge(request()->all(), ['sort' => 'created_at', 'direction' => $sortDirection === 'asc' ? 'desc' : 'asc'])) }}">Created on</a></th>
                     <th><a href="{{ route('custom_fields.index', array_merge(request()->all(), ['sort' => 'updated_by', 'direction' => $sortDirection === 'asc' ? 'desc' : 'asc'])) }}">Updated by</a></th>
                     <th><a href="{{ route('custom_fields.index', array_merge(request()->all(), ['sort' => 'updated_at', 'direction' => $sortDirection === 'asc' ? 'desc' : 'asc'])) }}">Updated on</a></th>
-                    <th style="width: 130px;">Actions</th>
+                    <th style="width: 100px;">Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -76,11 +76,12 @@
                         <td>{{ $row->updater->name ?? ''}}</td>
                         <td><small>{{ $row->updated_at }}</small></td>
                         <td>
+                            <!-- Removed as it is not needed
                             @if(session('user_routes')['custom_fields.show'] ?? false)
                                 <a href="{{ route('custom_fields.show', $row->id) }}" class="btn btn-info btn-xs">View</a>
                             @else
                                 <a href="#" class="btn btn-info btn-xs disabled">View</a>
-                            @endif
+                            @endif -->
                             @if(session('user_routes')['custom_fields.edit'] ?? false)
                                 <a href="{{ route('custom_fields.edit', $row->id) }}" class="btn btn-primary btn-xs">Edit</a>
                             @else
