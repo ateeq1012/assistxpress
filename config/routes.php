@@ -331,7 +331,7 @@ return [
         'custom_field-view' => [
             'routes' => ['custom_fields.show-web-GET'],
             'description' => 'View Custom Fields',
-            'public' => true,
+            'public' => false,
             'entity' => 'Custom Field Management',
         ],
         'custom_field-delete' => [
