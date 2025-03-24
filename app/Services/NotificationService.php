@@ -95,7 +95,7 @@ class NotificationService
     private function buildWhatsAppMessage($data)
     {
         $sr = $data['sr'] ?? [];
-        
+
         return "Service Request: {$data['emailTitle']}\n" .
                "Subject: " . (isset($sr['subject']) ? $sr['subject'] : 'N/A') . "\n" .
                "Details: {$data['salutation']}\n" .
@@ -114,7 +114,8 @@ class NotificationService
         if ($sr->executor && $sr->executor->phone) {
             $phones[] = $sr->executor->phone;
         }
-        return ["923160514938@c.us"]; // testing
+        $WHATSAPP_DEFAULT_GROUP = env('WHATSAPP_DEFAULT_GROUP');
+        return [$WHATSAPP_DEFAULT_GROUP];
         return $phones ?: ["923160514938@c.us"];
     }
 

@@ -334,11 +334,11 @@ class UserController extends Controller
 
     public function destroy($id)
     {
-        if($id != 1) {
-            $user = User::findOrFail($id);
-            $user->delete();
-        }
-        return redirect()->route('users.index');
+        // if($id != 1) {
+        //     $user = User::findOrFail($id);
+        //     $user->delete();
+        // }
+        // return redirect()->route('users.index');
     }
 
     public function search(Request $request)
