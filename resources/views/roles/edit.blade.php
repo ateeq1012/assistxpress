@@ -90,7 +90,7 @@
                                                 {{ $entity }} <span class="caret"></span>
                                             </h4>
                                         </div>
-                                        <div id="collapse-{{ Str::slug($entity) }}" class="panel-collapse in">
+                                        <div id="collapse-{{ Str::slug($entity) }}" class="panel-collapse collapse in">
                                             <div class="panel-body p-0">
                                                 <table class="table table-striped table-bordered mb-0">
                                                     @foreach($routes as $row)
@@ -160,5 +160,26 @@
             checkbox.checked = checkbox.defaultChecked;
         });
     };
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Ensure all accordions are expanded by default
+        document.querySelectorAll('.panel-collapse').forEach(function(panel) {
+            panel.classList.add('in');
+            panel.style.display = 'block';
+        });
+
+        // Override Bootstrap's collapse behavior
+        document.querySelectorAll('.panel-heading').forEach(function(heading) {
+            heading.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                const target = document.querySelector(this.dataset.target);
+                if (target) {
+                    target.classList.toggle('in');
+                    target.style.display = target.classList.contains('in') ? 'block' : 'none';
+                }
+            });
+        });
+    });
 </script>
 @endsection
