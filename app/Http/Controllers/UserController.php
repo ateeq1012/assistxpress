@@ -64,7 +64,8 @@ class UserController extends Controller
     public function store(Request $request)
     {
         $now_ts = date('Y-m-d H:i:s');
-        $request->request->all();
+
+        // Validation rules
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
@@ -77,24 +78,30 @@ class UserController extends Controller
                 'regex:/[A-Z]/',
                 'regex:/[0-9]/',
                 'regex:/[@$!%*#?&]/',
+                'confirmed',
             ],
             'role_id' => 'required|integer|exists:roles,id',
-        ],[
-            'password.regex' => 'Password must contain ( atleast one lower case alphabet, atleast one upper case alphabet, atleast one number and atleast one special character'
+            'enabled' => 'required|boolean',
+        ], [
+            'password.regex' => 'Password must contain at least one lowercase letter, one uppercase letter, one number, and one special character.',
+            'password.confirmed' => 'The password and confirmation must match.',
         ]);
-        $user = User::create([
+
+        $data = [
             'name' => GeneralHelper::cleanText($request->input('name')),
             'email' => $request->email,
             'phone' => $request->phone,
             'password' => Hash::make($request->password),
             'role_id' => $request->role_id,
+            'enabled' => $request->boolean('enabled'),
             'created_by' => auth()->id(),
             'updated_by' => auth()->id(),
             'created_at' => $now_ts,
             'updated_at' => $now_ts,
-        ]);
+        ];
+        $user = User::create($data);
 
-        // Redirect to the users list with a success message
+        // Redirect with success message
         return redirect()->route('users.index')->with('success', 'User created successfully.');
     }
 
@@ -215,13 +222,14 @@ class UserController extends Controller
                 'email' => 'required|email|unique:users,email,' . $id,
                 'phone' => 'nullable|numeric|digits_between:10,15',
                 'password' => 'nullable',
+                'enabled' => 'required|boolean',
             ]);
             $data = [
-                'name' => GeneralHelper::cleanText($request->input('name')),
-                'email' => $request->input('email'),
-                'phone' => $request->input('phone'),
-                'role_id' => $request->input('role_id'),
-                'enabled' => $request->input('enabled'),
+                'name' => GeneralHelper::cleanText($request->name),
+                'email' => $request->email,
+                'phone' => $request->phone,
+                'role_id' => $request->role_id,
+                'enabled' => $request->enabled,
                 'updated_by' => auth()->id(),
                 'updated_at' => $now_ts,
             ];
