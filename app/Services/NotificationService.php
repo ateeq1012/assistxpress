@@ -105,6 +105,9 @@ class NotificationService
 
     private function extractWhatsAppRecipients($sr = null)
     {
+        $WHATSAPP_DEFAULT_GROUP = env('WHATSAPP_DEFAULT_GROUP');
+        return [$WHATSAPP_DEFAULT_GROUP];
+        
         if (!$sr) return []; // Return empty if no SR provided
 
         $phones = [];
@@ -114,8 +117,6 @@ class NotificationService
         if ($sr->executor && $sr->executor->phone) {
             $phones[] = $sr->executor->phone;
         }
-        $WHATSAPP_DEFAULT_GROUP = env('WHATSAPP_DEFAULT_GROUP');
-        return [$WHATSAPP_DEFAULT_GROUP];
         return $phones ?: ["923160514938@c.us"];
     }
 
