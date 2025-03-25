@@ -70,8 +70,8 @@ class ServicePriorityController extends Controller
 
     public function edit($id)
     {
-        $service_priorities = ServicePriority::findOrFail($id);
-        return view('service_priorities.edit', compact('service_priorities'));
+        $service_priority = ServicePriority::findOrFail($id);
+        return view('service_priorities.edit', compact('service_priority'));
     }
 
     public function update(Request $request, $id)
