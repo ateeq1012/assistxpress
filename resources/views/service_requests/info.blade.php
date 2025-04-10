@@ -46,7 +46,14 @@
 		@foreach ($service_request_info->serviceRequestCustomField as $tcfk => $field)
 			<tr>
 				<th>{{$custom_fields_lkp[$field->field_id]['name']}}</th>
-				<td>{{$field->value}}</td>
+
+				<td>
+					@if($custom_fields_lkp[$field->field_id]['field_type'] == 'Datetime Picker')
+						{{ date('Y-m-d H:i:s', strtotime($field->value))}}
+					@else
+						{{$field->value}}
+					@endif
+				</td>
 			</tr>
 		@endforeach
 
@@ -54,6 +61,10 @@
 		<tr>
 			<th>Creator</th>
 			<td>{{$service_request_info->creator->name ?? ''}}</td>
+		</tr>
+		<tr>
+			<th>Created At</th>
+			<td>{{$service_request_info->created_at ?? ''}}</td>
 		</tr>
 		<tr>
 			<th>Creator Group</th>
@@ -72,8 +83,8 @@
 			<td>{{$service_request_info->updater->name ?? ''}}</td>
 		</tr>
 		<tr>
-			<th>Last Updated On</th>
-			<td>{{$service_request_info->updated_on ?? ''}}</td>
+			<th>Last Updated At</th>
+			<td>{{$service_request_info->updated_at ?? ''}}</td>
 		</tr>
 	</tbody>
 </table>

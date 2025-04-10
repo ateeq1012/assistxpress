@@ -14,7 +14,7 @@
 </style>
 <div class="ibox pt-2">
     <div class="ibox-title">
-        <h5>Edit Service Priority</h5>
+        <h5>Create Service Priority</h5>
         <div class="ibox-tools">
             <a href="{{ route('service_priorities.index') }}" class="btn btn-primary btn-xs">Manage Service Priorities</a>
         </div>

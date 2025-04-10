@@ -48,15 +48,17 @@ class GroupController extends Controller
     public function store(Request $request)
     {
         $now_ts = date('Y-m-d H:i:s');
-        $request->request->all();
+
         $request->validate([
             'name' => 'required|string|max:255|unique:groups',
         ]);
 
+
         $group = Group::create([
             'name' => GeneralHelper::cleanText($request->name),
             'description' => GeneralHelper::cleanText($request->description),
-            'parent_id' => $request->parent_id,
+            'parent_id' => $request->parent_id ?? null,
+            'enabled' => $request->enabled ?? false,
             'created_by' => Auth::user()->id,
             'updated_by' => Auth::user()->id,
             'created_at' => $now_ts,

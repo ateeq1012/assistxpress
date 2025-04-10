@@ -1157,23 +1157,62 @@
 	}
 
 	function createTimeField(field) {
-		let required = (field.required === true) ? '<span class="text-danger">*</span>' : '';
-		let oldValue = old_vals[field.field_id] ?? null;
+	    let required = (field.required === true) ? '<span class="text-danger">*</span>' : '';
+	    let oldValue = old_vals[field.field_id] ?? null;
+	    let displayValue = '';
 
-		return `
-			<div class="form-group">
-				<label for="${field.field_id}">${field.name} ${required}</label>
-				<input type="time" 
-					name="${field.field_id}" 
-					class="form-control custom-field" 
-					id="${field.field_id}" 
-					placeholder="${field.settings.placeholder || 'HH:MM'}" 
-					value="${oldValue !== null ? oldValue : field.settings.default_val || ''}" 
-					min="${field.settings.min_time || ''}" 
-					max="${field.settings.max_time || ''}">
-			</div>
-		`;
+	    // Convert oldValue or default_val to HH:mm for <input type="time">
+	    if (oldValue !== null) {
+	        // Assuming oldValue might be in "HH:mm:ss AM/PM" or "HH:mm" format
+	        const timeParts = oldValue.match(/(\d{2}):(\d{2})(?::\d{2})?\s*(AM|PM)?/i);
+	        if (timeParts) {
+	            let [_, hours, minutes, period] = timeParts;
+	            if (period) {
+	                hours = parseInt(hours, 10);
+	                if (period.toUpperCase() === 'PM' && hours !== 12) hours += 12;
+	                if (period.toUpperCase() === 'AM' && hours === 12) hours = 0;
+	                hours = hours.toString().padStart(2, '0');
+	            }
+	            displayValue = `${hours}:${minutes}`; // HH:mm for input
+	        } else {
+	            displayValue = oldValue; // Fallback if format doesn’t match
+	        }
+	    } else {
+	        displayValue = field.settings.default_val || ''; // Use default if provided
+	    }
+
+	    return `
+	        <div class="form-group">
+	            <label for="${field.field_id}">${field.name} ${required}</label>
+	            <input type="time" 
+	                name="${field.field_id}" 
+	                class="form-control custom-field" 
+	                id="${field.field_id}" 
+	                placeholder="${field.settings.placeholder || 'HH:MM'}" 
+	                value="${displayValue}" 
+	                min="${field.settings.min_time || ''}" 
+	                max="${field.settings.max_time || ''}">
+	        </div>
+	    `;
 	}
+	// function createTimeField(field) {
+	// 	let required = (field.required === true) ? '<span class="text-danger">*</span>' : '';
+	// 	let oldValue = old_vals[field.field_id] ?? null;
+
+	// 	return `
+	// 		<div class="form-group">
+	// 			<label for="${field.field_id}">${field.name} ${required}</label>
+	// 			<input type="time" 
+	// 				name="${field.field_id}" 
+	// 				class="form-control custom-field" 
+	// 				id="${field.field_id}" 
+	// 				placeholder="${field.settings.placeholder || 'HH:MM'}" 
+	// 				value="${oldValue !== null ? oldValue : field.settings.default_val || ''}" 
+	// 				min="${field.settings.min_time || ''}" 
+	// 				max="${field.settings.max_time || ''}">
+	// 		</div>
+	// 	`;
+	// }
 
 	function createDateTimeField(field) {
 		let required = (field.required === true) ? '<span class="text-danger">*</span>' : '';

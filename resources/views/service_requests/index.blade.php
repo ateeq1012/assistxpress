@@ -158,7 +158,7 @@
                                         </select>
                                     </div>
                                     <div class="form-group pl-1 pr-1" style="min-width: 200px;">
-                                        <select id="creator_id" class="form-control srch_col select2-field" data-placeholder="Creator">
+                                        <select id="created_by" class="form-control srch_col select2-field" data-placeholder="Creator">
                                             <option value="">Creator</option>
                                             @foreach ($users as $user)
                                                 <option value="{{$user['id']}}" >{{$user['name']}}</option>
@@ -538,6 +538,17 @@
                 { "class": "dt-column", "data": null, "defaultContent": "" },
             ],
             "columnDefs": [
+                {
+                    "targets": 0,
+                    "render": function (data, type, row, meta) {
+                        @if(session('user_routes')['service_requests.edit'] ?? false)
+                            return `<a href="/service_requests/${row.id}/edit" class="text-success font-weight-bold font-italic">${row.id}</a>`;
+                        @elseif(session('user_routes')['service_requests.show'] ?? false)
+                            return `<a href="/service_requests/${row.id}" class="text-success font-weight-bold font-italic">${row.id}</a>`;
+                        @endif
+                        return row.id;
+                    }
+                },
                 {
                     "targets": -1,
                     "orderable": false
