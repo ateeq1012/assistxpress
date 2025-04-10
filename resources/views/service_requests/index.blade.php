@@ -158,7 +158,7 @@
                                         </select>
                                     </div>
                                     <div class="form-group pl-1 pr-1" style="min-width: 200px;">
-                                        <select id="creator_id" class="form-control srch_col select2-field" data-placeholder="Creator">
+                                        <select id="created_by" class="form-control srch_col select2-field" data-placeholder="Creator">
                                             <option value="">Creator</option>
                                             @foreach ($users as $user)
                                                 <option value="{{$user['id']}}" >{{$user['name']}}</option>

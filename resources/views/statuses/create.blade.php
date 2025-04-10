@@ -14,7 +14,7 @@
 </style>
 <div class="ibox pt-2">
     <div class="ibox-title">
-        <h5>Edit Status</h5>
+        <h5>Create Status</h5>
         <div class="ibox-tools">
             <a href="{{ route('statuses.index') }}" class="btn btn-primary btn-xs">Manage Statuses</a>
         </div>

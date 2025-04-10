@@ -133,10 +133,12 @@ class ServiceRequestController extends Controller
 				  ->orWhereRaw('LOWER(description) LIKE ?', ['%' . $searchValue . '%']);
 			});
 		}
+
+		
 		if (count($filters) > 0) {
 			$custom_fields_lkp = array_column($custom_fields, null, 'field_id');
 			$_LIKE = ['subject', 'description'];
-			$_EQUAL = ['id', 'service_domain_id', 'service_id', 'status_id', 'priority_id', 'sla_rule_id'];
+			$_EQUAL = ['id', 'service_domain_id', 'service_id', 'status_id', 'priority_id', 'sla_rule_id', 'created_by', 'creator_group_id', 'executor_id', 'executor_group_id', 'updated_by'];
 
 			$_LIKE_CF = ['Text', 'Textarea', 'Checkbox Group'];
 			$_EQUAL_CF = ['Number', 'Radio Buttons', 'Dropdown List', 'Date', 'Time', 'Date-Time Picker'];
@@ -514,7 +516,7 @@ class ServiceRequestController extends Controller
 					}
 					break;
 				case 'Time':
-					$rules[] = 'date_format:H:i:s'; 
+					$rules[] = 'date_format:H:i'; 
 					break;
 				default:
 					break;
@@ -1053,7 +1055,7 @@ class ServiceRequestController extends Controller
 					}
 					break;
 				case 'Time':
-					$rules[] = 'date_format:H:i:s'; 
+					$rules[] = 'date_format:H:i'; 
 					break;
 
 				default:
@@ -1594,36 +1596,49 @@ class ServiceRequestController extends Controller
 			// [General Users By Role] => 5
 			// [General Users By Group] => 6
 
+			$allowed_status_ids_query = WorkflowStatusTransition::select('status_to_id')
+			    ->where('workflow_id', $service->workflow_id)
+			    ->where('status_from_id', $service_request->status_id);
 
 			$transition_types = array_flip(config('lookup')['transition_types']);
 
-			$allowed_transition_types = [];
-			if ($this_user->id == $service_request->created_by) {
-				$allowed_transition_types[] = $transition_types['Issuer'];
-			}
-			if (in_array($service_request->creator_group_id, $this_user_group_ids)) {
-				$allowed_transition_types[] = $transition_types['Issuer Group Users'];
-			}
-			if ($this_user->id == $service_request->executor_id) {
-				$allowed_transition_types[] = $transition_types['Receiver'];
-			}
-			if (in_array($service_request->executor_group_id, $this_user_group_ids)) {
-				$allowed_transition_types[] = $transition_types['Receiver Group Users'];
-			}
+			$allowed_status_ids_query->where(function ($query) use ($service_request, $transition_types, $this_user_group_ids, $this_user) {
 
-			$allowed_status_ids = WorkflowStatusTransition::select('status_to_id')
-				->where('status_from_id', $service_request->status_id)
-				->where(function ($query) use ($allowed_transition_types, $this_user_group_ids, $this_user) {
-					if (!empty($allowed_transition_types)) {
-						$query->whereIn('transition_type', $allowed_transition_types);
-					}
-					$query->orWhereIn('group_id', $this_user_group_ids)
-						  ->orWhere('role_id', $this_user->role_id);
-				})
-				->pluck('status_to_id')
-				->unique()
-				->toArray();
-			$allowed_status_ids[] = $service_request->status_id;
+
+			    if ($this_user->id == $service_request->created_by) {
+			        $query->where('transition_type', $transition_types['Issuer']);
+			    }
+			    
+			    if (isset($this_user->role_id)) {
+			        $query->orWhere(function ($q) use ($transition_types, $this_user) {
+			            $q->where('transition_type', $transition_types['Issuer Group Users'])
+			              ->where('role_id', $this_user->role_id);
+			        });
+			    }
+			    
+			    if ($this_user->id == $service_request->executor_id) {
+			        $query->orWhere('transition_type', $transition_types['Receiver']);
+			    }
+			    
+			    if (isset($this_user->role_id)) {
+			        $query->orWhere(function ($q) use ($transition_types, $this_user) {
+			            $q->where('transition_type', $transition_types['Receiver Group Users'])
+			              ->where('role_id', $this_user->role_id);
+			        });
+			    }
+
+		        $query->orWhere(function ($q) use ($transition_types, $this_user) {
+		            $q->where('transition_type', $transition_types['General Users By Role'])
+		              ->where('role_id', $this_user->role_id);
+		        });
+
+		        $query->orWhere(function ($q) use ($transition_types, $this_user_group_ids) {
+		            $q->where('transition_type', $transition_types['General Users By Group'])
+		              ->whereIn('group_id', $this_user_group_ids);
+		        });
+			});
+
+			$allowed_status_ids = $allowed_status_ids_query->pluck('status_to_id')->unique()->toArray();
 
 		} else {
 			$allowed_status_ids = WorkflowStatusTransition::select('status_to_id')
@@ -1635,7 +1650,7 @@ class ServiceRequestController extends Controller
 				->toArray();
 		}
 
-		$allowed_statuses = Status::whereIn('id', $allowed_status_ids)->orderBy('order')->get()->toArray();
+		$allowed_statuses = Status::whereIn('id', $allowed_status_ids)->orWhere('id', $service_request->status_id)->orderBy('order')->get()->toArray();
 		foreach ($allowed_statuses as $key => $asts) {
 			$allowed_statuses[$key]['text_color'] = GeneralHelper::invert_color($asts['color']);
 		}

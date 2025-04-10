@@ -402,7 +402,7 @@
                         <div class="col-12 p-0 m-0">
                             <div class="panel panel-info">
                                 <div class="panel-heading">
-                                    Transitions for general users who can edit
+                                    Transitions for general users who can edit by Group
                                 </div>
                                 <div class="panel-body p-1">
                                     <div class="row">
