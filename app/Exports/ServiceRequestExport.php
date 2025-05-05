@@ -21,6 +21,7 @@ use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithColumnFormatting;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithStyles;
+use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
@@ -85,6 +86,8 @@ class ServiceRequestExport implements FromCollection, WithMapping, WithColumnFor
         
         $sla_rules = Sla::get()->toArray();
         $this->sla_rules_lkp = array_column($sla_rules, null, 'id');
+
+        $this->sla_start_col = 0;
     }
 
     public function collection()
@@ -147,25 +150,28 @@ class ServiceRequestExport implements FromCollection, WithMapping, WithColumnFor
             $this->priorities_lkp[$service_request->priority_id]['name'] ?? '',
             $this->groups_lkp[$service_request->creator_group_id] ?? '',
             $this->users_lkp[$service_request->created_by] ?? '',
+            $service_request->created_at,
             $this->users_lkp[$service_request->executor_id] ?? '',
             $this->groups_lkp[$service_request->executor_group_id] ?? '',
             $this->users_lkp[$service_request->updated_by] ?? '',
-            $slaInfo['sla_rule_name'] ?? 'Not Applicable',
-            $slaInfo['response_time_sla'] ?? '',
-            $slaInfo['response_time_spent'] ?? '',
-            $slaInfo['response_sla_percentage'] ?? '',
-            $slaInfo['response_sla_status'] ?? '',
-            $slaInfo['resolution_time_sla'] ?? '',
-            $slaInfo['resolution_time_spent'] ?? '',
-            $slaInfo['resolution_sla_percentage'] ?? '',
-            $slaInfo['resolution_sla_status'] ?? '',
-            $service_request->created_at,
             $service_request->updated_at
         ];
 
         foreach ($this->custom_fields_lkp as $cfk => $cfl) {
             $row[] = $service_request->$cfk;
         }
+
+        $this->sla_start_col = count($row);
+
+        $row[] = $slaInfo['sla_rule_name'] ?? 'Not Applicable';
+        $row[] = $slaInfo['response_time_sla'] ?? '';
+        $row[] = $slaInfo['response_time_spent'] ?? '';
+        $row[] = $slaInfo['response_sla_percentage'] ?? '';
+        $row[] = $slaInfo['response_sla_status'] ?? '';
+        $row[] = $slaInfo['resolution_time_sla'] ?? '';
+        $row[] = $slaInfo['resolution_time_spent'] ?? '';
+        $row[] = $slaInfo['resolution_sla_percentage'] ?? '';
+        $row[] = $slaInfo['resolution_sla_status'] ?? '';
 
         return $row;
     }
@@ -182,25 +188,27 @@ class ServiceRequestExport implements FromCollection, WithMapping, WithColumnFor
             'Priority',
             'Creator Group',
             'Creator',
+            'Created at',
             'Assignee',
             'Assignee Group',
             'Last Updated By',
-            'SLA Rule',
-            'Response Time SLA',
-            'Response Time Spent',
-            'Response SLA %',
-            'Response SLA Status',
-            'Resolution Time SLA',
-            'Resolution Time Spent',
-            'Resolution SLA %',
-            'Response SLA Status',
-            'Created at',
             'Updated at',
         ];
 
         foreach ($this->custom_fields_lkp as $cfk => $cfl) {
             $headings[] = $cfl['name'];
         }
+        
+
+        $headings[] = 'SLA Rule';
+        $headings[] = 'Response Time SLA';
+        $headings[] = 'Response Time Spent';
+        $headings[] = 'Response SLA %';
+        $headings[] = 'Response SLA Status';
+        $headings[] = 'Resolution Time SLA';
+        $headings[] = 'Resolution Time Spent';
+        $headings[] = 'Resolution SLA %';
+        $headings[] = 'Response SLA Status';
 
         return $headings;
     }
@@ -242,7 +250,13 @@ class ServiceRequestExport implements FromCollection, WithMapping, WithColumnFor
             ],
         ]);
         
-        $sheet->getStyle('M1:Q1')->applyFromArray([
+
+        $starting_column_number = $this->sla_start_col + 1;
+        $startCol1 = Coordinate::stringFromColumnIndex($starting_column_number);
+        $endCol1 = Coordinate::stringFromColumnIndex($starting_column_number + 4);
+        $range1 = "{$startCol1}1:{$endCol1}1";
+
+        $sheet->getStyle($range1)->applyFromArray([
             'font' => [
                 'bold' => true,
                 'color' => ['argb' => 'FFFFFFFF'],
@@ -259,7 +273,11 @@ class ServiceRequestExport implements FromCollection, WithMapping, WithColumnFor
             ],
         ]);
 
-        $sheet->getStyle('R1:U1')->applyFromArray([
+        $startCol2 = Coordinate::stringFromColumnIndex($starting_column_number + 5);
+        $endCol2 = Coordinate::stringFromColumnIndex($starting_column_number + 8);
+        $range2 = "{$startCol2}1:{$endCol2}1";
+
+        $sheet->getStyle($range2)->applyFromArray([
             'font' => [
                 'bold' => true,
                 'color' => ['argb' => 'FFFFFFFF'],

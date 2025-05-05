@@ -122,9 +122,14 @@ class Sla extends Command
 					}
 				}
 
+				$tto_new = $tto_old;
+				$ttr_new = $ttr_old;
+
 				// Calculate time Spent
-				$new_tto = $this->get_range_overlap_dur($resp_sla_wins);
-				$new_ttr = $this->get_range_overlap_dur($sla_wins);
+				if(count($service_wins) > 0) {
+					$tto_new = $this->get_range_overlap_dur($resp_sla_wins);
+					$ttr_new = $this->get_range_overlap_dur($sla_wins);
+				}
 
 				// Calculate SLA allowed time in seconds
 				$tto_sla = null;
