@@ -312,7 +312,7 @@ class GroupController extends Controller
 
         $already_added_groups = [];
         if($service_domain_id) {
-            $already_added_groups = ServiceDomainGroup::where('id', $service_domain_id)->pluck('group_id')->toArray();
+            $already_added_groups = ServiceDomainGroup::where('service_domain_id', $service_domain_id)->pluck('group_id')->toArray();
         }
 
         if (!$search) {
