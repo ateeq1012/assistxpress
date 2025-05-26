@@ -132,6 +132,12 @@ class ServiceRequest extends Model
 	{
 		return $this->hasMany(ServiceRequestComment::class, 'service_request_id');
 	}
+	public function serviceRequestLatestComment()
+	{
+	    return $this->hasOne(ServiceRequestComment::class, 'service_request_id')
+	                ->latest();
+	}
+
 	public function serviceRequestCustomField()
 	{
 		return $this->hasMany(ServiceRequestCustomField::class, 'service_request_id');
