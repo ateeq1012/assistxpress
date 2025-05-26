@@ -16,6 +16,7 @@ use App\Models\Service;
 use App\Models\Status;
 use App\Models\ServicePriority;
 use App\Helpers\GeneralHelper;
+use App\Helpers\SlaHelper;
 
 class SlaController extends Controller
 {
@@ -161,11 +162,11 @@ class SlaController extends Controller
                     }
                 },
             ],
-            'issuer_esc_l1' => [
+            'issuer_escalation_1' => [
                 'nullable',
                 'array'
             ],
-            'issuer_esc_l1_emails' => [
+            'issuer_escalation_1_emails' => [
                 'nullable',
                 'string',
                 function ($attribute, $value, $fail) {
@@ -185,11 +186,11 @@ class SlaController extends Controller
                     }
                 },
             ],
-            'issuer_esc_l2' => [
+            'issuer_escalation_2' => [
                 'nullable',
                 'array'
             ],
-            'issuer_esc_l2_emails' => [
+            'issuer_escalation_2_emails' => [
                 'nullable',
                 'string',
                 function ($attribute, $value, $fail) {
@@ -209,11 +210,11 @@ class SlaController extends Controller
                     }
                 },
             ],
-            'issuer_esc_l3' => [
+            'issuer_escalation_3' => [
                 'nullable',
                 'array'
             ],
-            'issuer_esc_l3_emails' => [
+            'issuer_escalation_3_emails' => [
                 'nullable',
                 'string',
                 function ($attribute, $value, $fail) {
@@ -233,11 +234,11 @@ class SlaController extends Controller
                     }
                 },
             ],
-            'executor_esc_l1' => [
+            'executor_escalation_1' => [
                 'nullable',
                 'array'
             ],
-            'executor_esc_l1_emails' => [
+            'executor_escalation_1_emails' => [
                 'nullable',
                 'string',
                 function ($attribute, $value, $fail) {
@@ -257,11 +258,11 @@ class SlaController extends Controller
                     }
                 },
             ],
-            'executor_esc_l2' => [
+            'executor_escalation_2' => [
                 'nullable',
                 'array',
             ],
-            'executor_esc_l2_emails' => [
+            'executor_escalation_2_emails' => [
                 'nullable',
                 'string',
                 function ($attribute, $value, $fail) {
@@ -281,11 +282,11 @@ class SlaController extends Controller
                     }
                 },
             ],
-            'executor_esc_l3' => [
+            'executor_escalation_3' => [
                 'nullable',
                 'array'
             ],
-            'executor_esc_l3_emails' => [
+            'executor_escalation_3_emails' => [
                 'nullable',
                 'string',
                 function ($attribute, $value, $fail) {
@@ -320,18 +321,18 @@ class SlaController extends Controller
             'qb_rules' => 'Conditions',
             'reminder' => 'Reminders',
             'escalation' => 'Escalations',
-            'issuer_esc_l1' => 'Issuer Escalation L1',
-            'issuer_esc_l1_emails' => 'Issuer Escalation L1 non-system Emails',
-            'issuer_esc_l2' => 'Issuer Escalation L2',
-            'issuer_esc_l2_emails' => 'Issuer Escalation L2 non-system Emails',
-            'issuer_esc_l3' => 'Issuer Escalation L3',
-            'issuer_esc_l3_emails' => 'Issuer Escalation L3 non-system Emails',
-            'executor_esc_l1' => 'Executor Escalation L1',
-            'executor_esc_l1_emails' => 'Executor Escalation L1 non-system Emails',
-            'executor_esc_l2' => 'Executor Escalation L2',
-            'executor_esc_l2_emails' => 'Executor Escalation L2 non-system Emails',
-            'executor_esc_l3' => 'Executor Escalation L3',
-            'executor_esc_l3_emails' => 'Executor Escalation L3 non-system Emails',
+            'issuer_escalation_1' => 'Issuer Escalation L1',
+            'issuer_escalation_1_emails' => 'Issuer Escalation L1 non-system Emails',
+            'issuer_escalation_2' => 'Issuer Escalation L2',
+            'issuer_escalation_2_emails' => 'Issuer Escalation L2 non-system Emails',
+            'issuer_escalation_3' => 'Issuer Escalation L3',
+            'issuer_escalation_3_emails' => 'Issuer Escalation L3 non-system Emails',
+            'executor_escalation_1' => 'Executor Escalation L1',
+            'executor_escalation_1_emails' => 'Executor Escalation L1 non-system Emails',
+            'executor_escalation_2' => 'Executor Escalation L2',
+            'executor_escalation_2_emails' => 'Executor Escalation L2 non-system Emails',
+            'executor_escalation_3' => 'Executor Escalation L3',
+            'executor_escalation_3_emails' => 'Executor Escalation L3 non-system Emails',
         ]);
         
         if ($validator->fails()) {
@@ -357,22 +358,22 @@ class SlaController extends Controller
             'escalations' => $validatedData['escalation'] ?? null,
             'escalation_users' => [
                 'l1' => [
-                    'issuer_esc_l1' => $validatedData['issuer_esc_l1'] ?? [],
-                    'issuer_esc_l1_emails' => trim($validatedData['issuer_esc_l1_emails']) ?? '',
-                    'executor_esc_l1' => $validatedData['executor_esc_l1'] ?? [],
-                    'executor_esc_l1_emails' => trim($validatedData['executor_esc_l1_emails']) ?? '',
+                    'issuer_escalation_1' => $validatedData['issuer_escalation_1'] ?? [],
+                    'issuer_escalation_1_emails' => trim($validatedData['issuer_escalation_1_emails']) ?? '',
+                    'executor_escalation_1' => $validatedData['executor_escalation_1'] ?? [],
+                    'executor_escalation_1_emails' => trim($validatedData['executor_escalation_1_emails']) ?? '',
                 ],
                 'l2' => [
-                    'issuer_esc_l2' => $validatedData['issuer_esc_l2'] ?? [],
-                    'issuer_esc_l2_emails' => trim($validatedData['issuer_esc_l2_emails']) ?? '',
-                    'executor_esc_l2' => $validatedData['executor_esc_l2'] ?? [],
-                    'executor_esc_l2_emails' => trim($validatedData['executor_esc_l2_emails']) ?? '',
+                    'issuer_escalation_2' => $validatedData['issuer_escalation_2'] ?? [],
+                    'issuer_escalation_2_emails' => trim($validatedData['issuer_escalation_2_emails']) ?? '',
+                    'executor_escalation_2' => $validatedData['executor_escalation_2'] ?? [],
+                    'executor_escalation_2_emails' => trim($validatedData['executor_escalation_2_emails']) ?? '',
                 ],
                 'l3' => [
-                    'issuer_esc_l3' => $validatedData['issuer_esc_l3'] ?? [],
-                    'issuer_esc_l3_emails' => trim($validatedData['issuer_esc_l3_emails']) ?? '',
-                    'executor_esc_l3' => $validatedData['executor_esc_l3'] ?? [],
-                    'executor_esc_l3_emails' => trim($validatedData['executor_esc_l3_emails']) ?? '',
+                    'issuer_escalation_3' => $validatedData['issuer_escalation_3'] ?? [],
+                    'issuer_escalation_3_emails' => trim($validatedData['issuer_escalation_3_emails']) ?? '',
+                    'executor_escalation_3' => $validatedData['executor_escalation_3'] ?? [],
+                    'executor_escalation_3_emails' => trim($validatedData['executor_escalation_3_emails']) ?? '',
                 ],
             ],
         ];
@@ -399,31 +400,32 @@ class SlaController extends Controller
     public function edit($id)
     {
         $sla_rule = Sla::findOrFail($id);
+
         $sla_settings = json_decode($sla_rule->settings, true);
-        // echo "<pre><strong>" . __FILE__ . " Line: [". __LINE__ ."]</strong> @ " .date("Y-m-d H:i:s"). "<br>"; print_r( $sla_settings ); echo "</pre><br>"; exit;
+
         $service_domains = ServiceDomain::pluck('name', 'id')->toArray();
         $services = Service::pluck('name', 'id')->toArray();
         $priorities = ServicePriority::pluck('name', 'id')->toArray();
         $statuses = Status::whereNotIn('type', [3,4])->pluck('name', 'id')->toArray();
 
         $escalation_user_ids = [];
-        if (isset($sla_settings['escalation_users']) && isset($sla_settings['escalation_users']['l1']) && isset($sla_settings['escalation_users']['l1']['issuer_esc_l1']) && count($sla_settings['escalation_users']['l1']['issuer_esc_l1']) > 0) {
-            $escalation_user_ids =  array_merge($escalation_user_ids, $sla_settings['escalation_users']['l1']['issuer_esc_l1']);
+        if (isset($sla_settings['escalation_users']) && isset($sla_settings['escalation_users']['l1']) && isset($sla_settings['escalation_users']['l1']['issuer_escalation_1']) && count($sla_settings['escalation_users']['l1']['issuer_escalation_1']) > 0) {
+            $escalation_user_ids =  array_merge($escalation_user_ids, $sla_settings['escalation_users']['l1']['issuer_escalation_1']);
         }
-        if (isset($sla_settings['escalation_users']) && isset($sla_settings['escalation_users']['l1']) && isset($sla_settings['escalation_users']['l1']['executor_esc_l1']) && count($sla_settings['escalation_users']['l1']['executor_esc_l1']) > 0) {
-            $escalation_user_ids =  array_merge($escalation_user_ids, $sla_settings['escalation_users']['l1']['executor_esc_l1']);
+        if (isset($sla_settings['escalation_users']) && isset($sla_settings['escalation_users']['l1']) && isset($sla_settings['escalation_users']['l1']['executor_escalation_1']) && count($sla_settings['escalation_users']['l1']['executor_escalation_1']) > 0) {
+            $escalation_user_ids =  array_merge($escalation_user_ids, $sla_settings['escalation_users']['l1']['executor_escalation_1']);
         }
-        if (isset($sla_settings['escalation_users']) && isset($sla_settings['escalation_users']['l2']) && isset($sla_settings['escalation_users']['l2']['issuer_esc_l2']) && count($sla_settings['escalation_users']['l2']['issuer_esc_l2']) > 0) {
-            $escalation_user_ids =  array_merge($escalation_user_ids, $sla_settings['escalation_users']['l2']['issuer_esc_l2']);
+        if (isset($sla_settings['escalation_users']) && isset($sla_settings['escalation_users']['l2']) && isset($sla_settings['escalation_users']['l2']['issuer_escalation_2']) && count($sla_settings['escalation_users']['l2']['issuer_escalation_2']) > 0) {
+            $escalation_user_ids =  array_merge($escalation_user_ids, $sla_settings['escalation_users']['l2']['issuer_escalation_2']);
         }
-        if (isset($sla_settings['escalation_users']) && isset($sla_settings['escalation_users']['l2']) && isset($sla_settings['escalation_users']['l2']['issuer_esc_l2']) && count($sla_settings['escalation_users']['l2']['issuer_esc_l2']) > 0) {
-            $escalation_user_ids =  array_merge($escalation_user_ids, $sla_settings['escalation_users']['l2']['issuer_esc_l2']);
+        if (isset($sla_settings['escalation_users']) && isset($sla_settings['escalation_users']['l2']) && isset($sla_settings['escalation_users']['l2']['issuer_escalation_2']) && count($sla_settings['escalation_users']['l2']['issuer_escalation_2']) > 0) {
+            $escalation_user_ids =  array_merge($escalation_user_ids, $sla_settings['escalation_users']['l2']['issuer_escalation_2']);
         }
-        if (isset($sla_settings['escalation_users']) && isset($sla_settings['escalation_users']['l3']) && isset($sla_settings['escalation_users']['l3']['issuer_esc_l3']) && count($sla_settings['escalation_users']['l3']['issuer_esc_l3']) > 0) {
-            $escalation_user_ids =  array_merge($escalation_user_ids, $sla_settings['escalation_users']['l3']['issuer_esc_l3']);
+        if (isset($sla_settings['escalation_users']) && isset($sla_settings['escalation_users']['l3']) && isset($sla_settings['escalation_users']['l3']['issuer_escalation_3']) && count($sla_settings['escalation_users']['l3']['issuer_escalation_3']) > 0) {
+            $escalation_user_ids =  array_merge($escalation_user_ids, $sla_settings['escalation_users']['l3']['issuer_escalation_3']);
         }
-        if (isset($sla_settings['escalation_users']) && isset($sla_settings['escalation_users']['l3']) && isset($sla_settings['escalation_users']['l3']['issuer_esc_l3']) && count($sla_settings['escalation_users']['l3']['issuer_esc_l3']) > 0) {
-            $escalation_user_ids =  array_merge($escalation_user_ids, $sla_settings['escalation_users']['l3']['issuer_esc_l3']);
+        if (isset($sla_settings['escalation_users']) && isset($sla_settings['escalation_users']['l3']) && isset($sla_settings['escalation_users']['l3']['issuer_escalation_3']) && count($sla_settings['escalation_users']['l3']['issuer_escalation_3']) > 0) {
+            $escalation_user_ids =  array_merge($escalation_user_ids, $sla_settings['escalation_users']['l3']['issuer_escalation_3']);
         }
 
         $users = [];
@@ -544,11 +546,11 @@ class SlaController extends Controller
                     }
                 },
             ],
-            'issuer_esc_l1' => [
+            'issuer_escalation_1' => [
                 'nullable',
                 'array'
             ],
-            'issuer_esc_l1_emails' => [
+            'issuer_escalation_1_emails' => [
                 'nullable',
                 'string',
                 function ($attribute, $value, $fail) {
@@ -568,11 +570,11 @@ class SlaController extends Controller
                     }
                 },
             ],
-            'issuer_esc_l2' => [
+            'issuer_escalation_2' => [
                 'nullable',
                 'array'
             ],
-            'issuer_esc_l2_emails' => [
+            'issuer_escalation_2_emails' => [
                 'nullable',
                 'string',
                 function ($attribute, $value, $fail) {
@@ -592,11 +594,11 @@ class SlaController extends Controller
                     }
                 },
             ],
-            'issuer_esc_l3' => [
+            'issuer_escalation_3' => [
                 'nullable',
                 'array'
             ],
-            'issuer_esc_l3_emails' => [
+            'issuer_escalation_3_emails' => [
                 'nullable',
                 'string',
                 function ($attribute, $value, $fail) {
@@ -616,11 +618,11 @@ class SlaController extends Controller
                     }
                 },
             ],
-            'executor_esc_l1' => [
+            'executor_escalation_1' => [
                 'nullable',
                 'array'
             ],
-            'executor_esc_l1_emails' => [
+            'executor_escalation_1_emails' => [
                 'nullable',
                 'string',
                 function ($attribute, $value, $fail) {
@@ -640,11 +642,11 @@ class SlaController extends Controller
                     }
                 },
             ],
-            'executor_esc_l2' => [
+            'executor_escalation_2' => [
                 'nullable',
                 'array',
             ],
-            'executor_esc_l2_emails' => [
+            'executor_escalation_2_emails' => [
                 'nullable',
                 'string',
                 function ($attribute, $value, $fail) {
@@ -664,11 +666,11 @@ class SlaController extends Controller
                     }
                 },
             ],
-            'executor_esc_l3' => [
+            'executor_escalation_3' => [
                 'nullable',
                 'array'
             ],
-            'executor_esc_l3_emails' => [
+            'executor_escalation_3_emails' => [
                 'nullable',
                 'string',
                 function ($attribute, $value, $fail) {
@@ -703,18 +705,18 @@ class SlaController extends Controller
             'qb_rules' => 'Conditions',
             'reminder' => 'Reminders',
             'escalation' => 'Escalations',
-            'issuer_esc_l1' => 'Issuer Escalation L1',
-            'issuer_esc_l1_emails' => 'Issuer Escalation L1 non-system Emails',
-            'issuer_esc_l2' => 'Issuer Escalation L2',
-            'issuer_esc_l2_emails' => 'Issuer Escalation L2 non-system Emails',
-            'issuer_esc_l3' => 'Issuer Escalation L3',
-            'issuer_esc_l3_emails' => 'Issuer Escalation L3 non-system Emails',
-            'executor_esc_l1' => 'Executor Escalation L1',
-            'executor_esc_l1_emails' => 'Executor Escalation L1 non-system Emails',
-            'executor_esc_l2' => 'Executor Escalation L2',
-            'executor_esc_l2_emails' => 'Executor Escalation L2 non-system Emails',
-            'executor_esc_l3' => 'Executor Escalation L3',
-            'executor_esc_l3_emails' => 'Executor Escalation L3 non-system Emails',
+            'issuer_escalation_1' => 'Issuer Escalation L1',
+            'issuer_escalation_1_emails' => 'Issuer Escalation L1 non-system Emails',
+            'issuer_escalation_2' => 'Issuer Escalation L2',
+            'issuer_escalation_2_emails' => 'Issuer Escalation L2 non-system Emails',
+            'issuer_escalation_3' => 'Issuer Escalation L3',
+            'issuer_escalation_3_emails' => 'Issuer Escalation L3 non-system Emails',
+            'executor_escalation_1' => 'Executor Escalation L1',
+            'executor_escalation_1_emails' => 'Executor Escalation L1 non-system Emails',
+            'executor_escalation_2' => 'Executor Escalation L2',
+            'executor_escalation_2_emails' => 'Executor Escalation L2 non-system Emails',
+            'executor_escalation_3' => 'Executor Escalation L3',
+            'executor_escalation_3_emails' => 'Executor Escalation L3 non-system Emails',
         ]);
         
         if ($validator->fails()) {
@@ -737,22 +739,22 @@ class SlaController extends Controller
             'escalations' => $validatedData['escalation'] ?? null,
             'escalation_users' => [
                 'l1' => [
-                    'issuer_esc_l1' => $validatedData['issuer_esc_l1'] ?? [],
-                    'issuer_esc_l1_emails' => trim($validatedData['issuer_esc_l1_emails']) ?? '',
-                    'executor_esc_l1' => $validatedData['executor_esc_l1'] ?? [],
-                    'executor_esc_l1_emails' => trim($validatedData['executor_esc_l1_emails']) ?? '',
+                    'issuer_escalation_1' => $validatedData['issuer_escalation_1'] ?? [],
+                    'issuer_escalation_1_emails' => trim($validatedData['issuer_escalation_1_emails']) ?? '',
+                    'executor_escalation_1' => $validatedData['executor_escalation_1'] ?? [],
+                    'executor_escalation_1_emails' => trim($validatedData['executor_escalation_1_emails']) ?? '',
                 ],
                 'l2' => [
-                    'issuer_esc_l2' => $validatedData['issuer_esc_l2'] ?? [],
-                    'issuer_esc_l2_emails' => trim($validatedData['issuer_esc_l2_emails']) ?? '',
-                    'executor_esc_l2' => $validatedData['executor_esc_l2'] ?? [],
-                    'executor_esc_l2_emails' => trim($validatedData['executor_esc_l2_emails']) ?? '',
+                    'issuer_escalation_2' => $validatedData['issuer_escalation_2'] ?? [],
+                    'issuer_escalation_2_emails' => trim($validatedData['issuer_escalation_2_emails']) ?? '',
+                    'executor_escalation_2' => $validatedData['executor_escalation_2'] ?? [],
+                    'executor_escalation_2_emails' => trim($validatedData['executor_escalation_2_emails']) ?? '',
                 ],
                 'l3' => [
-                    'issuer_esc_l3' => $validatedData['issuer_esc_l3'] ?? [],
-                    'issuer_esc_l3_emails' => trim($validatedData['issuer_esc_l3_emails']) ?? '',
-                    'executor_esc_l3' => $validatedData['executor_esc_l3'] ?? [],
-                    'executor_esc_l3_emails' => trim($validatedData['executor_esc_l3_emails']) ?? '',
+                    'issuer_escalation_3' => $validatedData['issuer_escalation_3'] ?? [],
+                    'issuer_escalation_3_emails' => trim($validatedData['issuer_escalation_3_emails']) ?? '',
+                    'executor_escalation_3' => $validatedData['executor_escalation_3'] ?? [],
+                    'executor_escalation_3_emails' => trim($validatedData['executor_escalation_3_emails']) ?? '',
                 ],
             ],
         ];

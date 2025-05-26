@@ -246,11 +246,11 @@
                                                     <div class="row">
                                                         <div class="col-4 pl-1 pr-1">
                                                             <div class="form-group pb-1">
-                                                                <label for="issuer_esc_l1">Issuer Escalation L1</label>
+                                                                <label for="issuer_escalation_1">Issuer Escalation L1</label>
                                                                 @if(session('user_routes')['users.search'] ?? false)
-                                                                    <select data-placeholder="Search Users" id="issuer_esc_l1" name="issuer_esc_l1[]" class="form-control users-search-field" multiple="multiple">
+                                                                    <select data-placeholder="Search Users" id="issuer_escalation_1" name="issuer_escalation_1[]" class="form-control users-search-field" multiple="multiple">
                                                                         @foreach ($users as $id => $name)
-                                                                            @if(in_array($id, $sla_settings['escalation_users']['l1']['issuer_esc_l1'] ?? []))
+                                                                            @if(in_array($id, $sla_settings['escalation_users']['l1']['issuer_escalation_1'] ?? []))
                                                                                 <option value="{{ $id }}"  selected>{{ $name }}</option>
                                                                             @endif
                                                                         @endforeach
@@ -258,20 +258,20 @@
                                                                 @else
                                                                     <div class="alert alert-info mr-3">You don't have permission to search Users.</div>
                                                                 @endif
-                                                                <textarea name="issuer_esc_l1_emails"
+                                                                <textarea name="issuer_escalation_1_emails"
                                                                     class="form-control mt-1"
                                                                     placeholder="Add emails for people that are not in the system"
-                                                                    id="issuer_esc_l1_emails"
-                                                                    rows="2">{{$sla_settings['escalation_users']['l1']['issuer_esc_l1_emails'] ?? ''}}</textarea>
+                                                                    id="issuer_escalation_1_emails"
+                                                                    rows="2">{{$sla_settings['escalation_users']['l1']['issuer_escalation_1_emails'] ?? ''}}</textarea>
                                                             </div>
                                                         </div>
                                                         <div class="col-4 pl-1 pr-1">
                                                             <div class="form-group pb-1">
-                                                                <label for="issuer_esc_l2">Issuer Escalation L2</label>
+                                                                <label for="issuer_escalation_2">Issuer Escalation L2</label>
                                                                 @if(session('user_routes')['users.search'] ?? false)
-                                                                    <select data-placeholder="Search Users" id="issuer_esc_l2" name="issuer_esc_l2[]" class="form-control users-search-field" multiple="multiple">
+                                                                    <select data-placeholder="Search Users" id="issuer_escalation_2" name="issuer_escalation_2[]" class="form-control users-search-field" multiple="multiple">
                                                                         @foreach ($users as $id => $name)
-                                                                            @if(in_array($id, $sla_settings['escalation_users']['l2']['issuer_esc_l2'] ?? []))
+                                                                            @if(in_array($id, $sla_settings['escalation_users']['l2']['issuer_escalation_2'] ?? []))
                                                                                 <option value="{{ $id }}"  selected>{{ $name }}</option>
                                                                             @endif
                                                                         @endforeach
@@ -279,20 +279,20 @@
                                                                 @else
                                                                     <div class="alert alert-info mr-3">You don't have permission to search Users.</div>
                                                                 @endif
-                                                                <textarea name="issuer_esc_l2_emails"
+                                                                <textarea name="issuer_escalation_2_emails"
                                                                     class="form-control mt-1"
                                                                     placeholder="Add emails for people that are not in the system"
-                                                                    id="issuer_esc_l2_emails"
-                                                                    rows="2">{{$sla_settings['escalation_users']['l2']['issuer_esc_l2_emails'] ?? ''}}</textarea>
+                                                                    id="issuer_escalation_2_emails"
+                                                                    rows="2">{{$sla_settings['escalation_users']['l2']['issuer_escalation_2_emails'] ?? ''}}</textarea>
                                                             </div>
                                                         </div>
                                                         <div class="col-4 pl-1 pr-1">
                                                             <div class="form-group pb-1">
-                                                                <label for="issuer_esc_l3">Issuer Escalation L3</label>
+                                                                <label for="issuer_escalation_3">Issuer Escalation L3</label>
                                                                 @if(session('user_routes')['users.search'] ?? false)
-                                                                    <select data-placeholder="Search Users" id="issuer_esc_l3" name="issuer_esc_l3[]" class="form-control users-search-field" multiple="multiple">
+                                                                    <select data-placeholder="Search Users" id="issuer_escalation_3" name="issuer_escalation_3[]" class="form-control users-search-field" multiple="multiple">
                                                                         @foreach ($users as $id => $name)
-                                                                            @if(in_array($id, $sla_settings['escalation_users']['l3']['issuer_esc_l3'] ?? []))
+                                                                            @if(in_array($id, $sla_settings['escalation_users']['l3']['issuer_escalation_3'] ?? []))
                                                                                 <option value="{{ $id }}"  selected>{{ $name }}</option>
                                                                             @endif
                                                                         @endforeach
@@ -300,11 +300,11 @@
                                                                 @else
                                                                     <div class="alert alert-info mr-3">You don't have permission to search Users.</div>
                                                                 @endif
-                                                                <textarea name="issuer_esc_l3_emails"
+                                                                <textarea name="issuer_escalation_3_emails"
                                                                     class="form-control mt-1"
                                                                     placeholder="Add emails for people that are not in the system"
-                                                                    id="issuer_esc_l3_emails"
-                                                                    rows="2">{{$sla_settings['escalation_users']['l3']['issuer_esc_l3_emails'] ?? '' }}</textarea>
+                                                                    id="issuer_escalation_3_emails"
+                                                                    rows="2">{{$sla_settings['escalation_users']['l3']['issuer_escalation_3_emails'] ?? '' }}</textarea>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -318,11 +318,11 @@
                                                     <div class="row">
                                                         <div class="col-4 pl-1 pr-1">
                                                             <div class="form-group pb-1">
-                                                                <label for="executor_esc_l1">Executor Escalation L1</label>
+                                                                <label for="executor_escalation_1">Executor Escalation L1</label>
                                                                 @if(session('user_routes')['users.search'] ?? false)
-                                                                    <select data-placeholder="Search Users" id="executor_esc_l1" name="executor_esc_l1[]" class="form-control users-search-field" multiple="multiple">
+                                                                    <select data-placeholder="Search Users" id="executor_escalation_1" name="executor_escalation_1[]" class="form-control users-search-field" multiple="multiple">
                                                                         @foreach ($users as $id => $name)
-                                                                            @if(in_array($id, $sla_settings['escalation_users']['l1']['executor_esc_l1'] ?? []))
+                                                                            @if(in_array($id, $sla_settings['escalation_users']['l1']['executor_escalation_1'] ?? []))
                                                                                 <option value="{{ $id }}"  selected>{{ $name }}</option>
                                                                             @endif
                                                                         @endforeach
@@ -330,20 +330,20 @@
                                                                 @else
                                                                     <div class="alert alert-info mr-3">You don't have permission to search Users.</div>
                                                                 @endif
-                                                                <textarea name="executor_esc_l1_emails"
+                                                                <textarea name="executor_escalation_1_emails"
                                                                     class="form-control mt-1"
                                                                     placeholder="Add emails for people that are not in the system"
-                                                                    id="executor_esc_l1_emails"
-                                                                    rows="2">{{$sla_settings['escalation_users']['l1']['executor_esc_l1_emails'] ?? ''}}</textarea>
+                                                                    id="executor_escalation_1_emails"
+                                                                    rows="2">{{$sla_settings['escalation_users']['l1']['executor_escalation_1_emails'] ?? ''}}</textarea>
                                                             </div>
                                                         </div>
                                                         <div class="col-4 pl-1 pr-1">
                                                             <div class="form-group pb-1">
-                                                                <label for="executor_esc_l2">Executor Escalation L2</label>
+                                                                <label for="executor_escalation_2">Executor Escalation L2</label>
                                                                 @if(session('user_routes')['users.search'] ?? false)
-                                                                    <select data-placeholder="Search Users" id="executor_esc_l2" name="executor_esc_l2[]" class="form-control users-search-field" multiple="multiple">
+                                                                    <select data-placeholder="Search Users" id="executor_escalation_2" name="executor_escalation_2[]" class="form-control users-search-field" multiple="multiple">
                                                                         @foreach ($users as $id => $name)
-                                                                            @if(in_array($id, $sla_settings['escalation_users']['l2']['executor_esc_l2'] ?? []))
+                                                                            @if(in_array($id, $sla_settings['escalation_users']['l2']['executor_escalation_2'] ?? []))
                                                                                 <option value="{{ $id }}"  selected>{{ $name }}</option>
                                                                             @endif
                                                                         @endforeach
@@ -351,20 +351,20 @@
                                                                 @else
                                                                     <div class="alert alert-info mr-3">You don't have permission to search Users.</div>
                                                                 @endif
-                                                                <textarea name="executor_esc_l2_emails"
+                                                                <textarea name="executor_escalation_2_emails"
                                                                     class="form-control mt-1"
                                                                     placeholder="Add emails for people that are not in the system"
-                                                                    id="executor_esc_l2_emails"
-                                                                    rows="2">{{$sla_settings['escalation_users']['l2']['executor_esc_l2_emails'] ?? ''}}</textarea>
+                                                                    id="executor_escalation_2_emails"
+                                                                    rows="2">{{$sla_settings['escalation_users']['l2']['executor_escalation_2_emails'] ?? ''}}</textarea>
                                                             </div>
                                                         </div>
                                                         <div class="col-4 pl-1 pr-1">
                                                             <div class="form-group pb-1">
-                                                                <label for="executor_esc_l3">Executor Escalation L3</label>
+                                                                <label for="executor_escalation_3">Executor Escalation L3</label>
                                                                 @if(session('user_routes')['users.search'] ?? false)
-                                                                    <select data-placeholder="Search Users" id="executor_esc_l3" name="executor_esc_l3[]" class="form-control users-search-field" multiple="multiple">
+                                                                    <select data-placeholder="Search Users" id="executor_escalation_3" name="executor_escalation_3[]" class="form-control users-search-field" multiple="multiple">
                                                                         @foreach ($users as $id => $name)
-                                                                            @if(in_array($id, $sla_settings['escalation_users']['l3']['executor_esc_l3'] ?? []))
+                                                                            @if(in_array($id, $sla_settings['escalation_users']['l3']['executor_escalation_3'] ?? []))
                                                                                 <option value="{{ $id }}"  selected>{{ $name }}</option>
                                                                             @endif
                                                                         @endforeach
@@ -372,11 +372,11 @@
                                                                 @else
                                                                     <div class="alert alert-info mr-3">You don't have permission to search Users.</div>
                                                                 @endif
-                                                                <textarea name="executor_esc_l3_emails"
+                                                                <textarea name="executor_escalation_3_emails"
                                                                     class="form-control mt-1"
                                                                     placeholder="Add emails for people that are not in the system"
-                                                                    id="executor_esc_l3_emails"
-                                                                    rows="2">{{$sla_settings['escalation_users']['l3']['executor_esc_l3_emails'] ?? ''}}</textarea>
+                                                                    id="executor_escalation_3_emails"
+                                                                    rows="2">{{$sla_settings['escalation_users']['l3']['executor_escalation_3_emails'] ?? ''}}</textarea>
                                                             </div>
                                                         </div>
                                                     </div>

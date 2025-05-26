@@ -9,6 +9,9 @@ use Illuminate\Support\Facades\DB;
 use App\Models\Sla as SlaModel;
 use App\Models\ServiceRequest;
 
+use App\Helpers\SlaHelper;
+
+
 class Sla extends Command
 {
 	/**
@@ -36,6 +39,7 @@ class Sla extends Command
 		$this->claim_service_requests($sla_rules);
 
 		foreach ($sla_rules as $key => $sla_rule) {
+
 			// Get Service Requests
 			$sla_settings = json_decode($sla_rule->settings);
 			$sla_status_ids = $sla_settings->sla_statuses ?? [];
@@ -46,12 +50,12 @@ class Sla extends Command
 				->where(function ($query) use ($sla_status_ids, $updated_at) {
 					if (count($sla_status_ids) > 0) {
 						$query->whereIn('status_id', $sla_status_ids)
-							  ->orWhere(function ($query) use ($sla_status_ids, $updated_at) {
-								  $query->whereNotIn('status_id', $sla_status_ids);
-								  if ($updated_at) {
-									  $query->where('updated_at', '>', $updated_at);
-								  }
-							  });
+							->orWhere(function ($query) use ($sla_status_ids, $updated_at) {
+								$query->whereNotIn('status_id', $sla_status_ids);
+								if ($updated_at) {
+									$query->where('updated_at', '>', $updated_at);
+								}
+							});
 					}
 				})
 				->get();
@@ -112,8 +116,8 @@ class Sla extends Command
 					$sla_wins[] = $service_wins;
 				}
 
-				$tto = $service_request->tto ?? 0;
-				$ttr = $service_request->ttr ?? 0;
+				$tto_old = $service_request->tto ?? 0;
+				$ttr_old = $service_request->ttr ?? 0;
 				$resp_sla_wins = $sla_wins;
 				if(!isset($service_request->response_time) || strtotime($service_request->response_time) > strtotime($last_run_ts)) {
 					if(isset($service_request->response_time)) {
@@ -121,6 +125,7 @@ class Sla extends Command
 						$resp_sla_wins[] = [[$service_request_created_at, date('Y-m-d H:i:s', strtotime($service_request->response_time))]];
 					}
 				}
+
 
 				$tto_new = $tto_old;
 				$ttr_new = $ttr_old;
@@ -143,24 +148,54 @@ class Sla extends Command
 					$ttr_sla = $rt_exp[0] * 60 * 60 + $rt_exp[1] * 60;
 				}
 
-				// Calculate Percentages
-				$ttocentage = 0;
-				$ttrcentage = 0;
 
-				if($new_tto > 0) {
-					$ttocentage = ($new_tto/$tto_sla) * 100;
-				}
-				if($new_ttr > 0) {
-					$ttrcentage = ($new_ttr/$ttr_sla) * 100;
-				}
-
-				if($new_tto != $tto || $new_ttr != $ttr) {
+				if($tto_new != $tto_old || $ttr_new != $ttr_old) {
 					DB::table('service_requests')
 						->where('id', $service_request->id)
 						->update([
-							'tto' => $new_tto,
-							'ttr' => $new_ttr,
+							'tto' => $tto_new,
+							'ttr' => $ttr_new,
 						]);
+
+				/*	// Last Percentages
+					$ttopercentage_old = 0;
+					$ttrpercentage_old = 0;
+
+					// Calculate last response time percentage
+					if (isset($sla_settings->response_time)) {
+						$rt_exp = explode(':', $sla_settings->response_time);
+						$tto_sla = $rt_exp[0] * 60 * 60 + $rt_exp[1] * 60;
+						if ($tto_old > 0 && $tto_sla > 0) {
+							$ttopercentage_old = ($tto_old/$tto_sla) * 100;
+						}
+					}
+
+					// Calculate last resolution time percentage
+					if (isset($sla_settings->resolution_time)) {
+						$rt_exp = explode(':', $sla_settings->resolution_time);
+						$ttr_sla = $rt_exp[0] * 60 * 60 + $rt_exp[1] * 60;
+						if ($ttr_old > 0 && $ttr_sla > 0) {
+							$ttrpercentage_old = ($ttr_old/$ttr_sla) * 100;
+						}
+					}
+
+					// New Percentages
+
+					$ttopercentage_new = 0;
+					$ttrpercentage_new = 0;
+
+					if($tto_new > 0 && $tto_sla > 0) {
+						$ttopercentage_new = ($tto_new/$tto_sla) * 100;
+					}
+					if($ttr_new > 0 && $ttr_sla > 0) {
+						$ttrpercentage_new = ($ttr_new/$ttr_sla) * 100;
+					}
+
+					$res = SlaHelper::getSlaNotificationDetails($sla_rule, 50, 55, 55, 60, 92996, 92996, 94996, 93996);
+					// $res = SlaHelper::getSlaNotificationDetails($sla_rule, $ttopercentage_old, $ttrpercentage_old, $ttopercentage_new, $ttrpercentage_new, $tto_old, $ttr_old, $tto_new, $ttr_new);
+					echo "res: " . __LINE__ . " " . __FILE__ . "<br><pre>"; print_r($res); echo "</pre><br>"; exit();
+				*/
+				
 				}
 
 				// Calculate timespent
@@ -237,9 +272,6 @@ class Sla extends Command
 	        $sla_rule->update(['last_run_ts' => now()]);
 	    }
 	}
-
-
-
 
 	public static function gen_working_slots( $holidays, $service_days, $service_window_start, $service_window_end, $last_run_time, $now_ts )
 	{

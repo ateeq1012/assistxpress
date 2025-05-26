@@ -89,17 +89,17 @@
                         <td>{{ $user->updated_at ?? ''}}</td>
                         <td>{!! ($user->enabled == 1 ? '<badge class="badge badge-primary">Enabled</badge>' : '<badge class="badge badge-warning">Disabled</badge>') !!}</td>
                         <td>
-                            @if(session('user_routes')['groups.show'] ?? false)
+                            @if(session('user_routes')['users.show'] ?? false)
                                 <a href="{{ route('users.show', $user->id) }}" class="btn btn-info btn-xs">View</a>
                             @else
                                 <a href="#" class="btn btn-info btn-xs disabled">View</a>
                             @endif
-                            @if(session('user_routes')['groups.edit'] ?? false)
+                            @if(session('user_routes')['users.edit'] ?? false)
                                 <a href="{{ route('users.edit', $user->id) }}" class="btn btn-primary btn-xs">Edit</a>
                             @else
                                 <a href="#" class="btn btn-primary btn-xs disabled">Edit</a>
                             @endif
-                            @if(session('user_routes')['groups.destroy'] ?? false)
+                            @if(session('user_routes')['users.destroy'] ?? false)
                                 <form action="{{ route('users.destroy', $user->id) }}" method="POST" style="display: inline-block;">
                                     @csrf
                                     @method('DELETE')

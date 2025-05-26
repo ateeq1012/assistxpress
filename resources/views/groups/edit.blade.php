@@ -41,7 +41,7 @@
         <div class="row">
             <div class="col-6">
                 <div class="panel panel-primary">
-                    <div class="panel-heading"> User Info </div>
+                    <div class="panel-heading"> Group Info </div>
                     <div class="panel-body" style="max-height: 750px; overflow: auto;">
                         <form action="{{ route('groups.update', $group->id) }}" method="POST">
                             @csrf

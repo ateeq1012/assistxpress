@@ -50,7 +50,7 @@ use Illuminate\Http\Request;
 								<span class="text-muted text-xs block">{{ session('user_role_name') }} <b class="caret"></b></span>
 							</a>
 							<ul class="dropdown-menu animated fadeInRight m-t-xs">
-								<li><a class="dropdown-item" href="profile.html">Profile</a></li>
+								<!-- <li><a class="dropdown-item" href="profile.html">Profile</a></li> -->
 								<li class="dropdown-divider"></li>
 								<li><a class="dropdown-item" href="login">Logout</a></li>
 							</ul>
@@ -84,38 +84,44 @@ use Illuminate\Http\Request;
 						</li>
 					@endif
 
+					@php
+						$userRoutes = session('user_routes') ?? [];
+						$hasWorkflowRoutes = !empty(array_intersect(
+							['statuses.index', 'custom_fields.index', 'workflows.index', 'service_priorities.index'],
+							array_keys(array_filter($userRoutes))
+						));
+					@endphp
 
-					<li @if(in_array(request()->route()->getName(), ['workflows.index', 'statuses.index', 'service_priorities.index'])) class="active" @endif>
-						<a href=""><i class="fa fa-gears"></i> Workflow Engine</span> <span class="fa arrow"></a>
-						<ul class="nav nav-second-level collapse">
-							@if(session('user_routes')['statuses.index'] ?? false)
-								<li @if(request()->route()->getName() == 'statuses.index') class="active" @endif>
-									<a href="{{ route('statuses.index') }}">Statuses</a>
-								</li>
-							@endif
+					@if($hasWorkflowRoutes)
+						<li @if(in_array(request()->route()->getName(), ['workflows.index', 'statuses.index', 'service_priorities.index'])) class="active" @endif>
+							<a href="#"><i class="fa fa-gears"></i> Workflow Engine <span class="fa arrow"></span></a>
+							<ul class="nav nav-second-level collapse">
+								@if($userRoutes['statuses.index'] ?? false)
+									<li @if(request()->route()->getName() == 'statuses.index') class="active" @endif>
+										<a href="{{ route('statuses.index') }}">Statuses</a>
+									</li>
+								@endif
 
+								@if($userRoutes['custom_fields.index'] ?? false)
+									<li @if(request()->route()->getName() == 'custom_fields.index') class="active" @endif>
+										<a href="{{ route('custom_fields.index') }}">Custom Fields</a>
+									</li>
+								@endif
 
-							@if(session('user_routes')['custom_fields.index'] ?? false)
-								<li @if(request()->route()->getName() == 'custom_fields.index') class="active" @endif>
-									<a href="{{ route('custom_fields.index') }}">Custom Fields</a>
-								</li>
-							@endif
+								@if($userRoutes['workflows.index'] ?? false)
+									<li @if(request()->route()->getName() == 'workflows.index') class="active" @endif>
+										<a href="{{ route('workflows.index') }}">Status Transitions</a>
+									</li>
+								@endif
 
-							@if(session('user_routes')['workflows.index'] ?? false)
-								<li @if(request()->route()->getName() == 'workflows.index') class="active" @endif>
-									<a href="{{ route('workflows.index') }}">Status Transitions</a>
-								</li>
-							@endif
-
-							@if(session('user_routes')['service_priorities.index'] ?? false)
-								<li @if(request()->route()->getName() == 'service_priorities.index') class="active" @endif>
-									<a href="{{ route('service_priorities.index') }}">Service Priorities</a>
-								</li>
-							@endif
-
-
-						</ul>
-					</li>
+								@if($userRoutes['service_priorities.index'] ?? false)
+									<li @if(request()->route()->getName() == 'service_priorities.index') class="active" @endif>
+										<a href="{{ route('service_priorities.index') }}">Service Priorities</a>
+									</li>
+								@endif
+							</ul>
+						</li>
+					@endif
 
 					<li @if(in_array(request()->route()->getName(), ['roles.index', 'users.index', 'groups.index'])) class="active" @endif>
 						<a href=""><i class="fa fa-gear"></i> User Management</span> <span class="fa arrow"></a>

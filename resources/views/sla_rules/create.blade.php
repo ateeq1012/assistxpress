@@ -243,35 +243,35 @@
                                                     <div class="row">
                                                         <div class="col-4 pl-1 pr-1">
                                                             <div class="form-group pb-1">
-                                                                <label for="issuer_esc_l1">Issuer Escalation L1</label>
+                                                                <label for="issuer_escalation_1">Issuer Escalation L1</label>
                                                                 @if(session('user_routes')['users.search'] ?? false)
-                                                                    <select data-placeholder="Search Users" id="issuer_esc_l1" name="issuer_esc_l1[]" class="form-control users-search-field" multiple="multiple"></select>
+                                                                    <select data-placeholder="Search Users" id="issuer_escalation_1" name="issuer_escalation_1[]" class="form-control users-search-field" multiple="multiple"></select>
                                                                 @else
                                                                     <div class="alert alert-info mr-3">You don't have permission to search Users.</div>
                                                                 @endif
-                                                                <textarea name="issuer_esc_l1_emails" class="form-control mt-1" placeholder="Add emails for people that are not in the system" id="issuer_esc_l1_emails" rows="2"></textarea>
+                                                                <textarea name="issuer_escalation_1_emails" class="form-control mt-1" placeholder="Add emails for people that are not in the system" id="issuer_escalation_1_emails" rows="2"></textarea>
                                                             </div>
                                                         </div>
                                                         <div class="col-4 pl-1 pr-1">
                                                             <div class="form-group pb-1">
-                                                                <label for="issuer_esc_l2">Issuer Escalation L2</label>
+                                                                <label for="issuer_escalation_2">Issuer Escalation L2</label>
                                                                 @if(session('user_routes')['users.search'] ?? false)
-                                                                    <select data-placeholder="Search Users" id="issuer_esc_l2" name="issuer_esc_l2[]" class="form-control users-search-field" multiple="multiple"></select>
+                                                                    <select data-placeholder="Search Users" id="issuer_escalation_2" name="issuer_escalation_2[]" class="form-control users-search-field" multiple="multiple"></select>
                                                                 @else
                                                                     <div class="alert alert-info mr-3">You don't have permission to search Users.</div>
                                                                 @endif
-                                                                <textarea name="issuer_esc_l2_emails" class="form-control mt-1" placeholder="Add emails for people that are not in the system" id="issuer_esc_l2_emails" rows="2"></textarea>
+                                                                <textarea name="issuer_escalation_2_emails" class="form-control mt-1" placeholder="Add emails for people that are not in the system" id="issuer_escalation_2_emails" rows="2"></textarea>
                                                             </div>
                                                         </div>
                                                         <div class="col-4 pl-1 pr-1">
                                                             <div class="form-group pb-1">
-                                                                <label for="issuer_esc_l3">Issuer Escalation L3</label>
+                                                                <label for="issuer_escalation_3">Issuer Escalation L3</label>
                                                                 @if(session('user_routes')['users.search'] ?? false)
-                                                                    <select data-placeholder="Search Users" id="issuer_esc_l3" name="issuer_esc_l3[]" class="form-control users-search-field" multiple="multiple"></select>
+                                                                    <select data-placeholder="Search Users" id="issuer_escalation_3" name="issuer_escalation_3[]" class="form-control users-search-field" multiple="multiple"></select>
                                                                 @else
                                                                     <div class="alert alert-info mr-3">You don't have permission to search Users.</div>
                                                                 @endif
-                                                                <textarea name="issuer_esc_l3_emails" class="form-control mt-1" placeholder="Add emails for people that are not in the system" id="issuer_esc_l3_emails" rows="2"></textarea>
+                                                                <textarea name="issuer_escalation_3_emails" class="form-control mt-1" placeholder="Add emails for people that are not in the system" id="issuer_escalation_3_emails" rows="2"></textarea>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -285,35 +285,35 @@
                                                     <div class="row">
                                                         <div class="col-4 pl-1 pr-1">
                                                             <div class="form-group pb-1">
-                                                                <label for="executor_esc_l1">Executor Escalation L1</label>
+                                                                <label for="executor_escalation_1">Executor Escalation L1</label>
                                                                 @if(session('user_routes')['users.search'] ?? false)
-                                                                    <select data-placeholder="Search Users" id="executor_esc_l1" name="executor_esc_l1[]" class="form-control users-search-field" multiple="multiple"></select>
+                                                                    <select data-placeholder="Search Users" id="executor_escalation_1" name="executor_escalation_1[]" class="form-control users-search-field" multiple="multiple"></select>
                                                                 @else
                                                                     <div class="alert alert-info mr-3">You don't have permission to search Users.</div>
                                                                 @endif
-                                                                <textarea name="executor_esc_l1_emails" class="form-control mt-1" placeholder="Add emails for people that are not in the system" id="executor_esc_l1_emails" rows="2"></textarea>
+                                                                <textarea name="executor_escalation_1_emails" class="form-control mt-1" placeholder="Add emails for people that are not in the system" id="executor_escalation_1_emails" rows="2"></textarea>
                                                             </div>
                                                         </div>
                                                         <div class="col-4 pl-1 pr-1">
                                                             <div class="form-group pb-1">
-                                                                <label for="executor_esc_l2">Executor Escalation L2</label>
+                                                                <label for="executor_escalation_2">Executor Escalation L2</label>
                                                                 @if(session('user_routes')['users.search'] ?? false)
-                                                                    <select data-placeholder="Search Users" id="executor_esc_l2" name="executor_esc_l2[]" class="form-control users-search-field" multiple="multiple"></select>
+                                                                    <select data-placeholder="Search Users" id="executor_escalation_2" name="executor_escalation_2[]" class="form-control users-search-field" multiple="multiple"></select>
                                                                 @else
                                                                     <div class="alert alert-info mr-3">You don't have permission to search Users.</div>
                                                                 @endif
-                                                                <textarea name="executor_esc_l2_emails" class="form-control mt-1" placeholder="Add emails for people that are not in the system" id="executor_esc_l2_emails" rows="2"></textarea>
+                                                                <textarea name="executor_escalation_2_emails" class="form-control mt-1" placeholder="Add emails for people that are not in the system" id="executor_escalation_2_emails" rows="2"></textarea>
                                                             </div>
                                                         </div>
                                                         <div class="col-4 pl-1 pr-1">
                                                             <div class="form-group pb-1">
-                                                                <label for="executor_esc_l3">Executor Escalation L3</label>
+                                                                <label for="executor_escalation_3">Executor Escalation L3</label>
                                                                 @if(session('user_routes')['users.search'] ?? false)
-                                                                    <select data-placeholder="Search Users" id="executor_esc_l3" name="executor_esc_l3[]" class="form-control users-search-field" multiple="multiple"></select>
+                                                                    <select data-placeholder="Search Users" id="executor_escalation_3" name="executor_escalation_3[]" class="form-control users-search-field" multiple="multiple"></select>
                                                                 @else
                                                                     <div class="alert alert-info mr-3">You don't have permission to search Users.</div>
                                                                 @endif
-                                                                <textarea name="executor_esc_l3_emails" class="form-control mt-1" placeholder="Add emails for people that are not in the system" id="executor_esc_l3_emails" rows="2"></textarea>
+                                                                <textarea name="executor_escalation_3_emails" class="form-control mt-1" placeholder="Add emails for people that are not in the system" id="executor_escalation_3_emails" rows="2"></textarea>
                                                             </div>
                                                         </div>
                                                     </div>

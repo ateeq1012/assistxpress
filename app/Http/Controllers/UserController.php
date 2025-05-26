@@ -334,6 +334,7 @@ class UserController extends Controller
 
     public function destroy($id)
     {
+        echo "User Delete Not Allowed"; exit();
         // if($id != 1) {
         //     $user = User::findOrFail($id);
         //     $user->delete();
