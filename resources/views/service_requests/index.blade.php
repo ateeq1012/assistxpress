@@ -302,6 +302,7 @@
                         @foreach ($selected_fields as $key => $field_name)
                             <th>{{ $field_name }}</th>
                         @endforeach
+                            <th>LatestComment</th>
                         <th class="actions-col">Actions</th>
                     </tr>
                 </thead>
@@ -312,6 +313,7 @@
                         @foreach ($selected_fields as $key => $field_name)
                             <th>{{ $field_name }}</th>
                         @endforeach
+                            <th>LatestComment</th>
                         <th>Actions</th>
                     </tr>
                 </tfoot>
@@ -535,6 +537,7 @@
                 @foreach ($selected_fields as $key => $value)
                     { "class": "dt-column", "data": "{{ $key }}", "defaultContent": "" },
                 @endforeach
+                { "class": "dt-column", "data": "latest_comment", "defaultContent": "" },
                 { "class": "dt-column", "data": null, "defaultContent": "" },
             ],
             "columnDefs": [

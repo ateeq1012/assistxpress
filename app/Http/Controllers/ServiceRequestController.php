@@ -178,7 +178,20 @@ class ServiceRequestController extends Controller
 		// Handle pagination
 		$service_requests = $query->offset($start)->limit($length)->get();
 
+		$service_request_ids = array_unique(array_column($service_requests->toArray(), 'id'));
 		$service_domain_ids = array_unique(array_column($query->offset($start)->limit($length)->get()->toArray(), 'service_domain_id'));
+		$latest_comments = ServiceRequestComment::select('service_request_id', 'text')
+		    ->whereIn('service_request_id', $service_request_ids)
+		    ->orderBy('service_request_id')
+		    ->orderByDesc('created_at')
+		    ->get()
+		    ->unique('service_request_id');
+
+		$latest_comments_lkp = [];
+		if(!empty($latest_comments)) {
+			$latest_comments_lkp = array_column($latest_comments->toArray(), 'text', 'service_request_id');
+		}
+
 		$service_domain_lkp = [];
 		if(count($service_domain_ids) > 0) {
 			$service_domain_lkp = ServiceDomain::select('id', 'name', 'color')->whereIn('id', $service_domain_ids)->get()->toArray();
@@ -190,61 +203,74 @@ class ServiceRequestController extends Controller
 		$filteredRecords = $query->count();  // Can be optimized by querying only filtered records
 
 		// Prepare the data for DataTable response
-		$data = $service_requests->map(function ($service_request, $index) use ($start, $final_fields, $statuses_lkp, $priorities_lkp, $users_lkp, $groups_lkp, $services_lkp, $service_domain_lkp, $sla_rules_lkp) {
-			$row = ['sr_no' => $start + $index + 1];
-			
-			// Loop through each field in the final fields
-			foreach ($final_fields as $field => $name) {
-				// Mapping IDs to labels for specific fields
-				switch ($field) {
-					case 'service_domain_id':
-						$service_Label = $service_domain_lkp[$service_request->service_domain_id]['name'] ?? '';
-						$row[$field] = $service_Label ? 
-							"<span class='label tbl-label color-parent-td' style='background-color: {$service_domain_lkp[$service_request->service_domain_id]['color']}; color: " . GeneralHelper::invert_color($service_domain_lkp[$service_request->service_domain_id]['color']) . ";'>{$service_Label}</span>" 
-							: '';
-						break;
-					case 'service_id':
-						$service_Label = $services_lkp[$service_request->service_id]['name'] ?? '';
-						$row[$field] = $service_Label ? 
-							"<span class='label tbl-label color-parent-td' style='background-color: {$services_lkp[$service_request->service_id]['color']}; color: " . GeneralHelper::invert_color($services_lkp[$service_request->service_id]['color']) . ";'>{$service_Label}</span>" 
-							: '';
-						break;
-					case 'sla_rule_id':
-						$service_Label = $sla_rules_lkp[$service_request->sla_rule_id]['name'] ?? '';
-						$row[$field] = $service_Label ? 
-							"<span class='label tbl-label color-parent-td' style='background-color: {$sla_rules_lkp[$service_request->sla_rule_id]['color']}; color: " . GeneralHelper::invert_color($sla_rules_lkp[$service_request->sla_rule_id]['color']) . ";'>{$service_Label}</span>" 
-							: '';
-						break;
-					case 'status_id':
-						$statusLabel = $statuses_lkp[$service_request->status_id]['name'] ?? '';
-						$row[$field] = $statusLabel ? 
-							"<span class='label tbl-label color-parent-td' style='background-color: {$statuses_lkp[$service_request->status_id]['color']}; color: " . GeneralHelper::invert_color($statuses_lkp[$service_request->status_id]['color']) . ";'>{$statusLabel}</span>" 
-							: '';
-						break;
-					case 'priority_id':
-						$priorityLabel = $priorities_lkp[$service_request->priority_id]['name'] ?? '';
-						$row[$field] = $priorityLabel ? 
-							"<span class='label tbl-label color-parent-td' style='background-color: {$priorities_lkp[$service_request->priority_id]['color']}; color: " . GeneralHelper::invert_color($priorities_lkp[$service_request->priority_id]['color']) . ";'>{$priorityLabel}</span>" 
-							: "<span class='label tbl-label color-parent-td'><small>{not-set}</small></span>";
-						break;
-					case 'created_by':
-					case 'updated_by':
-					case 'executor_id':
-						$row[$field] = $users_lkp[$service_request->{$field}] ?? '';
-						break;
-					case 'creator_group_id':
-					case 'executor_group_id':
-						$row[$field] = $groups_lkp[$service_request->{$field}] ?? '';
-						break;
-					default:
-						// For all other fields, just use the value from the service_request
-						$row[$field] = $service_request->{$field} ?? '';
-						break;
+		$data = $service_requests->map(
+			function ($service_request, $index) use (
+				$start,
+				$final_fields,
+				$statuses_lkp,
+				$priorities_lkp,
+				$users_lkp,
+				$groups_lkp,
+				$services_lkp,
+				$service_domain_lkp,
+				$sla_rules_lkp,
+				$latest_comments_lkp,
+			) {
+				$row = ['sr_no' => $start + $index + 1];
+				
+				// Loop through each field in the final fields
+				foreach ($final_fields as $field => $name) {
+					// Mapping IDs to labels for specific fields
+					switch ($field) {
+						case 'service_domain_id':
+							$service_Label = $service_domain_lkp[$service_request->service_domain_id]['name'] ?? '';
+							$row[$field] = $service_Label ? 
+								"<span class='label tbl-label color-parent-td' style='background-color: {$service_domain_lkp[$service_request->service_domain_id]['color']}; color: " . GeneralHelper::invert_color($service_domain_lkp[$service_request->service_domain_id]['color']) . ";'>{$service_Label}</span>" 
+								: '';
+							break;
+						case 'service_id':
+							$service_Label = $services_lkp[$service_request->service_id]['name'] ?? '';
+							$row[$field] = $service_Label ? 
+								"<span class='label tbl-label color-parent-td' style='background-color: {$services_lkp[$service_request->service_id]['color']}; color: " . GeneralHelper::invert_color($services_lkp[$service_request->service_id]['color']) . ";'>{$service_Label}</span>" 
+								: '';
+							break;
+						case 'sla_rule_id':
+							$service_Label = $sla_rules_lkp[$service_request->sla_rule_id]['name'] ?? '';
+							$row[$field] = $service_Label ? 
+								"<span class='label tbl-label color-parent-td' style='background-color: {$sla_rules_lkp[$service_request->sla_rule_id]['color']}; color: " . GeneralHelper::invert_color($sla_rules_lkp[$service_request->sla_rule_id]['color']) . ";'>{$service_Label}</span>" 
+								: '';
+							break;
+						case 'status_id':
+							$statusLabel = $statuses_lkp[$service_request->status_id]['name'] ?? '';
+							$row[$field] = $statusLabel ? 
+								"<span class='label tbl-label color-parent-td' style='background-color: {$statuses_lkp[$service_request->status_id]['color']}; color: " . GeneralHelper::invert_color($statuses_lkp[$service_request->status_id]['color']) . ";'>{$statusLabel}</span>" 
+								: '';
+							break;
+						case 'priority_id':
+							$priorityLabel = $priorities_lkp[$service_request->priority_id]['name'] ?? '';
+							$row[$field] = $priorityLabel ? 
+								"<span class='label tbl-label color-parent-td' style='background-color: {$priorities_lkp[$service_request->priority_id]['color']}; color: " . GeneralHelper::invert_color($priorities_lkp[$service_request->priority_id]['color']) . ";'>{$priorityLabel}</span>" 
+								: "<span class='label tbl-label color-parent-td'><small>{not-set}</small></span>";
+							break;
+						case 'created_by':
+						case 'updated_by':
+						case 'executor_id':
+							$row[$field] = $users_lkp[$service_request->{$field}] ?? '';
+							break;
+						case 'creator_group_id':
+						case 'executor_group_id':
+							$row[$field] = $groups_lkp[$service_request->{$field}] ?? '';
+							break;
+						default:
+							// For all other fields, just use the value from the service_request
+							$row[$field] = $service_request->{$field} ?? '';
+							break;
+					}
 				}
-			}
-			
-			return $row;
-		});
+				
+				$row['latest_comment'] = $latest_comments_lkp[$service_request->id] ?? ''; 
+				return $row;
+			});
 
 
 		// Return the response in DataTable format
@@ -325,14 +351,10 @@ class ServiceRequestController extends Controller
 		$validation_array = [
 			'service_domain_id' => 'required|numeric',
 			'service_id' => 'required|numeric',
-			'subject' => ['required','string','max:1000', 'regex:/^[\p{L}0-9_.()\[\] -]+$/u'],
-			'description' => ['nullable','string','max:10000', 'regex:/^[\P{C}\n\r]+$/u'],
+			'subject' => ['required', 'string', 'max:1000' ],
+			'description' => ['nullable', 'string', 'max:10000' ],
 			'status_id' => 'required|numeric|min:1',
 			'priority_id' => 'nullable|numeric|min:1',
-		];
-		$validation_messages = [
-			'subject.regex' => 'The subject contains invalid characters. It may only include letters, numbers, spaces, and the following special characters: _ . ( ) [ ] -.',
-			'description.regex' => 'Special characters or control characters found in description.',
 		];
 
 		$creator = Auth::user();
@@ -527,7 +549,7 @@ class ServiceRequestController extends Controller
 			}
 		}
 
-		$validator_final = Validator::make($request->all(), $validation_array, $validation_messages, $attribute_names);
+		$validator_final = Validator::make($request->all(), $validation_array, [], $attribute_names);
 
 		if ($validator_final->fails()) {
 			return response()->json(['success' => false, 'errors' => $validator_final->errors()], 422);
@@ -540,8 +562,8 @@ class ServiceRequestController extends Controller
 			$service_request = new ServiceRequest();
 
 			$service_request->service_domain_id = trim($validatedData['service_domain_id']);
-			$service_request->subject = trim($validatedData['subject']);
-			$service_request->description = isset($validatedData['description']) ? trim($validatedData['description']) : null;
+			$service_request->subject = GeneralHelper::cleanText($validatedData['subject']);
+			$service_request->description = isset($validatedData['description']) ? GeneralHelper::cleanText($validatedData['description']) : null;
 			$service_request->service_id = trim($validatedData['service_id']);
 			$service_request->status_id = trim($validatedData['status_id']);
 			$service_request->priority_id = isset($validatedData['priority_id']) ? trim($validatedData['priority_id']) : null;
@@ -857,14 +879,10 @@ class ServiceRequestController extends Controller
 		$validation_array = [
 			'service_domain_id' => 'required|numeric',
 			'service_id' => 'required|numeric',
-			'subject' => ['required','string','max:1000', 'regex:/^[\p{L}0-9_.()\[\] -]+$/u'],
-			'description' => ['nullable','string','max:10000', 'regex:/^[\P{C}\n\r]+$/u'],
+			'subject' => ['required', 'string', 'max:1000' ],
+			'description' => ['nullable', 'string', 'max:10000' ],
 			'status_id' => 'required|numeric|min:1',
 			'priority_id' => 'nullable|numeric|min:1',
-		];
-		$validation_messages = [
-			'subject.regex' => 'The subject contains invalid characters. It may only include letters, numbers, spaces, and the following special characters: _ . ( ) [ ] -.',
-			'description.regex' => 'Special characters or control characters found in description.',
 		];
 
 		$creator = Auth::user();
@@ -1067,7 +1085,7 @@ class ServiceRequestController extends Controller
 			}
 		}
 
-		$validator_final = Validator::make($request->all(), $validation_array, $validation_messages, $attribute_names);
+		$validator_final = Validator::make($request->all(), $validation_array, [], $attribute_names);
 
 		if ($validator_final->fails()) {
 			return response()->json(['success' => false, 'errors' => $validator_final->errors()], 422);
