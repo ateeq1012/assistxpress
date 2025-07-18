@@ -156,8 +156,9 @@ use Illuminate\Http\Request;
 			<nav class="navbar navbar-static-top  " role="navigation" style="margin-bottom: 0; background: #2f4050;">
 				<div class="navbar-header">
 					<a class="navbar-minimalize minimalize-styl-2 btn btn-primary " href="#"><i class="fa fa-bars pt-1 pb-1"></i> </a>
-					<img alt="image" src="/img/logo/inx-logo-grey.png" style="height: 37px; margin: 0px 20px 3px 5px;">
-					<img alt="image" src="/img/logo/an10_logo_mini_grey.png" style="height: 55px; margin: 2px 20px 0px 5px">
+					<img alt="image" src="{{ asset('img/logo/inx-logo-grey.png') }}" style="height: 37px; margin: 0px 20px 3px 5px;">
+<img alt="image" src="{{ asset('img/logo/an10_logo_mini_grey.png') }}" style="height: 55px; margin: 2px 20px 0px 5px">
+
 				</div>
 				<ul class="nav navbar-top-links navbar-right">
 					<li>
