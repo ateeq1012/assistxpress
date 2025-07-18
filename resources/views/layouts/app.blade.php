@@ -135,7 +135,7 @@ use Illuminate\Http\Request;
 							
 							@if(session('user_routes')['roles.index'] ?? false)
 								<li @if(request()->route()->getName() == 'roles.index') class="active" @endif>
-									<a href="{{ route('roles.index') }}"><i class="fa fa-address-card-o"></i> Roles</a>
+									<a href="{{ route('roles.index') }}"><i class="fa fa-address-card-o"></i> Rolesss</a>
 								</li>
 							@endif
 							
