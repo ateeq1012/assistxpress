@@ -49,7 +49,7 @@
             @endif
             <div>
                 <br/>
-                <h3>Login</h3>
+                <h3>Login Super Admin</h3>
                 <form method="POST" action="{{ route('login.submit') }}">
                     @csrf <!-- CSRF protection -->
                     <div class="form-group">
